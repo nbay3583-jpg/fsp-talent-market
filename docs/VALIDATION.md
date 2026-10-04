@@ -1,0 +1,2 @@
+# Validation (plan)
+Baseline: résumé lexical ranking. System: verified-evidence matching. Same candidates, same needs, independent 0/1/2 relevance labels. Metrics: Precision@5, nDCG@10, Recall@10. Assessment checks: variants share competency+rubric dimensions; reference solutions pass; wrong solutions fail; deterministic. Results land as JSON+Markdown. Not psychometric validation. Numbers: TBD (measured in Phase 9).
