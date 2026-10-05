@@ -1,10 +1,12 @@
+from collections.abc import Iterator
+
 import pytest
 
 from fsp_market.config import Settings, get_settings
 
 
 @pytest.fixture(autouse=True)
-def _isolate_settings_cache() -> None:
+def _isolate_settings_cache() -> Iterator[None]:
     """get_settings is cached; never leak an overridden instance into other test modules."""
     get_settings.cache_clear()
     yield
