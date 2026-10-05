@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Generator
+from collections.abc import Generator
 
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -18,7 +18,7 @@ def make_engine(url: str | None = None) -> Engine:
     return create_engine(url or get_settings().database_url, pool_pre_ping=True)
 
 
-def make_session_factory(engine: Engine):
+def make_session_factory(engine: Engine) -> sessionmaker[Session]:
     return sessionmaker(bind=engine, expire_on_commit=False)
 
 
@@ -42,9 +42,6 @@ def get_session() -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
-
-
-from sqlalchemy import create_engine
 
 
 __all__ = [
