@@ -20,3 +20,6 @@ May: rewrite task context, parse résumé/need text, human-readable explanations
 
 ## Auth
 Token (JWT) + argon2/bcrypt, roles candidate/employer; Keycloak-swappable behind a dependency.
+
+## Layout note
+Factory scopes workers to `src/`, `tests/`, `docs/`; hence backend = `src/fsp_market`, frontend = `src/ui`.
