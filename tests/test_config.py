@@ -3,6 +3,14 @@ import pytest
 from fsp_market.config import Settings, get_settings
 
 
+@pytest.fixture(autouse=True)
+def _isolate_settings_cache() -> None:
+    """get_settings is cached; never leak an overridden instance into other test modules."""
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
 def test_default_settings_values(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("DATABASE_URL", raising=False)
     monkeypatch.delenv("JWT_SECRET", raising=False)
