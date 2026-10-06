@@ -436,6 +436,7 @@ def seed_matching_demo(session: Session, now: datetime | None = None) -> dict:
             profile_visible=vis,
             open_to_invitations=openi,
             available_in_days=14,
+            phone=f"+7-900-000-{len(key):02d}{ord(key[0]):03d}",
         )
         session.add(cand)
         session.flush()

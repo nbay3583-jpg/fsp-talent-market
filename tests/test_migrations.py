@@ -40,10 +40,10 @@ def test_downgrade_removes_app_meta_table(tmp_path: Path) -> None:
     assert "app_meta" not in table_names
 
 
-def test_head_revision_is_0003(tmp_path: Path) -> None:
+def test_head_revision_is_0004(tmp_path: Path) -> None:
     config = _build_config(tmp_path)
     script_dir = ScriptDirectory.from_config(config)
-    assert script_dir.get_heads() == ["0003"]
+    assert script_dir.get_heads() == ["0004"]
 
 
 def test_domain_tables_created_and_removed(tmp_path: Path) -> None:
@@ -70,6 +70,7 @@ def test_domain_tables_created_and_removed(tmp_path: Path) -> None:
         "need_skills",
         "match_runs",
         "match_results",
+        "invitations",
     }
     with sqlite3.connect(db_path) as conn:
         names = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}

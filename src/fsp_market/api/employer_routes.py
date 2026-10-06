@@ -19,6 +19,7 @@ from fsp_market.auth.tokens import create_token
 from fsp_market.common.enums import Grade, SalaryType, Sublevel, WorkFormat
 from fsp_market.config import get_settings
 from fsp_market.employers.models import Employer
+from fsp_market.invitations import service as invitation_service
 from fsp_market.matching import service
 from fsp_market.matching.models import EmployerNeed, MatchRun
 
@@ -54,6 +55,7 @@ class PreferencesIn(BaseModel):
     available_in_days: int | None = Field(default=None, ge=0)
     profile_visible: bool | None = None
     open_to_invitations: bool | None = None
+    phone: str | None = Field(default=None, max_length=32)
 
 
 def _own_need(session: Session, need_id: int, employer_id: int) -> EmployerNeed:
@@ -218,4 +220,8 @@ def candidate_detail(
     detail = service.candidate_detail(session, candidate_id, need)
     if detail is None:
         raise HTTPException(status_code=404, detail="candidate not found")
+    contacts = invitation_service.unlocked_contacts(session, employer_id, candidate_id)
+    detail["contact_status"] = "UNLOCKED" if contacts else "LOCKED"
+    if contacts:  # only after the candidate accepted this employer's invitation
+        detail["contacts"] = contacts
     return detail

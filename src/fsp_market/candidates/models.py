@@ -49,3 +49,4 @@ class Candidate(Base):
     available_in_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     profile_visible: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     open_to_invitations: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)  # private contact

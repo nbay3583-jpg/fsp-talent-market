@@ -107,3 +107,11 @@ class SalaryType(StrEnum):
 class SkillImportance(StrEnum):
     REQUIRED = "REQUIRED"
     OPTIONAL = "OPTIONAL"
+
+
+class InvitationStatus(StrEnum):
+    SENT = "SENT"
+    VIEWED = "VIEWED"
+    ACCEPTED = "ACCEPTED"
+    CONTACTS_UNLOCKED = "CONTACTS_UNLOCKED"
+    DECLINED = "DECLINED"
