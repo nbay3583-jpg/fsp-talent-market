@@ -1,0 +1,2597 @@
+{
+ "assessment": {
+  "anchors": [
+   {
+    "family": "backend.api.middle.api_validation",
+    "solved_by": [
+     "P-MIDDLE",
+     "P-SENIOR"
+    ],
+    "variant": "backend.api.middle.api_validation.t1.v1"
+   }
+  ],
+  "cases": 42,
+  "coverage": {
+   "competencies_covered": {
+    "JUNIOR": 2,
+    "MIDDLE": 6,
+    "SENIOR": 4
+   },
+   "coverage_ratio": {
+    "JUNIOR": 0.3333,
+    "MIDDLE": 1.0,
+    "SENIOR": 0.6667
+   },
+   "items_per_attempt": {
+    "JUNIOR": 2,
+    "MIDDLE": 6,
+    "SENIOR": 4
+   },
+   "matrix": {
+    "api_fastapi": {
+     "MIDDLE": {
+      "families": 1,
+      "variants": 2
+     },
+     "SENIOR": {
+      "families": 1,
+      "variants": 2
+     }
+    },
+    "docker_basics": {
+     "MIDDLE": {
+      "families": 1,
+      "variants": 2
+     }
+    },
+    "python": {
+     "JUNIOR": {
+      "families": 1,
+      "variants": 2
+     },
+     "MIDDLE": {
+      "families": 1,
+      "variants": 2
+     },
+     "SENIOR": {
+      "families": 1,
+      "variants": 2
+     }
+    },
+    "sql": {
+     "JUNIOR": {
+      "families": 1,
+      "variants": 2
+     },
+     "MIDDLE": {
+      "families": 1,
+      "variants": 2
+     },
+     "SENIOR": {
+      "families": 1,
+      "variants": 2
+     }
+    },
+    "system_thinking": {
+     "MIDDLE": {
+      "families": 1,
+      "variants": 2
+     },
+     "SENIOR": {
+      "families": 1,
+      "variants": 2
+     }
+    },
+    "testing": {
+     "MIDDLE": {
+      "families": 1,
+      "variants": 2
+     }
+    }
+   }
+  },
+  "deterministic": true,
+  "disagreement_over_one_sublevel_rate": 0.0,
+  "discrimination": {
+   "JUNIOR": {
+    "auc_knowers_vs_others": 1.0,
+    "margin": 1.0,
+    "mean_score_by_persona": {
+     "P-JUNIOR": 1.0,
+     "P-MIDDLE": 1.0,
+     "P-SENIOR": 1.0,
+     "P-WEAK": 0.0
+    }
+   },
+   "MIDDLE": {
+    "auc_knowers_vs_others": 1.0,
+    "margin": 1.0,
+    "mean_score_by_persona": {
+     "P-JUNIOR": 0.0,
+     "P-MIDDLE": 1.0,
+     "P-SENIOR": 1.0,
+     "P-WEAK": 0.0
+    }
+   },
+   "SENIOR": {
+    "auc_knowers_vs_others": 1.0,
+    "margin": 1.0,
+    "mean_score_by_persona": {
+     "P-JUNIOR": 0.0,
+     "P-MIDDLE": 0.0,
+     "P-SENIOR": 1.0,
+     "P-WEAK": 0.0
+    }
+   }
+  },
+  "failures": [],
+  "grade_accuracy": 1.0,
+  "guessing_baseline": {
+   "JUNIOR": {
+    "false_verification_rate": 0.086,
+    "items": 2,
+    "trials": 500
+   },
+   "MIDDLE": {
+    "false_verification_rate": 0.004,
+    "items": 6,
+    "trials": 500
+   },
+   "SENIOR": {
+    "false_verification_rate": 0.054,
+    "items": 4,
+    "trials": 500
+   }
+  },
+  "highest_grade_accuracy": 1.0,
+  "kind": "MVP reference-solution validation (synthetic personas); not psychometric calibration",
+  "outcomes": [
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-JUNIOR",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-JUNIOR",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-JUNIOR",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-JUNIOR",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-JUNIOR",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-JUNIOR",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-MIDDLE",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-MIDDLE",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M2",
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-MIDDLE",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M2",
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-MIDDLE",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M2"
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-MIDDLE",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-MIDDLE",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-SENIOR",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-SENIOR",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M2",
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-SENIOR",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M2",
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-SENIOR",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "S2",
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-SENIOR",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "S2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "S2",
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-SENIOR",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "S2"
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-MIDDLE-HIGH",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-MIDDLE-HIGH",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M1",
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-MIDDLE-HIGH",
+    "rotation": 0,
+    "score": 0.8333,
+    "status": "VERIFIED",
+    "sublevel": "M1"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M1",
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-MIDDLE-HIGH",
+    "rotation": 1,
+    "score": 0.8333,
+    "status": "VERIFIED",
+    "sublevel": "M1"
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-MIDDLE-HIGH",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-MIDDLE-HIGH",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
+    "rotation": 0,
+    "score": 0.6667,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
+    "rotation": 1,
+    "score": 0.6667,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-SENIOR-EDGE",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J2",
+    "grade": "JUNIOR",
+    "items": 2,
+    "match": true,
+    "persona": "P-SENIOR-EDGE",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M2",
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-SENIOR-EDGE",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M2",
+    "grade": "MIDDLE",
+    "items": 6,
+    "match": true,
+    "persona": "P-SENIOR-EDGE",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M2"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "S1",
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-SENIOR-EDGE",
+    "rotation": 0,
+    "score": 0.75,
+    "status": "VERIFIED",
+    "sublevel": "S1"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "S1",
+    "grade": "SENIOR",
+    "items": 4,
+    "match": true,
+    "persona": "P-SENIOR-EDGE",
+    "rotation": 1,
+    "score": 0.75,
+    "status": "VERIFIED",
+    "sublevel": "S1"
+   }
+  ],
+  "pass_thresholds": {
+   "JUNIOR": 0.6,
+   "MIDDLE": 0.7,
+   "SENIOR": 0.75
+  },
+  "personas": [
+   {
+    "description": "knows Junior material only",
+    "id": "P-JUNIOR"
+   },
+   {
+    "description": "knows Junior + Middle material",
+    "id": "P-MIDDLE"
+   },
+   {
+    "description": "knows everything",
+    "id": "P-SENIOR"
+   },
+   {
+    "description": "answers every question wrongly",
+    "id": "P-WEAK"
+   },
+   {
+    "description": "Middle, slips on testing (5/6 = 0.833 -> M1)",
+    "id": "P-MIDDLE-HIGH"
+   },
+   {
+    "description": "Middle, slips on testing + docker (4/6 = 0.667 < 0.7)",
+    "id": "P-MIDDLE-LOW"
+   },
+   {
+    "description": "Senior, slips on system thinking (3/4 = 0.75 -> S1)",
+    "id": "P-SENIOR-EDGE"
+   }
+  ],
+  "rubric_checks": {
+   "details": [],
+   "violations": 0
+  },
+  "variant_stability": {
+   "identical_outcome_rate": 1.0,
+   "max_abs_score_diff": 0.0,
+   "mean_abs_score_diff": 0.0,
+   "pairs": 21
+  }
+ },
+ "dataset": {
+  "candidates": 32,
+  "label_cells": 320,
+  "needs": 10,
+  "nonzero_labels": 98,
+  "relevant_threshold": 2,
+  "sha256": "2f491079cc219481758bbc0b210ae2f872acd961f550872275594b6e70f9ee39",
+  "version": "1"
+ },
+ "failures": [
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "keyword_baseline:V-N01:V-C04:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N01",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 2",
+   "candidate": "V-C24",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N01:V-C24:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N01",
+   "probable_reason": "violates hard constraint(s): salary (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 3",
+   "candidate": "V-C30",
+   "expected": "relevance 1 (<2)",
+   "id": "keyword_baseline:V-N01:V-C30:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N01",
+   "probable_reason": "candidate is UNVERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C05",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N01:V-C05:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N01",
+   "probable_reason": "no keyword overlap with the need"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C10",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N01:V-C10:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N01",
+   "probable_reason": "relevant candidate ranked 20, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C16",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N01:V-C16:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N01",
+   "probable_reason": "relevant candidate ranked 14, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C17",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N01:V-C17:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N01",
+   "probable_reason": "relevant candidate ranked 15, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C18",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N01:V-C18:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N01",
+   "probable_reason": "relevant candidate ranked 22, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N01:V-C04:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N01",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C18",
+   "expected": "relevance 3 in top-10",
+   "id": "hard_filters_only:V-N01:V-C18:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N01",
+   "probable_reason": "relevant candidate ranked 11, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C20",
+   "expected": "relevance 3 in top-10",
+   "id": "hard_filters_only:V-N01:V-C20:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N01",
+   "probable_reason": "relevant candidate ranked 13, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C02",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N02:V-C02:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N02",
+   "probable_reason": "violates hard constraint(s): salary (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 2",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "keyword_baseline:V-N02:V-C04:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N02",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C05",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N02:V-C05:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N02",
+   "probable_reason": "relevant candidate ranked 26, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C09",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N02:V-C09:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N02",
+   "probable_reason": "relevant candidate ranked 12, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C10",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N02:V-C10:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N02",
+   "probable_reason": "relevant candidate ranked 13, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C16",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N02:V-C16:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N02",
+   "probable_reason": "relevant candidate ranked 17, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C18",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N02:V-C18:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N02",
+   "probable_reason": "relevant candidate ranked 18, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 3",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N02:V-C04:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N02",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C08",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N02:V-C08:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N02",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C28",
+   "expected": "relevance 3 in top-10",
+   "id": "hard_filters_only:V-N02:V-C28:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N02",
+   "probable_reason": "relevant candidate ranked 11, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C29",
+   "expected": "relevance 3 in top-10",
+   "id": "hard_filters_only:V-N02:V-C29:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N02",
+   "probable_reason": "relevant candidate ranked 12, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "keyword_baseline:V-N03:V-C04:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N03",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 2",
+   "candidate": "V-C30",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N03:V-C30:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N03",
+   "probable_reason": "violates hard constraint(s): work_format (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 3",
+   "candidate": "V-C02",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N03:V-C02:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N03",
+   "probable_reason": "violates hard constraint(s): location (method does not apply constraints)"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C05",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N03:V-C05:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N03",
+   "probable_reason": "no keyword overlap with the need"
+  },
+  {
+   "actual": "returned at rank 2",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N03:V-C04:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N03",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C13",
+   "expected": "relevance 0 (<2)",
+   "id": "hard_filters_only:V-N03:V-C13:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N03",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C27",
+   "expected": "relevance 0 (<2)",
+   "id": "hard_filters_only:V-N03:V-C27:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N03",
+   "probable_reason": "passes constraints but labelled irrelevant (no relevant evidence for this need)"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C27",
+   "expected": "relevance 0 (<2)",
+   "id": "evidence_matching:V-N03:V-C27:top5-false-positive",
+   "method": "evidence_matching",
+   "need": "V-N03",
+   "probable_reason": "passes constraints but labelled irrelevant (no relevant evidence for this need)"
+  },
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C02",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N04:V-C02:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N04",
+   "probable_reason": "violates hard constraint(s): grade, salary (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 2",
+   "candidate": "V-C04",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N04:V-C04:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N04",
+   "probable_reason": "violates hard constraint(s): salary (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 3",
+   "candidate": "V-C19",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N04:V-C19:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N04",
+   "probable_reason": "violates hard constraint(s): salary (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C28",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N04:V-C28:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N04",
+   "probable_reason": "violates hard constraint(s): grade, salary (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C29",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N04:V-C29:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N04",
+   "probable_reason": "violates hard constraint(s): salary (method does not apply constraints)"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C12",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N04:V-C12:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N04",
+   "probable_reason": "relevant candidate ranked 15, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C27",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N04:V-C27:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N04",
+   "probable_reason": "relevant candidate ranked 23, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C31",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N04:V-C31:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N04",
+   "probable_reason": "relevant candidate ranked 24, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 2",
+   "candidate": "V-C13",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N04:V-C13:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N04",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C13",
+   "expected": "relevance 1 (<2)",
+   "id": "evidence_matching:V-N04:V-C13:top5-false-positive",
+   "method": "evidence_matching",
+   "need": "V-N04",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "keyword_baseline:V-N05:V-C04:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N05",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 2",
+   "candidate": "V-C22",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N05:V-C22:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N05",
+   "probable_reason": "violates hard constraint(s): grade, salary (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 3",
+   "candidate": "V-C24",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N05:V-C24:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N05",
+   "probable_reason": "violates hard constraint(s): salary (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C11",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N05:V-C11:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N05",
+   "probable_reason": "violates hard constraint(s): work_format (method does not apply constraints)"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C05",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N05:V-C05:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N05",
+   "probable_reason": "no keyword overlap with the need"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C09",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N05:V-C09:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N05",
+   "probable_reason": "relevant candidate ranked 13, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C10",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N05:V-C10:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N05",
+   "probable_reason": "relevant candidate ranked 14, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C16",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N05:V-C16:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N05",
+   "probable_reason": "relevant candidate ranked 17, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C17",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N05:V-C17:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N05",
+   "probable_reason": "relevant candidate ranked 18, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C18",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N05:V-C18:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N05",
+   "probable_reason": "no keyword overlap with the need"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C19",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N05:V-C19:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N05",
+   "probable_reason": "no keyword overlap with the need"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N05:V-C04:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N05",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C18",
+   "expected": "relevance 3 in top-10",
+   "id": "hard_filters_only:V-N05:V-C18:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N05",
+   "probable_reason": "relevant candidate ranked 11, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C19",
+   "expected": "relevance 2 in top-10",
+   "id": "hard_filters_only:V-N05:V-C19:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N05",
+   "probable_reason": "relevant candidate ranked 12, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C20",
+   "expected": "relevance 3 in top-10",
+   "id": "hard_filters_only:V-N05:V-C20:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N05",
+   "probable_reason": "relevant candidate ranked 13, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C19",
+   "expected": "relevance 2 in top-10",
+   "id": "evidence_matching:V-N05:V-C19:missed-relevant",
+   "method": "evidence_matching",
+   "need": "V-N05",
+   "probable_reason": "relevant candidate ranked 11, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C01",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N06:V-C01:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N06",
+   "probable_reason": "violates hard constraint(s): salary, work_format (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 2",
+   "candidate": "V-C04",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N06:V-C04:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N06",
+   "probable_reason": "violates hard constraint(s): work_format (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 3",
+   "candidate": "V-C07",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N06:V-C07:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N06",
+   "probable_reason": "violates hard constraint(s): location (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C09",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N06:V-C09:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N06",
+   "probable_reason": "violates hard constraint(s): work_format (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C24",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N06:V-C24:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N06",
+   "probable_reason": "violates hard constraint(s): grade, salary, work_format (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C08",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N06:V-C08:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N06",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C30",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N06:V-C30:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N06",
+   "probable_reason": "candidate is UNVERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C08",
+   "expected": "relevance 1 (<2)",
+   "id": "evidence_matching:V-N06:V-C08:top5-false-positive",
+   "method": "evidence_matching",
+   "need": "V-N06",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C30",
+   "expected": "relevance 1 (<2)",
+   "id": "evidence_matching:V-N06:V-C30:top5-false-positive",
+   "method": "evidence_matching",
+   "need": "V-N06",
+   "probable_reason": "candidate is UNVERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "keyword_baseline:V-N07:V-C04:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N07",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C06",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N07:V-C06:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N07",
+   "probable_reason": "violates hard constraint(s): salary (method does not apply constraints)"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C05",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N07:V-C05:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N07",
+   "probable_reason": "relevant candidate ranked 30, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C10",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N07:V-C10:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N07",
+   "probable_reason": "relevant candidate ranked 17, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C17",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N07:V-C17:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N07",
+   "probable_reason": "relevant candidate ranked 21, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C19",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N07:V-C19:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N07",
+   "probable_reason": "relevant candidate ranked 12, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C20",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N07:V-C20:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N07",
+   "probable_reason": "relevant candidate ranked 22, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N07:V-C04:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N07",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C19",
+   "expected": "relevance 3 in top-10",
+   "id": "hard_filters_only:V-N07:V-C19:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N07",
+   "probable_reason": "relevant candidate ranked 11, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C20",
+   "expected": "relevance 3 in top-10",
+   "id": "hard_filters_only:V-N07:V-C20:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N07",
+   "probable_reason": "relevant candidate ranked 12, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C04",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N08:V-C04:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N08",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 3",
+   "candidate": "V-C24",
+   "expected": "relevance 1 (<2)",
+   "id": "keyword_baseline:V-N08:V-C24:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N08",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C11",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N08:V-C11:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N08",
+   "probable_reason": "violates hard constraint(s): work_format (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C20",
+   "expected": "relevance 1 (<2)",
+   "id": "keyword_baseline:V-N08:V-C20:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N08",
+   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
+  },
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C01",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N08:V-C01:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N08",
+   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
+  },
+  {
+   "actual": "returned at rank 2",
+   "candidate": "V-C02",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N08:V-C02:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N08",
+   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
+  },
+  {
+   "actual": "returned at rank 3",
+   "candidate": "V-C03",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N08:V-C03:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N08",
+   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C04",
+   "expected": "relevance 0 (<2)",
+   "id": "hard_filters_only:V-N08:V-C04:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N08",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C05",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N08:V-C05:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N08",
+   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C22",
+   "expected": "relevance 3 in top-10",
+   "id": "hard_filters_only:V-N08:V-C22:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N08",
+   "probable_reason": "relevant candidate ranked 13, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C23",
+   "expected": "relevance 2 in top-10",
+   "id": "hard_filters_only:V-N08:V-C23:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N08",
+   "probable_reason": "relevant candidate ranked 14, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 3",
+   "candidate": "V-C20",
+   "expected": "relevance 1 (<2)",
+   "id": "evidence_matching:V-N08:V-C20:top5-false-positive",
+   "method": "evidence_matching",
+   "need": "V-N08",
+   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C02",
+   "expected": "relevance 1 (<2)",
+   "id": "evidence_matching:V-N08:V-C02:top5-false-positive",
+   "method": "evidence_matching",
+   "need": "V-N08",
+   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C01",
+   "expected": "relevance 1 (<2)",
+   "id": "evidence_matching:V-N08:V-C01:top5-false-positive",
+   "method": "evidence_matching",
+   "need": "V-N08",
+   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
+  },
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "keyword_baseline:V-N09:V-C04:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N09",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 2",
+   "candidate": "V-C11",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N09:V-C11:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N09",
+   "probable_reason": "violates hard constraint(s): work_format (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C22",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N09:V-C22:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N09",
+   "probable_reason": "violates hard constraint(s): grade, salary (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C23",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N09:V-C23:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N09",
+   "probable_reason": "violates hard constraint(s): salary (method does not apply constraints)"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C05",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N09:V-C05:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N09",
+   "probable_reason": "relevant candidate ranked 21, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C09",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N09:V-C09:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N09",
+   "probable_reason": "relevant candidate ranked 13, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C10",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N09:V-C10:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N09",
+   "probable_reason": "relevant candidate ranked 14, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C16",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N09:V-C16:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N09",
+   "probable_reason": "relevant candidate ranked 17, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C17",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N09:V-C17:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N09",
+   "probable_reason": "relevant candidate ranked 18, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C18",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N09:V-C18:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N09",
+   "probable_reason": "relevant candidate ranked 25, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C19",
+   "expected": "relevance 2 in top-10",
+   "id": "keyword_baseline:V-N09:V-C19:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N09",
+   "probable_reason": "relevant candidate ranked 26, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N09:V-C04:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N09",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C18",
+   "expected": "relevance 2 in top-10",
+   "id": "hard_filters_only:V-N09:V-C18:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N09",
+   "probable_reason": "relevant candidate ranked 11, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C19",
+   "expected": "relevance 2 in top-10",
+   "id": "hard_filters_only:V-N09:V-C19:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N09",
+   "probable_reason": "relevant candidate ranked 12, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C20",
+   "expected": "relevance 3 in top-10",
+   "id": "hard_filters_only:V-N09:V-C20:missed-relevant",
+   "method": "hard_filters_only",
+   "need": "V-N09",
+   "probable_reason": "relevant candidate ranked 13, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C19",
+   "expected": "relevance 2 in top-10",
+   "id": "evidence_matching:V-N09:V-C19:missed-relevant",
+   "method": "evidence_matching",
+   "need": "V-N09",
+   "probable_reason": "relevant candidate ranked 11, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C01",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N10:V-C01:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N10",
+   "probable_reason": "violates hard constraint(s): grade, salary (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 2",
+   "candidate": "V-C02",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N10:V-C02:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N10",
+   "probable_reason": "violates hard constraint(s): grade, salary, location (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 3",
+   "candidate": "V-C03",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N10:V-C03:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N10",
+   "probable_reason": "violates hard constraint(s): grade, salary, work_format (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 4",
+   "candidate": "V-C04",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N10:V-C04:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N10",
+   "probable_reason": "violates hard constraint(s): grade, salary (method does not apply constraints)"
+  },
+  {
+   "actual": "returned at rank 5",
+   "candidate": "V-C06",
+   "expected": "relevance 0 (<2)",
+   "id": "keyword_baseline:V-N10:V-C06:top5-false-positive",
+   "method": "keyword_baseline",
+   "need": "V-N10",
+   "probable_reason": "violates hard constraint(s): grade, salary, work_format (method does not apply constraints)"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C27",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N10:V-C27:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N10",
+   "probable_reason": "relevant candidate ranked 20, outside the top-10"
+  },
+  {
+   "actual": "not in top-10",
+   "candidate": "V-C31",
+   "expected": "relevance 3 in top-10",
+   "id": "keyword_baseline:V-N10:V-C31:missed-relevant",
+   "method": "keyword_baseline",
+   "need": "V-N10",
+   "probable_reason": "relevant candidate ranked 24, outside the top-10"
+  },
+  {
+   "actual": "returned at rank 1",
+   "candidate": "V-C13",
+   "expected": "relevance 1 (<2)",
+   "id": "hard_filters_only:V-N10:V-C13:top5-false-positive",
+   "method": "hard_filters_only",
+   "need": "V-N10",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  },
+  {
+   "actual": "returned at rank 3",
+   "candidate": "V-C13",
+   "expected": "relevance 1 (<2)",
+   "id": "evidence_matching:V-N10:V-C13:top5-false-positive",
+   "method": "evidence_matching",
+   "need": "V-N10",
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+  }
+ ],
+ "limitations": [
+  "Own dataset: the organisers did not provide a dataset or ground truth; labels were assigned by hand by the development team (not by independent experts), so the numbers measure agreement with our own judgement.",
+  "Small and designed: 32 synthetic candidates and 10 needs, built to contain conflict cases. Results do not estimate performance on real candidates or real vacancies.",
+  "Many candidates are 'perfect' fits by construction, which compresses nDCG/P@k differences between methods that already apply constraints.",
+  "Label/engine similarity: the labelling rubric (constraints, verified vs experience-only evidence, sublevel adjacency) was written by the same team as the matching policy and follows similar logic. nDCG@10 = 1.0 for evidence matching therefore mostly shows that the engine implements the intended policy, not that it generalises. R@10 is capped below 1 for needs with more than 10 relevant candidates.",
+  "The keyword baseline is a deliberately simple résumé keyword search, not a tuned search engine.",
+  "Skills outside the six Core competencies (PostgreSQL, Kafka) can only be evidenced by experience or claims.",
+  "Assessment: synthetic personas answer by rule, so grade accuracy and variant stability check the scoring pipeline, thresholds and content integrity. They are not test-retest reliability or psychometric calibration (no IRT/2PL is claimed).",
+  "Assessment depth is small: Junior has 2 items (python, sql only) and Senior has 4 (python, sql, api_fastapi, system_thinking); a random guesser is verified at a non-trivial rate on those short tests (see guessing_baseline).",
+  "Single-choice items only; no arbitrary code execution, plagiarism or proctoring checks.",
+  "Weights are initial tunable configuration; sensitivity configurations were fixed in advance, not optimised."
+ ],
+ "matching": {
+  "deterministic": true,
+  "per_need": {
+   "evidence_matching": {
+    "V-N01": {
+     "ndcg@10": 1.0,
+     "p@3": 1.0,
+     "p@5": 1.0,
+     "r@10": 1.0
+    },
+    "V-N02": {
+     "ndcg@10": 1.0,
+     "p@3": 1.0,
+     "p@5": 1.0,
+     "r@10": 1.0
+    },
+    "V-N03": {
+     "ndcg@10": 0.9971,
+     "p@3": 1.0,
+     "p@5": 0.8,
+     "r@10": 1.0
+    },
+    "V-N04": {
+     "ndcg@10": 1.0,
+     "p@3": 1.0,
+     "p@5": 0.6,
+     "r@10": 1.0
+    },
+    "V-N05": {
+     "ndcg@10": 1.0,
+     "p@3": 1.0,
+     "p@5": 1.0,
+     "r@10": 0.9091
+    },
+    "V-N06": {
+     "ndcg@10": 1.0,
+     "p@3": 1.0,
+     "p@5": 0.6,
+     "r@10": 1.0
+    },
+    "V-N07": {
+     "ndcg@10": 1.0,
+     "p@3": 1.0,
+     "p@5": 1.0,
+     "r@10": 1.0
+    },
+    "V-N08": {
+     "ndcg@10": 1.0,
+     "p@3": 0.6667,
+     "p@5": 0.4,
+     "r@10": 1.0
+    },
+    "V-N09": {
+     "ndcg@10": 1.0,
+     "p@3": 1.0,
+     "p@5": 1.0,
+     "r@10": 0.9091
+    },
+    "V-N10": {
+     "ndcg@10": 1.0,
+     "p@3": 0.6667,
+     "p@5": 0.4,
+     "r@10": 1.0
+    }
+   },
+   "hard_filters_only": {
+    "V-N01": {
+     "ndcg@10": 0.8244,
+     "p@3": 1.0,
+     "p@5": 0.8,
+     "r@10": 0.8
+    },
+    "V-N02": {
+     "ndcg@10": 0.8327,
+     "p@3": 0.6667,
+     "p@5": 0.6,
+     "r@10": 0.8
+    },
+    "V-N03": {
+     "ndcg@10": 0.8711,
+     "p@3": 0.6667,
+     "p@5": 0.4,
+     "r@10": 1.0
+    },
+    "V-N04": {
+     "ndcg@10": 0.9217,
+     "p@3": 0.6667,
+     "p@5": 0.6,
+     "r@10": 1.0
+    },
+    "V-N05": {
+     "ndcg@10": 0.8402,
+     "p@3": 1.0,
+     "p@5": 0.8,
+     "r@10": 0.7273
+    },
+    "V-N06": {
+     "ndcg@10": 0.7662,
+     "p@3": 0.6667,
+     "p@5": 0.6,
+     "r@10": 1.0
+    },
+    "V-N07": {
+     "ndcg@10": 0.8244,
+     "p@3": 1.0,
+     "p@5": 0.8,
+     "r@10": 0.8
+    },
+    "V-N08": {
+     "ndcg@10": 0.3202,
+     "p@3": 0.0,
+     "p@5": 0.0,
+     "r@10": 0.0
+    },
+    "V-N09": {
+     "ndcg@10": 0.6839,
+     "p@3": 1.0,
+     "p@5": 0.8,
+     "r@10": 0.7273
+    },
+    "V-N10": {
+     "ndcg@10": 0.7482,
+     "p@3": 0.6667,
+     "p@5": 0.4,
+     "r@10": 1.0
+    }
+   },
+   "keyword_baseline": {
+    "V-N01": {
+     "ndcg@10": 0.4648,
+     "p@3": 0.0,
+     "p@5": 0.4,
+     "r@10": 0.5
+    },
+    "V-N02": {
+     "ndcg@10": 0.4638,
+     "p@3": 0.3333,
+     "p@5": 0.6,
+     "r@10": 0.5
+    },
+    "V-N03": {
+     "ndcg@10": 0.5031,
+     "p@3": 0.0,
+     "p@5": 0.4,
+     "r@10": 0.75
+    },
+    "V-N04": {
+     "ndcg@10": 0.0,
+     "p@3": 0.0,
+     "p@5": 0.0,
+     "r@10": 0.0
+    },
+    "V-N05": {
+     "ndcg@10": 0.3387,
+     "p@3": 0.0,
+     "p@5": 0.2,
+     "r@10": 0.3636
+    },
+    "V-N06": {
+     "ndcg@10": 0.4539,
+     "p@3": 0.0,
+     "p@5": 0.0,
+     "r@10": 1.0
+    },
+    "V-N07": {
+     "ndcg@10": 0.6763,
+     "p@3": 1.0,
+     "p@5": 0.6,
+     "r@10": 0.5
+    },
+    "V-N08": {
+     "ndcg@10": 0.6165,
+     "p@3": 0.3333,
+     "p@5": 0.2,
+     "r@10": 1.0
+    },
+    "V-N09": {
+     "ndcg@10": 0.4282,
+     "p@3": 0.3333,
+     "p@5": 0.2,
+     "r@10": 0.3636
+    },
+    "V-N10": {
+     "ndcg@10": 0.0,
+     "p@3": 0.0,
+     "p@5": 0.0,
+     "r@10": 0.0
+    }
+   }
+  },
+  "rankings": {
+   "evidence_matching": {
+    "V-N01": [
+     "V-C20",
+     "V-C02",
+     "V-C01",
+     "V-C03",
+     "V-C16",
+     "V-C17",
+     "V-C18",
+     "V-C09",
+     "V-C05",
+     "V-C10",
+     "V-C19",
+     "V-C08",
+     "V-C04",
+     "V-C30"
+    ],
+    "V-N02": [
+     "V-C03",
+     "V-C01",
+     "V-C05",
+     "V-C10",
+     "V-C16",
+     "V-C18",
+     "V-C19",
+     "V-C28",
+     "V-C29",
+     "V-C09",
+     "V-C04",
+     "V-C08",
+     "V-C30"
+    ],
+    "V-N03": [
+     "V-C01",
+     "V-C05",
+     "V-C28",
+     "V-C29",
+     "V-C27",
+     "V-C31",
+     "V-C04",
+     "V-C13"
+    ],
+    "V-N04": [
+     "V-C12",
+     "V-C27",
+     "V-C31",
+     "V-C13"
+    ],
+    "V-N05": [
+     "V-C20",
+     "V-C02",
+     "V-C01",
+     "V-C03",
+     "V-C05",
+     "V-C10",
+     "V-C16",
+     "V-C17",
+     "V-C18",
+     "V-C09",
+     "V-C19",
+     "V-C04",
+     "V-C08",
+     "V-C30"
+    ],
+    "V-N06": [
+     "V-C25",
+     "V-C26",
+     "V-C32",
+     "V-C08",
+     "V-C30"
+    ],
+    "V-N07": [
+     "V-C02",
+     "V-C03",
+     "V-C01",
+     "V-C16",
+     "V-C17",
+     "V-C20",
+     "V-C09",
+     "V-C19",
+     "V-C05",
+     "V-C10",
+     "V-C08",
+     "V-C04",
+     "V-C30"
+    ],
+    "V-N08": [
+     "V-C22",
+     "V-C23",
+     "V-C20",
+     "V-C02",
+     "V-C01",
+     "V-C03",
+     "V-C05",
+     "V-C06",
+     "V-C10",
+     "V-C16",
+     "V-C17",
+     "V-C18",
+     "V-C04",
+     "V-C08",
+     "V-C24",
+     "V-C30"
+    ],
+    "V-N09": [
+     "V-C20",
+     "V-C03",
+     "V-C02",
+     "V-C01",
+     "V-C05",
+     "V-C10",
+     "V-C16",
+     "V-C17",
+     "V-C18",
+     "V-C09",
+     "V-C19",
+     "V-C04",
+     "V-C08",
+     "V-C30"
+    ],
+    "V-N10": [
+     "V-C27",
+     "V-C31",
+     "V-C13"
+    ]
+   },
+   "hard_filters_only": {
+    "V-N01": [
+     "V-C01",
+     "V-C02",
+     "V-C03",
+     "V-C04",
+     "V-C05",
+     "V-C08",
+     "V-C09",
+     "V-C10",
+     "V-C16",
+     "V-C17",
+     "V-C18",
+     "V-C19",
+     "V-C20",
+     "V-C30"
+    ],
+    "V-N02": [
+     "V-C01",
+     "V-C03",
+     "V-C04",
+     "V-C05",
+     "V-C08",
+     "V-C09",
+     "V-C10",
+     "V-C16",
+     "V-C18",
+     "V-C19",
+     "V-C28",
+     "V-C29",
+     "V-C30"
+    ],
+    "V-N03": [
+     "V-C01",
+     "V-C04",
+     "V-C05",
+     "V-C13",
+     "V-C27",
+     "V-C28",
+     "V-C29",
+     "V-C31"
+    ],
+    "V-N04": [
+     "V-C12",
+     "V-C13",
+     "V-C27",
+     "V-C31"
+    ],
+    "V-N05": [
+     "V-C01",
+     "V-C02",
+     "V-C03",
+     "V-C04",
+     "V-C05",
+     "V-C08",
+     "V-C09",
+     "V-C10",
+     "V-C16",
+     "V-C17",
+     "V-C18",
+     "V-C19",
+     "V-C20",
+     "V-C30"
+    ],
+    "V-N06": [
+     "V-C08",
+     "V-C25",
+     "V-C26",
+     "V-C30",
+     "V-C32"
+    ],
+    "V-N07": [
+     "V-C01",
+     "V-C02",
+     "V-C03",
+     "V-C04",
+     "V-C05",
+     "V-C08",
+     "V-C09",
+     "V-C10",
+     "V-C16",
+     "V-C17",
+     "V-C19",
+     "V-C20",
+     "V-C30"
+    ],
+    "V-N08": [
+     "V-C01",
+     "V-C02",
+     "V-C03",
+     "V-C04",
+     "V-C05",
+     "V-C06",
+     "V-C08",
+     "V-C10",
+     "V-C16",
+     "V-C17",
+     "V-C18",
+     "V-C20",
+     "V-C22",
+     "V-C23",
+     "V-C24",
+     "V-C30"
+    ],
+    "V-N09": [
+     "V-C01",
+     "V-C02",
+     "V-C03",
+     "V-C04",
+     "V-C05",
+     "V-C08",
+     "V-C09",
+     "V-C10",
+     "V-C16",
+     "V-C17",
+     "V-C18",
+     "V-C19",
+     "V-C20",
+     "V-C30"
+    ],
+    "V-N10": [
+     "V-C13",
+     "V-C27",
+     "V-C31"
+    ]
+   },
+   "keyword_baseline": {
+    "V-N01": [
+     "V-C04",
+     "V-C24",
+     "V-C30",
+     "V-C01",
+     "V-C09",
+     "V-C11",
+     "V-C20",
+     "V-C22",
+     "V-C02",
+     "V-C03",
+     "V-C06",
+     "V-C08",
+     "V-C15",
+     "V-C16",
+     "V-C17",
+     "V-C28",
+     "V-C07",
+     "V-C23",
+     "V-C25",
+     "V-C10",
+     "V-C14",
+     "V-C18",
+     "V-C19",
+     "V-C29",
+     "V-C26",
+     "V-C32"
+    ],
+    "V-N02": [
+     "V-C02",
+     "V-C04",
+     "V-C19",
+     "V-C28",
+     "V-C29",
+     "V-C30",
+     "V-C01",
+     "V-C03",
+     "V-C06",
+     "V-C07",
+     "V-C08",
+     "V-C09",
+     "V-C10",
+     "V-C11",
+     "V-C12",
+     "V-C14",
+     "V-C16",
+     "V-C18",
+     "V-C23",
+     "V-C24",
+     "V-C25",
+     "V-C26",
+     "V-C27",
+     "V-C31",
+     "V-C32",
+     "V-C05",
+     "V-C13",
+     "V-C15",
+     "V-C17",
+     "V-C20",
+     "V-C22"
+    ],
+    "V-N03": [
+     "V-C04",
+     "V-C30",
+     "V-C02",
+     "V-C28",
+     "V-C29",
+     "V-C01",
+     "V-C09",
+     "V-C24",
+     "V-C03",
+     "V-C06",
+     "V-C08",
+     "V-C10",
+     "V-C11",
+     "V-C14",
+     "V-C15",
+     "V-C16",
+     "V-C17",
+     "V-C19",
+     "V-C20",
+     "V-C22",
+     "V-C23",
+     "V-C07",
+     "V-C25",
+     "V-C26",
+     "V-C32"
+    ],
+    "V-N04": [
+     "V-C02",
+     "V-C04",
+     "V-C19",
+     "V-C28",
+     "V-C29",
+     "V-C30",
+     "V-C01",
+     "V-C03",
+     "V-C06",
+     "V-C07",
+     "V-C08",
+     "V-C09",
+     "V-C10",
+     "V-C11",
+     "V-C12",
+     "V-C14",
+     "V-C16",
+     "V-C18",
+     "V-C23",
+     "V-C24",
+     "V-C25",
+     "V-C26",
+     "V-C27",
+     "V-C31",
+     "V-C32",
+     "V-C05",
+     "V-C13",
+     "V-C15",
+     "V-C17",
+     "V-C20",
+     "V-C22"
+    ],
+    "V-N05": [
+     "V-C04",
+     "V-C22",
+     "V-C24",
+     "V-C11",
+     "V-C20",
+     "V-C23",
+     "V-C30",
+     "V-C01",
+     "V-C02",
+     "V-C03",
+     "V-C06",
+     "V-C08",
+     "V-C09",
+     "V-C10",
+     "V-C14",
+     "V-C15",
+     "V-C16",
+     "V-C17",
+     "V-C28",
+     "V-C29"
+    ],
+    "V-N06": [
+     "V-C01",
+     "V-C04",
+     "V-C07",
+     "V-C09",
+     "V-C24",
+     "V-C25",
+     "V-C30",
+     "V-C26",
+     "V-C32",
+     "V-C02",
+     "V-C03",
+     "V-C06",
+     "V-C08",
+     "V-C11",
+     "V-C15",
+     "V-C16",
+     "V-C17",
+     "V-C18",
+     "V-C19",
+     "V-C20",
+     "V-C22",
+     "V-C28",
+     "V-C05",
+     "V-C10",
+     "V-C12",
+     "V-C13",
+     "V-C14",
+     "V-C23",
+     "V-C27",
+     "V-C29",
+     "V-C31"
+    ],
+    "V-N07": [
+     "V-C01",
+     "V-C02",
+     "V-C03",
+     "V-C04",
+     "V-C06",
+     "V-C07",
+     "V-C08",
+     "V-C09",
+     "V-C11",
+     "V-C16",
+     "V-C18",
+     "V-C19",
+     "V-C24",
+     "V-C25",
+     "V-C28",
+     "V-C30",
+     "V-C10",
+     "V-C12",
+     "V-C14",
+     "V-C15",
+     "V-C17",
+     "V-C20",
+     "V-C22",
+     "V-C23",
+     "V-C26",
+     "V-C27",
+     "V-C29",
+     "V-C31",
+     "V-C32",
+     "V-C05",
+     "V-C13"
+    ],
+    "V-N08": [
+     "V-C04",
+     "V-C22",
+     "V-C24",
+     "V-C11",
+     "V-C20",
+     "V-C23",
+     "V-C30",
+     "V-C01",
+     "V-C02",
+     "V-C03",
+     "V-C06",
+     "V-C08",
+     "V-C09",
+     "V-C10",
+     "V-C14",
+     "V-C15",
+     "V-C16",
+     "V-C17",
+     "V-C28",
+     "V-C29"
+    ],
+    "V-N09": [
+     "V-C04",
+     "V-C11",
+     "V-C20",
+     "V-C22",
+     "V-C23",
+     "V-C24",
+     "V-C30",
+     "V-C01",
+     "V-C02",
+     "V-C03",
+     "V-C06",
+     "V-C08",
+     "V-C09",
+     "V-C10",
+     "V-C14",
+     "V-C15",
+     "V-C16",
+     "V-C17",
+     "V-C28",
+     "V-C29",
+     "V-C05",
+     "V-C07",
+     "V-C12",
+     "V-C13",
+     "V-C18",
+     "V-C19",
+     "V-C25",
+     "V-C26",
+     "V-C27",
+     "V-C31",
+     "V-C32"
+    ],
+    "V-N10": [
+     "V-C01",
+     "V-C02",
+     "V-C03",
+     "V-C04",
+     "V-C06",
+     "V-C07",
+     "V-C08",
+     "V-C09",
+     "V-C10",
+     "V-C11",
+     "V-C12",
+     "V-C14",
+     "V-C16",
+     "V-C18",
+     "V-C19",
+     "V-C23",
+     "V-C24",
+     "V-C25",
+     "V-C26",
+     "V-C27",
+     "V-C28",
+     "V-C29",
+     "V-C30",
+     "V-C31",
+     "V-C32",
+     "V-C05",
+     "V-C13",
+     "V-C15",
+     "V-C17",
+     "V-C20",
+     "V-C22"
+    ]
+   }
+  },
+  "sensitivity": {
+   "assessment_heavy": {
+    "ndcg@10": 0.9993,
+    "p@3": 0.9333,
+    "p@5": 0.78,
+    "r@10": 0.9818,
+    "top1_same_as_default": 0.9,
+    "top5_jaccard_vs_default": 1.0,
+    "weights": {
+     "assessment": 0.4,
+     "freshness": 0.1,
+     "fsp": 0.1,
+     "professional": 0.15,
+     "skill_coverage": 0.25
+    }
+   },
+   "default": {
+    "ndcg@10": 0.9997,
+    "p@3": 0.9333,
+    "p@5": 0.78,
+    "r@10": 0.9818,
+    "top1_same_as_default": 1.0,
+    "top5_jaccard_vs_default": 1.0,
+    "weights": {
+     "assessment": 0.2,
+     "freshness": 0.1,
+     "fsp": 0.1,
+     "professional": 0.15,
+     "skill_coverage": 0.4
+    }
+   },
+   "fsp_heavy": {
+    "ndcg@10": 0.9891,
+    "p@3": 0.9333,
+    "p@5": 0.78,
+    "r@10": 0.9818,
+    "top1_same_as_default": 0.6,
+    "top5_jaccard_vs_default": 1.0,
+    "weights": {
+     "assessment": 0.2,
+     "freshness": 0.1,
+     "fsp": 0.3,
+     "professional": 0.15,
+     "skill_coverage": 0.25
+    }
+   }
+  },
+  "summary": {
+   "evidence_matching": {
+    "constraint_violation_rate@10": 0.0,
+    "constraint_violations@10": 0,
+    "ndcg@10": 0.9997,
+    "p@3": 0.9333,
+    "p@5": 0.78,
+    "r@10": 0.9818,
+    "returned@10": 80
+   },
+   "hard_filters_only": {
+    "constraint_violation_rate@10": 0.0,
+    "constraint_violations@10": 0,
+    "ndcg@10": 0.7633,
+    "p@3": 0.7333,
+    "p@5": 0.58,
+    "r@10": 0.7855,
+    "returned@10": 80
+   },
+   "keyword_baseline": {
+    "constraint_violation_rate@10": 0.5,
+    "constraint_violations@10": 50,
+    "ndcg@10": 0.3945,
+    "p@3": 0.2,
+    "p@5": 0.26,
+    "r@10": 0.4977,
+    "returned@10": 100
+   }
+  }
+ },
+ "policy": {
+  "active_components": [
+   "skill_coverage",
+   "assessment",
+   "professional",
+   "fsp",
+   "freshness"
+  ],
+  "freshness_full_days": 180,
+  "freshness_zero_days": 720,
+  "match_pool_size": 20,
+  "ndfl_rate": 0.13,
+  "not_verified_factor": 0.6,
+  "optional_skill_weight": 0.4,
+  "required_skill_weight": 1.0,
+  "skill_credit_below_target": 0.5,
+  "skill_credit_experience_only": 0.5,
+  "skill_credit_verified": 1.0,
+  "sublevel_tolerance": 1,
+  "weights": {
+   "assessment": 0.2,
+   "context": 0.05,
+   "freshness": 0.1,
+   "fsp": 0.1,
+   "professional": 0.15,
+   "skill_coverage": 0.4
+  }
+ }
+}

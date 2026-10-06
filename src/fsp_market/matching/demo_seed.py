@@ -393,7 +393,7 @@ C = [
 ]
 
 
-def _assess(session: Session, cand: Candidate, grade: str, wrong, now: datetime) -> None:
+def run_core_assessment(session: Session, cand: Candidate, grade: str, wrong, now: datetime) -> None:
     attempt = start_attempt(session, cand.id, Grade(grade), now=now)
     answers = {}
     for v in select_variants(session, Grade(grade), attempt.id):
@@ -443,7 +443,7 @@ def seed_matching_demo(session: Session, now: datetime | None = None) -> dict:
         for skill in claims:
             add_self_reported_claim(session, cand.id, skill, Grade(claimed), "from CV")
         if assess:
-            _assess(session, cand, assess[0], assess[1], now)
+            run_core_assessment(session, cand, assess[0], assess[1], now)
         for skill, age in exp.items():
             add_professional_experience(
                 session,

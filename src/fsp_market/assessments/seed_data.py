@@ -470,3 +470,185 @@ FAMILIES = [
         },
     },
 ]
+
+
+def _senior_family(code, competency, band, rubric, edge, fmt, structure, schema, presets):
+    return {
+        "code": code,
+        "competency": competency,
+        "target_grade": "SENIOR",
+        "difficulty_band": band,
+        "rubric": rubric,
+        "edge_case_classes": edge,
+        "allowed_formats": [fmt],
+        "template": {
+            "code": f"{code}.t1",
+            "task_format": fmt,
+            "structure": structure,
+            "parameter_schema": schema,
+            "scoring_rule": {"type": "choice"},
+        },
+        "presets": [
+            {"code": f"{code}.t1.p{i}", "parameters": params}
+            for i, params in enumerate(presets, start=1)
+        ],
+    }
+
+
+# Senior track (4 families, 1 question each) added for validation: with 4 items a candidate can
+# land on S1 (3/4 = 0.75) or S2 (4/4). Content is deliberately small; see validation limitations.
+FAMILIES += [
+    _senior_family(
+        "backend.python.senior.mutability_semantics",
+        "python",
+        4,
+        [
+            {"dimension": "mutability_semantics", "weight": 0.5},
+            {"dimension": "scoping", "weight": 0.5},
+        ],
+        ["shared mutable default", "late-binding closure"],
+        "CODE_READING",
+        "What does this code print?\n{snippet}",
+        {"snippet": "str"},
+        [
+            {
+                "snippet": "def add(x, acc=[]):\n    acc.append(x)\n    return acc\n\nprint(add(1), add(2))",
+                "options": {
+                    "A": "[1] [2]",
+                    "B": "[1] [1, 2]",
+                    "C": "[1, 2] [1, 2]",
+                    "D": "[1, 2] [2]",
+                },
+                "correct": "C",
+                "dimension": "mutability_semantics",
+            },
+            {
+                "snippet": "funcs = [lambda: i for i in range(3)]\nprint([f() for f in funcs])",
+                "options": {"A": "[0, 1, 2]", "B": "[2, 2, 2]", "C": "[3, 3, 3]", "D": "NameError"},
+                "correct": "B",
+                "dimension": "scoping",
+            },
+        ],
+    ),
+    _senior_family(
+        "backend.api.senior.async_blocking",
+        "api_fastapi",
+        4,
+        [
+            {"dimension": "concurrency_model", "weight": 0.6},
+            {"dimension": "runtime_behavior", "weight": 0.4},
+        ],
+        ["blocking call in async handler", "sync handler thread pool"],
+        "API_REASONING",
+        "A FastAPI service (single worker process) exposes `{decl}` whose body calls `{call}`. "
+        "While one request is being handled, what happens to other concurrent requests?",
+        {"decl": "str", "call": "str"},
+        [
+            {
+                "decl": "async def report()",
+                "call": "time.sleep(2)",
+                "options": {
+                    "A": "They run in parallel threads, so they are unaffected",
+                    "B": "They are delayed because the blocking call stalls the event loop",
+                    "C": "FastAPI automatically moves the call to a thread pool",
+                    "D": "They fail with a RuntimeError",
+                },
+                "correct": "B",
+                "dimension": "concurrency_model",
+            },
+            {
+                "decl": "def report()",
+                "call": "time.sleep(2)",
+                "options": {
+                    "A": "They are delayed because the blocking call stalls the event loop",
+                    "B": "They are unaffected: sync endpoints run in a thread pool (up to its limit)",
+                    "C": "They fail with a RuntimeError",
+                    "D": "They are queued because FastAPI handles one request at a time",
+                },
+                "correct": "B",
+                "dimension": "runtime_behavior",
+            },
+        ],
+    ),
+    _senior_family(
+        "backend.sql.senior.latest_per_group",
+        "sql",
+        4,
+        [
+            {"dimension": "window_and_grouping", "weight": 0.6},
+            {"dimension": "postgres_dialect", "weight": 0.4},
+        ],
+        ["full row per group", "non-aggregated column in GROUP BY query"],
+        "SQL_REASONING",
+        "PostgreSQL table `{table}`(id, {key}, {ts}). Which query returns, for each {key}, "
+        "the full row with the latest {ts}?",
+        {"table": "str", "key": "str", "ts": "str"},
+        [
+            {
+                "table": "orders",
+                "key": "customer_id",
+                "ts": "created_at",
+                "options": {
+                    "A": "SELECT DISTINCT ON (customer_id) * FROM orders ORDER BY customer_id, created_at DESC",
+                    "B": "SELECT * FROM orders GROUP BY customer_id",
+                    "C": "SELECT * FROM orders ORDER BY created_at DESC LIMIT 1",
+                    "D": "SELECT customer_id, MAX(created_at) FROM orders GROUP BY customer_id",
+                },
+                "correct": "A",
+                "dimension": "window_and_grouping",
+            },
+            {
+                "table": "payments",
+                "key": "account_id",
+                "ts": "paid_at",
+                "options": {
+                    "A": "SELECT account_id, MAX(paid_at) FROM payments GROUP BY account_id",
+                    "B": "SELECT * FROM payments GROUP BY account_id",
+                    "C": "SELECT DISTINCT ON (account_id) * FROM payments ORDER BY account_id, paid_at DESC",
+                    "D": "SELECT * FROM payments ORDER BY paid_at DESC LIMIT 1",
+                },
+                "correct": "C",
+                "dimension": "postgres_dialect",
+            },
+        ],
+    ),
+    _senior_family(
+        "backend.system.senior.reliability",
+        "system_thinking",
+        4,
+        [
+            {"dimension": "idempotency", "weight": 0.6},
+            {"dimension": "delivery_semantics", "weight": 0.4},
+        ],
+        ["client retry after timeout", "at-least-once delivery"],
+        "RUBRIC_CHECK",
+        "{scenario} Which property must the handling code have to {goal}?",
+        {"scenario": "str", "goal": "str"},
+        [
+            {
+                "scenario": "A payment service retries `POST /charge` when the client times out, but the first attempt may have succeeded.",
+                "goal": "avoid charging the customer twice",
+                "options": {
+                    "A": "Exponential backoff between retries",
+                    "B": "An idempotency key checked on the server",
+                    "C": "A longer client timeout",
+                    "D": "Sticky sessions on the load balancer",
+                },
+                "correct": "B",
+                "dimension": "idempotency",
+            },
+            {
+                "scenario": "A queue consumer gets at-least-once delivery, so the same message can arrive twice.",
+                "goal": "end in the same final state regardless of duplicates",
+                "options": {
+                    "A": "Idempotent handling (e.g. deduplicate by message id)",
+                    "B": "A larger consumer batch size",
+                    "C": "Disabling acknowledgements",
+                    "D": "Reading messages in reverse order",
+                },
+                "correct": "A",
+                "dimension": "delivery_semantics",
+            },
+        ],
+    ),
+]

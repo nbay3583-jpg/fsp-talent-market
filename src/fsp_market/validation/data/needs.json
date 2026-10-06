@@ -1,0 +1,238 @@
+{
+ "version": "1",
+ "needs": [
+  {
+   "id": "V-N01",
+   "title": "Remote FastAPI/PostgreSQL Middle (M2)",
+   "specialization": "backend_python",
+   "target_grade": "MIDDLE",
+   "target_sublevel": "M2",
+   "required_skills": [
+    "api_fastapi",
+    "postgresql"
+   ],
+   "optional_skills": [
+    "kafka",
+    "docker_basics"
+   ],
+   "salary_from": 200000,
+   "salary_to": 250000,
+   "salary_type": "GROSS",
+   "work_formats": [
+    "REMOTE"
+   ],
+   "location": null,
+   "max_start_days": null,
+   "note": "the product gate scenario"
+  },
+  {
+   "id": "V-N02",
+   "title": "Python/SQL Middle, remote or hybrid Moscow",
+   "specialization": "backend_python",
+   "target_grade": "MIDDLE",
+   "target_sublevel": null,
+   "required_skills": [
+    "python",
+    "sql"
+   ],
+   "optional_skills": [
+    "testing"
+   ],
+   "salary_from": 180000,
+   "salary_to": 230000,
+   "salary_type": "GROSS",
+   "work_formats": [
+    "REMOTE",
+    "HYBRID"
+   ],
+   "location": "Moscow",
+   "max_start_days": null,
+   "note": ""
+  },
+  {
+   "id": "V-N03",
+   "title": "Hybrid Moscow API + testing Middle (M1), NET budget",
+   "specialization": "backend_python",
+   "target_grade": "MIDDLE",
+   "target_sublevel": "M1",
+   "required_skills": [
+    "api_fastapi",
+    "testing"
+   ],
+   "optional_skills": [
+    "docker_basics"
+   ],
+   "salary_from": 190000,
+   "salary_to": 240000,
+   "salary_type": "NET",
+   "work_formats": [
+    "HYBRID"
+   ],
+   "location": "Moscow",
+   "max_start_days": null,
+   "note": ""
+  },
+  {
+   "id": "V-N04",
+   "title": "Junior Python/SQL (J2)",
+   "specialization": "backend_python",
+   "target_grade": "JUNIOR",
+   "target_sublevel": "J2",
+   "required_skills": [
+    "python",
+    "sql"
+   ],
+   "optional_skills": [
+    "testing"
+   ],
+   "salary_from": 80000,
+   "salary_to": 130000,
+   "salary_type": "GROSS",
+   "work_formats": [
+    "REMOTE",
+    "HYBRID"
+   ],
+   "location": null,
+   "max_start_days": null,
+   "note": ""
+  },
+  {
+   "id": "V-N05",
+   "title": "Remote Middle: system thinking + FastAPI",
+   "specialization": "backend_python",
+   "target_grade": "MIDDLE",
+   "target_sublevel": "M2",
+   "required_skills": [
+    "system_thinking",
+    "api_fastapi"
+   ],
+   "optional_skills": [
+    "kafka"
+   ],
+   "salary_from": 230000,
+   "salary_to": 300000,
+   "salary_type": "GROSS",
+   "work_formats": [
+    "REMOTE"
+   ],
+   "location": null,
+   "max_start_days": null,
+   "note": ""
+  },
+  {
+   "id": "V-N06",
+   "title": "Kazan office Middle: Docker + Python",
+   "specialization": "backend_python",
+   "target_grade": "MIDDLE",
+   "target_sublevel": null,
+   "required_skills": [
+    "docker_basics",
+    "python"
+   ],
+   "optional_skills": [
+    "postgresql"
+   ],
+   "salary_from": 170000,
+   "salary_to": 220000,
+   "salary_type": "GROSS",
+   "work_formats": [
+    "OFFICE"
+   ],
+   "location": "Kazan",
+   "max_start_days": null,
+   "note": ""
+  },
+  {
+   "id": "V-N07",
+   "title": "Remote SQL/PostgreSQL Middle, start within 14 days",
+   "specialization": "backend_python",
+   "target_grade": "MIDDLE",
+   "target_sublevel": "M2",
+   "required_skills": [
+    "sql",
+    "postgresql"
+   ],
+   "optional_skills": [
+    "python"
+   ],
+   "salary_from": 200000,
+   "salary_to": 260000,
+   "salary_type": "GROSS",
+   "work_formats": [
+    "REMOTE"
+   ],
+   "location": null,
+   "max_start_days": 14,
+   "note": ""
+  },
+  {
+   "id": "V-N08",
+   "title": "Remote Senior (S1): FastAPI + system thinking",
+   "specialization": "backend_python",
+   "target_grade": "SENIOR",
+   "target_sublevel": "S1",
+   "required_skills": [
+    "api_fastapi",
+    "system_thinking"
+   ],
+   "optional_skills": [
+    "kafka"
+   ],
+   "salary_from": 350000,
+   "salary_to": 450000,
+   "salary_type": "GROSS",
+   "work_formats": [
+    "REMOTE"
+   ],
+   "location": null,
+   "max_start_days": null,
+   "note": ""
+  },
+  {
+   "id": "V-N09",
+   "title": "Remote Middle with Kafka (not assessable) + Python",
+   "specialization": "backend_python",
+   "target_grade": "MIDDLE",
+   "target_sublevel": "M2",
+   "required_skills": [
+    "kafka",
+    "python"
+   ],
+   "optional_skills": [
+    "api_fastapi"
+   ],
+   "salary_from": 220000,
+   "salary_to": 280000,
+   "salary_type": "GROSS",
+   "work_formats": [
+    "REMOTE"
+   ],
+   "location": null,
+   "max_start_days": null,
+   "note": ""
+  },
+  {
+   "id": "V-N10",
+   "title": "Junior Python, office/hybrid Moscow, NET",
+   "specialization": "backend_python",
+   "target_grade": "JUNIOR",
+   "target_sublevel": "J1",
+   "required_skills": [
+    "python"
+   ],
+   "optional_skills": [
+    "sql"
+   ],
+   "salary_from": 70000,
+   "salary_to": 110000,
+   "salary_type": "NET",
+   "work_formats": [
+    "OFFICE",
+    "HYBRID"
+   ],
+   "location": "Moscow",
+   "max_start_days": null,
+   "note": ""
+  }
+ ]
+}

@@ -68,9 +68,9 @@ def test_taxonomy_and_sublevels(session):
 def test_seed_is_idempotent_and_parameterized(session):
     seed_backend_python(session)
     session.commit()
-    assert session.scalar(select(func.count(TaskFamily.id))) == 8
-    assert session.scalar(select(func.count(TaskTemplate.id))) == 8
-    assert session.scalar(select(func.count(TaskPreset.id))) == 16
+    assert session.scalar(select(func.count(TaskFamily.id))) == 12
+    assert session.scalar(select(func.count(TaskTemplate.id))) == 12
+    assert session.scalar(select(func.count(TaskPreset.id))) == 24
     for family in session.scalars(select(TaskFamily)):
         variants = session.scalars(
             select(TaskVariant).join(TaskTemplate).where(TaskTemplate.family_id == family.id)

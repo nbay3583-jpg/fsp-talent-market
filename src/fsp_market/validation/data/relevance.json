@@ -1,0 +1,436 @@
+{
+ "version": "1",
+ "scale": {
+  "0": "irrelevant (fails a hard constraint, or no relevant evidence)",
+  "1": "partially relevant",
+  "2": "relevant",
+  "3": "highly relevant"
+ },
+ "relevant_threshold": 2,
+ "provenance": "Hand-assigned from the dataset facts using the rubric in 'tags'. Written BEFORE any matching code was run on the dataset; the matching score was never an input. Pairs not listed are 0.",
+ "tags": {
+  "EXACT_ALL": "passes all hard constraints; verified level at the target sublevel; all required skills verified or backed by professional experience",
+  "ADJ_ALL": "passes all hard constraints; adjacent sublevel within tolerance; all required skills evidenced and at least one optional skill verified/evidenced",
+  "ADJ_NO_EXTRA": "passes all hard constraints; adjacent sublevel; required skills evidenced but no optional extras",
+  "REQ_MISSING_UNVERIFIABLE": "passes constraints, grade verified; one required skill the platform cannot verify has no evidence; the other required skill is verified",
+  "REQ_MISSING_OTHER_VERIFIED": "passes constraints; one required skill missing, the other verified",
+  "REQ_MISSING_WEAK": "passes constraints; a verifiable required skill is missing and the other required skill is backed by experience only",
+  "UNVERIFIED_CONTEXT": "passes constraints but the claimed grade is NOT_VERIFIED / never assessed; only CV context",
+  "BELOW_TARGET_GRADE": "passes constraints through sublevel tolerance but verified skills are at a lower public grade than the need",
+  "SENIOR_PARTIAL": "verified Senior grade, one required skill not verified"
+ },
+ "labels": {
+  "V-N01": {
+   "V-C01": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C02": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C03": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C16": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C17": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C18": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C20": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C09": [
+    3,
+    "ADJ_ALL"
+   ],
+   "V-C05": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C10": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C04": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C08": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C30": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C19": [
+    1,
+    "REQ_MISSING_WEAK"
+   ]
+  },
+  "V-N02": {
+   "V-C01": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C03": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C05": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C09": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C10": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C16": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C18": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C19": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C28": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C29": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C04": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C08": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C30": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ]
+  },
+  "V-N03": {
+   "V-C01": [
+    3,
+    "ADJ_ALL"
+   ],
+   "V-C05": [
+    3,
+    "ADJ_ALL"
+   ],
+   "V-C28": [
+    3,
+    "ADJ_ALL"
+   ],
+   "V-C29": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C04": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ]
+  },
+  "V-N04": {
+   "V-C12": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C27": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C31": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C13": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ]
+  },
+  "V-N05": {
+   "V-C01": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C02": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C03": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C05": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C10": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C16": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C17": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C18": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C20": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C09": [
+    2,
+    "ADJ_NO_EXTRA"
+   ],
+   "V-C19": [
+    2,
+    "REQ_MISSING_OTHER_VERIFIED"
+   ],
+   "V-C04": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C08": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C30": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ]
+  },
+  "V-N06": {
+   "V-C25": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C26": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C32": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C08": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C30": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ]
+  },
+  "V-N07": {
+   "V-C01": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C02": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C03": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C16": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C17": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C20": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C09": [
+    3,
+    "ADJ_ALL"
+   ],
+   "V-C19": [
+    3,
+    "ADJ_ALL"
+   ],
+   "V-C05": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C10": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C04": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C08": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C30": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ]
+  },
+  "V-N08": {
+   "V-C22": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C23": [
+    2,
+    "SENIOR_PARTIAL"
+   ],
+   "V-C24": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C01": [
+    1,
+    "BELOW_TARGET_GRADE"
+   ],
+   "V-C02": [
+    1,
+    "BELOW_TARGET_GRADE"
+   ],
+   "V-C03": [
+    1,
+    "BELOW_TARGET_GRADE"
+   ],
+   "V-C05": [
+    1,
+    "BELOW_TARGET_GRADE"
+   ],
+   "V-C06": [
+    1,
+    "BELOW_TARGET_GRADE"
+   ],
+   "V-C10": [
+    1,
+    "BELOW_TARGET_GRADE"
+   ],
+   "V-C16": [
+    1,
+    "BELOW_TARGET_GRADE"
+   ],
+   "V-C17": [
+    1,
+    "BELOW_TARGET_GRADE"
+   ],
+   "V-C18": [
+    1,
+    "BELOW_TARGET_GRADE"
+   ],
+   "V-C20": [
+    1,
+    "BELOW_TARGET_GRADE"
+   ]
+  },
+  "V-N09": {
+   "V-C20": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C01": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C02": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C03": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C05": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C09": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C10": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C16": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C17": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C18": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C19": [
+    2,
+    "REQ_MISSING_UNVERIFIABLE"
+   ],
+   "V-C04": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C08": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ],
+   "V-C30": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ]
+  },
+  "V-N10": {
+   "V-C27": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C31": [
+    3,
+    "EXACT_ALL"
+   ],
+   "V-C13": [
+    1,
+    "UNVERIFIED_CONTEXT"
+   ]
+  }
+ }
+}
