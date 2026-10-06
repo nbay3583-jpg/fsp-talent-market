@@ -1,2 +1,5 @@
-# Validation (plan)
-Baseline: résumé lexical ranking. System: verified-evidence matching. Same candidates, same needs, independent 0/1/2 relevance labels. Metrics: Precision@5, nDCG@10, Recall@10. Assessment checks: variants share competency+rubric dimensions; reference solutions pass; wrong solutions fail; deterministic. Results land as JSON+Markdown. Not psychometric validation. Numbers: TBD (measured in Phase 9).
+# Validation
+
+Reproducible matching + assessment validation lives in [`VALIDATION_METHOD.md`](VALIDATION_METHOD.md) (method, data, labels, baselines, metrics, limitations). Results are generated, not typed: `artifacts/validation/latest.{json,md,summary.md}` and the generated block in the root `README.md`. Run: `python -m fsp_market.validation` (`--check` to verify reproducibility).
+
+This is MVP validation on our own dataset (the organisers provided none), not a psychometric calibration.

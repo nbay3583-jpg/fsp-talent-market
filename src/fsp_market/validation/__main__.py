@@ -13,12 +13,17 @@ import sys
 from pathlib import Path
 
 from fsp_market.validation.report import markdown
-from fsp_market.validation.runner import run_validation, write_artifacts
+from fsp_market.validation.runner import run_validation, update_readme, write_artifacts
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="fsp_market.validation")
     parser.add_argument("--out", default="artifacts/validation")
+    parser.add_argument(
+        "--update-readme",
+        action="store_true",
+        help="refresh the generated validation block in README.md",
+    )
     parser.add_argument(
         "--check", action="store_true", help="compare with stored artifacts instead of writing"
     )
@@ -35,6 +40,18 @@ def main() -> int:
         )
         return 0 if same else 1
     js, md = write_artifacts(res, Path(args.out))
+    if args.update_readme:
+        print(
+            "README.md updated"
+            if update_readme(res, Path("README.md"))
+            else "README.md already current"
+        )
+    if args.update_readme:
+        print(
+            "README.md updated"
+            if update_readme(res, Path("README.md"))
+            else "README.md already current"
+        )
     print(markdown(res))
     print(f"written: {js}  {md}")
     ev = res["matching"]["summary"]["evidence_matching"]

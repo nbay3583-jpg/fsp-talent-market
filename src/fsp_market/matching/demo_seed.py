@@ -393,7 +393,9 @@ C = [
 ]
 
 
-def run_core_assessment(session: Session, cand: Candidate, grade: str, wrong, now: datetime) -> None:
+def run_core_assessment(
+    session: Session, cand: Candidate, grade: str, wrong, now: datetime
+) -> None:
     attempt = start_attempt(session, cand.id, Grade(grade), now=now)
     answers = {}
     for v in select_variants(session, Grade(grade), attempt.id):
@@ -410,7 +412,9 @@ def run_core_assessment(session: Session, cand: Candidate, grade: str, wrong, no
     score_attempt(session, attempt.id, now=now)
 
 
-def seed_matching_demo(session: Session, now: datetime | None = None) -> dict:
+def seed_matching_demo(
+    session: Session, now: datetime | None = None, with_need: bool = True
+) -> dict:
     now = now or datetime.now(UTC)
     seed_backend_python(session)
     spec = session.scalar(select(Specialization).where(Specialization.code == "backend_python"))
@@ -463,27 +467,29 @@ def seed_matching_demo(session: Session, now: datetime | None = None) -> dict:
         session.flush()
     from fsp_market.matching.models import EmployerNeed
 
-    need = session.scalar(select(EmployerNeed).where(EmployerNeed.employer_id == employer.id))
-    if need is None:
-        need = create_need(
-            session,
-            employer.id,
-            title="Python Backend (FastAPI)",
-            specialization=spec.code,
-            target_grade=Grade.MIDDLE,
-            target_sublevel=Sublevel.M2,
-            required_skills=["api_fastapi", "postgresql"],
-            optional_skills=["kafka", "docker_basics"],
-            salary_from=200000,
-            salary_to=250000,
-            salary_type=SalaryType.GROSS,
-            work_formats=[R],
-            location=None,
-            max_start_days=None,
-            description="Remote Python backend, FastAPI + PostgreSQL",
-        )
+    need = None
+    if with_need:
+        need = session.scalar(select(EmployerNeed).where(EmployerNeed.employer_id == employer.id))
+        if need is None:
+            need = create_need(
+                session,
+                employer.id,
+                title="Python Backend (FastAPI)",
+                specialization=spec.code,
+                target_grade=Grade.MIDDLE,
+                target_sublevel=Sublevel.M2,
+                required_skills=["api_fastapi", "postgresql"],
+                optional_skills=["kafka", "docker_basics"],
+                salary_from=200000,
+                salary_to=250000,
+                salary_type=SalaryType.GROSS,
+                work_formats=[R],
+                location=None,
+                max_start_days=None,
+                description="Remote Python backend, FastAPI + PostgreSQL",
+            )
     session.commit()
-    return {"employer_id": employer.id, "need_id": need.id}
+    return {"employer_id": employer.id, "need_id": need.id if need else None}
 
 
 def main() -> None:

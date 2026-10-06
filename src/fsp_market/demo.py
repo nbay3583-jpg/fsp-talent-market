@@ -1,52 +1,138 @@
-"""Demo seed: python -m fsp_market.demo  (run `alembic upgrade head` first).
+"""Demo state: python -m fsp_market.demo {seed|reset|accounts}  (run `alembic upgrade head` first).
 
-Seeds the Backend/Python assessment content and two demo candidates:
-  * demo.fsp@example.com    -> FSP-1001 (has FSP history)
-  * demo.nofsp@example.com  -> FSP-2002 (verified member, NO achievements) / no FSP at all
-Prints bearer tokens so the flow can be driven with curl or the OpenAPI docs.
+seed   idempotent: assessment content, 22 matching-demo candidates, two FRESH canonical-demo
+       candidates (never assessed), the demo employer. Safe to re-run.
+reset  deletes ALL application rows, then seeds again -> canonical demo is back to its start.
+       The validation dataset is separate (in-memory, see fsp_market.validation) and is not touched.
+Demo accounts are local fixtures only: there are no passwords and no real secrets.
 """
 
 from __future__ import annotations
 
+import argparse
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from fsp_market.assessments.seed import seed_backend_python
-from fsp_market.auth.tokens import create_token
+import fsp_market.models  # noqa: F401  (registers every table)
 from fsp_market.candidates.models import Candidate
-from fsp_market.common.enums import Grade
+from fsp_market.common.enums import Grade, SalaryType
 from fsp_market.config import get_settings
-from fsp_market.db import get_engine
+from fsp_market.db import Base, get_engine
+from fsp_market.evidence.service import add_professional_experience
+from fsp_market.matching.demo_seed import seed_matching_demo
 from fsp_market.taxonomy.models import Specialization
 
-DEMO_CANDIDATES = (
-    ("demo.fsp@example.com", "Alexey Demo", "FSP-1001"),
-    ("demo.nofsp@example.com", "Nina Newcomer", "FSP-2002"),
+# key -> (role, email, display label, FSP id to suggest when linking, description)
+DEMO_ACCOUNTS: dict[str, dict[str, str | None]] = {
+    "candidate_alexey": {
+        "role": "candidate",
+        "email": "alexey@demo.example",
+        "label": "Alexey Demo (кандидат, есть история ФСП)",
+        "fsp_id": "FSP-1001",
+        "note": "Canonical demo: not yet assessed. Pass the Core Assessment, then link FSP-1001.",
+    },
+    "candidate_mila": {
+        "role": "candidate",
+        "email": "mila@demo.example",
+        "label": "Mila Newcomer (кандидат без истории ФСП)",
+        "fsp_id": "FSP-2002",
+        "note": "Not yet assessed; FSP member with no achievements - the no-FSP path.",
+    },
+    "candidate_verified": {
+        "role": "candidate",
+        "email": "anna@demo.example",
+        "label": "Anna Verified (уже VERIFIED Middle M2)",
+        "fsp_id": None,
+        "note": "Already assessed; shows a finished Evidence Profile and receives invitations.",
+    },
+    "candidate_not_verified": {
+        "role": "candidate",
+        "email": "hana@demo.example",
+        "label": "Hana Almost (NOT_VERIFIED Middle)",
+        "fsp_id": None,
+        "note": "Failed the Middle assessment: stays claimed Middle, never downgraded.",
+    },
+    "candidate_salary_mismatch": {
+        "role": "candidate",
+        "email": "fedor@demo.example",
+        "label": "Fedor Expensive (зарплата 300k - выпадет из подбора)",
+        "fsp_id": None,
+        "note": "Salary expectation above the demo budget: excluded by the hard constraint.",
+    },
+    "employer": {
+        "role": "employer",
+        "email": "hr@demo-corp.example",
+        "label": "Demo Corp (работодатель)",
+        "fsp_id": None,
+        "note": "Demo employer with no needs yet - create the canonical Need.",
+    },
+}
+
+FRESH = (
+    ("alexey@demo.example", "Alexey Demo", "+7-900-111-22-33", 225000),
+    ("mila@demo.example", "Mila Newcomer", "+7-900-444-55-66", 215000),
 )
 
 
-def seed_demo(session: Session) -> list[tuple[Candidate, str]]:
-    seed_backend_python(session)
+def seed(session: Session) -> dict:
+    ids = seed_matching_demo(session, with_need=False)
     spec = session.scalar(select(Specialization).where(Specialization.code == "backend_python"))
-    out = []
-    for email, name, fsp_id in DEMO_CANDIDATES:
-        cand = session.scalar(select(Candidate).where(Candidate.email == email))
-        if cand is None:
-            cand = Candidate(
-                email=email, full_name=name, specialization_id=spec.id, claimed_grade=Grade.MIDDLE
+    for email, name, phone, salary in FRESH:
+        if session.scalar(select(Candidate).where(Candidate.email == email)) is None:
+            row = Candidate(
+                email=email,
+                full_name=name,
+                phone=phone,
+                specialization_id=spec.id,
+                claimed_grade=Grade.MIDDLE,
+                salary_min=salary,
+                salary_type=SalaryType.GROSS,
+                work_formats=["REMOTE"],
+                location="Moscow",
+                available_in_days=14,
+                profile_visible=True,
+                open_to_invitations=True,
             )
-            session.add(cand)
+            session.add(row)
             session.flush()
-        out.append((cand, fsp_id))
+            # professional experience is separate, medium-strength evidence; it never sets the grade
+            add_professional_experience(
+                session,
+                row.id,
+                "postgresql",
+                "PostgreSQL in production",
+                created_at=datetime.now(UTC) - timedelta(days=60),
+            )
     session.commit()
-    return out
+    return ids
+
+
+def reset(session: Session) -> dict:
+    for table in reversed(Base.metadata.sorted_tables):
+        session.execute(table.delete())
+    session.commit()
+    return seed(session)
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(prog="fsp_market.demo")
+    parser.add_argument("command", choices=["seed", "reset", "accounts"])
+    parser.add_argument(
+        "--if-demo-mode", action="store_true", help="do nothing unless DEMO_MODE=true"
+    )
+    args = parser.parse_args()
+    if args.command == "accounts":
+        for key, a in DEMO_ACCOUNTS.items():
+            print(f"{key:28} {a['email']:28} {a['label']}")
+        return
+    if args.if_demo_mode and not get_settings().demo_mode:
+        print("DEMO_MODE is off: demo data not seeded")
+        return
     with Session(get_engine()) as session:
-        for cand, fsp_id in seed_demo(session):
-            token = create_token(cand.id, get_settings().jwt_secret, ttl_seconds=7 * 24 * 3600)
-            print(f"{cand.email}  id={cand.id}  fsp_id={fsp_id}\n  token={token}")
+        (reset if args.command == "reset" else seed)(session)
+    print(f"demo {args.command}: ok")
 
 
 if __name__ == "__main__":

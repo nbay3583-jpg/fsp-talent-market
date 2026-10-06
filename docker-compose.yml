@@ -1,7 +1,12 @@
+# One command on a clean machine:  docker compose up --build
+# Works without a .env file (safe local defaults below); copy .env.example to .env to change them.
 services:
   db:
     image: postgres:16-alpine
-    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fsp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ${POSTGRES_DB:-fsp_market}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -13,18 +18,28 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://fsp:change-me@db:5432/fsp_market}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-me}
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      DEMO_MODE: ${DEMO_MODE:-true}
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "3000:80"
 volumes:

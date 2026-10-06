@@ -2,18 +2,12 @@
 
 **Thesis:** reverse recruiting on verified evidence. Not a job board, not résumé search, not a résumé scorer.
 
-## Flows
-- Candidate: profile -> specialization+declared grade -> parameterized assessment -> Evidence Profile -> Verified Category -> Verified Talent Pool.
-- Employer: describe need -> hard constraints -> evidence-based reciprocal matching -> 3-10 candidates with WHY/GAPS -> salary-backed invitation -> candidate accepts (HARDSHAKE) -> contacts unlocked.
+Candidate: profile → specialisation + claimed grade → parameterised Core Assessment → `VERIFIED` / `NOT_VERIFIED` → Evidence Profile (claims vs evidence, FSP evidence) → addressed invitations with a visible salary → Accept / Decline.
 
-## Central abstraction: Evidence Profile
-SKILL CLAIM -> 1..n EVIDENCE (sources: assessment, FSP achievement, professional experience, recent challenge). Résumé = context, never verification. No universal Talent Score. "92% MATCH" = fit to THIS need only.
+Employer: need → hard constraints → Requirement Fit with WHY / GAPS → candidate view (no contacts) → salary-backed invitation → contacts only after the candidate accepts. A second mode, Full Pool, lists the whole visible bank with filters.
 
-## MVP scope
-Specializations: Backend, Frontend, Data/ML, DevOps. Grades: Junior/Middle/Senior (<=12 categories). Python-only code assessment. Mock FSP provider. Candidate and employer roles.
+Central abstraction: **Evidence Profile** — `Skill Claim → Skill Evidence → Verified Skill Level`; résumé data is context, FSP achievements are separate external evidence, and there is no universal Talent Score. "Fit" always means fit to one concrete need.
 
-## Hardshake
-SENT -> VIEWED -> (DECLINED | ACCEPTED -> CONTACTS_UNLOCKED). Invariant: contacts visible iff status is ACCEPTED. Salary range mandatory (server-enforced).
+MVP scope: Backend / Python fully implemented (Junior / Middle / Senior, sublevels J1–S2); other specialisations exist only as taxonomy rows. Mock FSP provider. Roles: candidate, employer.
 
-## Non-goals
-Calibrated IRT, SFIA, crypto unlock, mandatory gVisor, knowledge graph, microservices, LLM-as-judge, arbitrary LLM tests, universal score, ATS integrations, decay maths.
+Non-goals (not built): calibrated IRT, arbitrary code execution sandbox, LLM judging, résumé parsing, universal score, ATS, anti-fraud, chat, vacancy marketplace, real Keycloak / FSP API, email delivery.

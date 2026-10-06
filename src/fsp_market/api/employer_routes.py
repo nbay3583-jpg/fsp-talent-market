@@ -23,7 +23,7 @@ from fsp_market.invitations import service as invitation_service
 from fsp_market.matching import service
 from fsp_market.matching.models import EmployerNeed, MatchRun
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api", tags=["employer"])
 
 
 class EmployerRegisterIn(BaseModel):
@@ -76,6 +76,12 @@ def register_employer(body: EmployerRegisterIn, session: Session = SessionDep) -
         raise HTTPException(status_code=409, detail="email already registered") from exc
     token = create_token(employer.id, get_settings().jwt_secret, role="employer")
     return {"employer_id": employer.id, "access_token": token}
+
+
+@router.get("/employers/me")
+def employer_me(employer_id: int = EmployerDep, session: Session = SessionDep) -> dict[str, Any]:
+    employer = session.get(Employer, employer_id)
+    return {"id": employer.id, "company_name": employer.company_name}
 
 
 @router.patch("/candidates/me/preferences")

@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     jwt_secret: str = "dev-only-secret"
     environment: str = "local"
     app_name: str = "FSP Talent Market"
+    demo_mode: bool = (
+        False  # enables demo-login and reference-answer helper; never enable in production
+    )
+    validation_artifact: str = "artifacts/validation/latest.json"
 
 
 @lru_cache

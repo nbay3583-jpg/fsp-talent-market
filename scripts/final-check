@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Final verification: backend tests, migrations (up + down), frontend typecheck/test/build,
+# validation reproducibility, and (if a stack is running) the end-to-end smoke test.
+#   ./scripts/final-check                 # quick checks
+#   SMOKE_URL=http://localhost:3000 ./scripts/final-check   # + canonical demo against a running stack
+set -euo pipefail
+cd "$(dirname "$0")/.."
+PY=".venv/bin/python"; [ -x "$PY" ] || PY="python3"
+step() { printf '\n== %s\n' "$1"; }
+
+step "backend tests"
+PYTHONPATH=src "$PY" -m pytest tests -q
+
+step "migrations: upgrade head, downgrade base (clean SQLite)"
+DB="$(mktemp -t fsp-final-XXXXXX).db"; trap 'rm -f "$DB"' EXIT
+DATABASE_URL="sqlite:///$DB" PYTHONPATH=src "$PY" -m alembic upgrade head
+DATABASE_URL="sqlite:///$DB" PYTHONPATH=src "$PY" -m alembic downgrade base
+
+step "validation reproducibility (fresh run == stored artifacts)"
+PYTHONPATH=src "$PY" -m fsp_market.validation --check
+
+step "frontend: typecheck + tests + build"
+( cd src/ui && { [ -d node_modules ] || npm ci; } && npx tsc --noEmit && npm test && npm run build )
+
+if [ -n "${SMOKE_URL:-}" ]; then
+  step "canonical demo smoke test against $SMOKE_URL"
+  "$PY" scripts/smoke.py "$SMOKE_URL"
+else
+  echo; echo "(set SMOKE_URL=http://localhost:3000 with a running stack to include the end-to-end smoke test)"
+fi
+echo; echo "FINAL CHECK OK"

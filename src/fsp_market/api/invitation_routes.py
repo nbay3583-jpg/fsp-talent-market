@@ -14,7 +14,7 @@ from fsp_market.common.enums import SalaryType, WorkFormat
 from fsp_market.invitations import service
 from fsp_market.invitations.models import Invitation
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api", tags=["invitations"])
 
 
 class InvitationIn(BaseModel):

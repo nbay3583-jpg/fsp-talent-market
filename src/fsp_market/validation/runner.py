@@ -19,7 +19,7 @@ from fsp_market.validation.dataset import (
     dataset_sha256,
     load_dataset,
 )
-from fsp_market.validation.report import markdown
+from fsp_market.validation.report import README_BEGIN, README_END, markdown, summary_markdown
 
 LIMITATIONS = [
     (
@@ -100,4 +100,18 @@ def write_artifacts(res: dict[str, Any], out: Path) -> tuple[Path, Path]:
         json.dumps(res, indent=1, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     md.write_text(markdown(res), encoding="utf-8")
+    (out / "summary.md").write_text(summary_markdown(res), encoding="utf-8")
     return js, md
+
+
+def readme_block(res: dict[str, Any]) -> str:
+    return f"{README_BEGIN}\n{summary_markdown(res)}{README_END}"
+
+
+def update_readme(res: dict[str, Any], path: Path) -> bool:
+    """Rewrites the generated block in README.md; returns True if the file changed."""
+    text = path.read_text(encoding="utf-8")
+    start, end = text.index(README_BEGIN), text.index(README_END) + len(README_END)
+    new = text[:start] + readme_block(res) + text[end:]
+    path.write_text(new, encoding="utf-8")
+    return new != text
