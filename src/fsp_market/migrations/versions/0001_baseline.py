@@ -1,5 +1,5 @@
+import sqlalchemy as sa
 from alembic import op
-from sqlalchemy import String
 
 revision = "0001"
 down_revision = None
@@ -10,8 +10,8 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "app_meta",
-        op.column("key", String(64), primary_key=True),
-        op.column("value", String(255), nullable=False),
+        sa.Column("key", sa.String(64), primary_key=True),
+        sa.Column("value", sa.String(255), nullable=False),
     )
 
 
