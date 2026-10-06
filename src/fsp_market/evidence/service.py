@@ -132,3 +132,26 @@ def record_core_assessment_evidence(
             created.append(evidence)
     session.flush()
     return created
+
+
+def add_professional_experience(
+    session: Session,
+    candidate_id: int,
+    skill_code: str,
+    title: str,
+    created_at=None,
+) -> SkillEvidence:
+    """Medium-strength evidence; never changes the platform grade."""
+    skill = _skill(session, skill_code)
+    claim = _get_or_create_claim(session, candidate_id, skill.id, "experience")
+    evidence = SkillEvidence(
+        claim_id=claim.id,
+        evidence_type=EvidenceType.PROFESSIONAL_EXPERIENCE,
+        strength=EvidenceStrength.MEDIUM,
+        title=title,
+    )
+    if created_at is not None:
+        evidence.created_at = created_at
+    session.add(evidence)
+    session.flush()
+    return evidence

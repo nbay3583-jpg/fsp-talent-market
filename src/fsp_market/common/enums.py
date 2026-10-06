@@ -91,3 +91,19 @@ class UserRole(StrEnum):
     CANDIDATE = "CANDIDATE"
     EMPLOYER = "EMPLOYER"
     ADMIN = "ADMIN"
+
+
+class WorkFormat(StrEnum):
+    REMOTE = "REMOTE"
+    OFFICE = "OFFICE"
+    HYBRID = "HYBRID"
+
+
+class SalaryType(StrEnum):
+    GROSS = "GROSS"
+    NET = "NET"
+
+
+class SkillImportance(StrEnum):
+    REQUIRED = "REQUIRED"
+    OPTIONAL = "OPTIONAL"

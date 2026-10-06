@@ -27,3 +27,16 @@ SessionDep = Depends(get_session)
 CandidateDep = Depends(current_candidate_id)
 ProviderDep = Depends(get_fsp_provider)
 __all__ = ["CandidateDep", "ProviderDep", "Session", "SessionDep"]
+
+
+def current_employer_id(authorization: str | None = Header(default=None)) -> int:
+    scheme, _, token = (authorization or "").partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(status_code=401, detail="missing bearer token")
+    try:
+        return verify_token(token, get_settings().jwt_secret, role="employer")
+    except InvalidToken as exc:
+        raise HTTPException(status_code=401, detail="invalid or expired token") from exc
+
+
+EmployerDep = Depends(current_employer_id)

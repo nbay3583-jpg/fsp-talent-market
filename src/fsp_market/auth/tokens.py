@@ -26,22 +26,31 @@ def _sign(payload: str, secret: str) -> str:
 
 
 def create_token(
-    subject: int, secret: str, ttl_seconds: int = 3600, now: float | None = None
+    subject: int,
+    secret: str,
+    ttl_seconds: int = 3600,
+    now: float | None = None,
+    role: str = "candidate",
 ) -> str:
     issued = time.time() if now is None else now
-    payload = _b64(json.dumps({"sub": subject, "exp": int(issued + ttl_seconds)}).encode())
+    payload = _b64(
+        json.dumps({"sub": subject, "role": role, "exp": int(issued + ttl_seconds)}).encode()
+    )
     return f"{payload}.{_sign(payload, secret)}"
 
 
-def verify_token(token: str, secret: str, now: float | None = None) -> int:
+def verify_token(token: str, secret: str, now: float | None = None, role: str = "candidate") -> int:
     payload, _, signature = token.partition(".")
     if not payload or not signature or not hmac.compare_digest(signature, _sign(payload, secret)):
         raise InvalidToken("bad signature")
     try:
         claims = json.loads(_unb64(payload))
         subject, exp = int(claims["sub"]), int(claims["exp"])
+        token_role = claims.get("role", "candidate")
     except (ValueError, KeyError, TypeError) as exc:
         raise InvalidToken("malformed token") from exc
+    if token_role != role:
+        raise InvalidToken("wrong role")
     if exp <= (time.time() if now is None else now):
         raise InvalidToken("expired")
     return subject

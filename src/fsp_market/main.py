@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from fsp_market import __version__
+from fsp_market.api.employer_routes import router as employer_router
 from fsp_market.api.routes import router as api_router
 from fsp_market.config import get_settings
 
@@ -30,3 +31,4 @@ def health() -> HealthResponse:
 
 
 app.include_router(api_router)
+app.include_router(employer_router)
