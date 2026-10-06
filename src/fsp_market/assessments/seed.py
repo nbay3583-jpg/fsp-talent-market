@@ -7,11 +7,10 @@ from sqlalchemy.orm import Session
 
 from fsp_market.assessments import seed_data as data
 from fsp_market.assessments.models import TaskFamily, TaskPreset, TaskTemplate, TaskVariant
+from fsp_market.assessments.variants import render_variant_fields
 from fsp_market.common.enums import Grade, TaskFormat
 from fsp_market.skills.models import Skill
 from fsp_market.taxonomy.models import Competency, Specialization
-
-_NON_PLACEHOLDER = {"options", "correct", "dimension"}
 
 
 def _get_or_create(session: Session, model, code: str, **fields):
@@ -63,7 +62,7 @@ def seed_backend_python(session: Session) -> None:
             preset = _get_or_create(
                 session, TaskPreset, pre["code"], template_id=template.id, parameters=params
             )
-            fill = {k: v for k, v in params.items() if k not in _NON_PLACEHOLDER}
+            fields = render_variant_fields(tpl["structure"], params, seed)
             _get_or_create(
                 session,
                 TaskVariant,
@@ -71,14 +70,6 @@ def seed_backend_python(session: Session) -> None:
                 template_id=template.id,
                 preset_id=preset.id,
                 seed=seed,
-                prompt=tpl["structure"].format(**fill),
-                input_data={"options": params["options"]},
-                expected_behavior={"correct": params["correct"]},
-                scoring_contract={
-                    "type": "choice",
-                    "correct": params["correct"],
-                    "dimension": params["dimension"],
-                    "points": 1.0,
-                },
-                is_anchor=False,
+                is_anchor=bool(pre.get("anchor", False)),
+                **fields,
             )
