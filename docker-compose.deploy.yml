@@ -1,0 +1,58 @@
+# Public hackathon DEMO deployment (fsp.zhitnyakov.online). Local dev uses docker-compose.yml.
+#   cp .env.deploy.example .env.deploy   # then set real secrets (file is untracked)
+#   docker compose -f docker-compose.deploy.yml --env-file .env.deploy up -d --build
+# Only the frontend is published, on 127.0.0.1:8720; TLS/vhost is handled by the host's reverse proxy.
+# ENVIRONMENT must not be production/prod: that mode refuses to start with DEMO_MODE=true.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    # startup: alembic upgrade head -> idempotent demo seed (DEMO_MODE=true) -> uvicorn
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      ENVIRONMENT: ${ENVIRONMENT:-demo}
+      DEMO_MODE: ${DEMO_MODE:-true}
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8720:80"
+    networks: [internal]
+volumes:
+  pgdata:
+networks:
+  internal:
