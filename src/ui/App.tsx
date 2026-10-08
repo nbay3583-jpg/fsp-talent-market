@@ -32,14 +32,14 @@ export default function App() {
       <header className="top">
         <div className="brand"><span className="logo">FSP</span> Talent Market<span className="tag">обратный подбор по подтверждённым компетенциям</span></div>
         <div className="top-right">
-          <span className={`health health-${health}`}>Backend: {health === "checking" ? "checking" : health === "ok" ? "ok" : "unavailable"}</span>
+          <span className={`health health-${health}`}>{health === "checking" ? "Проверка системы…" : health === "ok" ? "Система работает" : "Система недоступна"}</span>
           <button className="link" onClick={() => setView(view === "validation" ? "app" : "validation")}>{view === "validation" ? "← Назад" : "Валидация"}</button>
           <a className="link" href="/docs" target="_blank" rel="noreferrer">API</a>
           {session && <><span className="who">{session.role === "candidate" ? "Кандидат" : "Работодатель"}</span><button onClick={() => signIn(null)}>Выйти</button></>}
         </div>
       </header>
       <main>
-        {health === "unavailable" && <ErrorBox message="Backend недоступен. Проверьте, что сервис запущен (docker compose up)." />}
+        {health === "unavailable" && <ErrorBox message="Система недоступна. Проверьте, что сервис запущен (docker compose up)." />}
         {view === "validation" ? <Validation /> : !session ? <Login demo={demo} onSession={signIn} /> :
           session.role === "candidate" ? <CandidateApp session={session} demoMode={demo.demo_mode} /> : <EmployerApp session={session} />}
       </main>
@@ -74,24 +74,24 @@ function Login({ demo, onSession }: { demo: DemoConfig; onSession: (s: Session) 
     <div className="grid">
       <Card title="Мы не ранжируем резюме — мы подтверждаем компетенции">
         <ol className="steps">
-          <li><b>Кандидат</b> заявляет специализацию и грейд, проходит параметризованный тест, получает Evidence Profile.</li>
-          <li><b>Работодатель</b> описывает потребность и получает короткий объяснимый список: «Соответствие этой потребности», WHY и GAPS.</li>
-          <li>Приглашение — <b>с обязательной зарплатой</b>. Контакты открываются <b>только после согласия</b> кандидата.</li>
+          <li>Кандидат указывает специализацию и желаемый грейд, проходит основную оценку компетенций и получает профиль подтверждённых компетенций.</li>
+          <li>Работодатель описывает потребность и получает короткий объяснимый список кандидатов: соответствие потребности, причины выбора и пробелы.</li>
+          <li>Каждое приглашение содержит зарплатную вилку. Контакты открываются только после согласия кандидата.</li>
         </ol>
         {err && <ErrorBox message={err} />}
         <h4>Регистрация</h4>
         <div className="row"><button className={mode === "candidate" ? "tab active" : "tab"} onClick={() => setMode("candidate")}>Я кандидат</button><button className={mode === "employer" ? "tab active" : "tab"} onClick={() => setMode("employer")}>Я работодатель</button></div>
         {mode === "candidate" ? <label>Имя<input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label> : <label>Компания<input value={f.company} onChange={(e) => setF({ ...f, company: e.target.value })} /></label>}
         <label>Email<input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
-        {mode === "candidate" && <label>Целевой грейд<select value={f.grade} onChange={(e) => setF({ ...f, grade: e.target.value })}>{Object.entries(GRADE_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>}
+        {mode === "candidate" && <label>Желаемый грейд<select value={f.grade} onChange={(e) => setF({ ...f, grade: e.target.value })}>{Object.entries(GRADE_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>}
         <button className="primary" disabled={!f.email || (mode === "candidate" ? !f.name : !f.company)} onClick={register}>Создать аккаунт</button>
-        <p className="muted">В MVP вход выдаётся при регистрации (без паролей); боевой путь — FSP ID / Keycloak.</p>
+        <p className="muted">В демо вход выдаётся при регистрации (без паролей); в боевой версии вход будет через ФСП ID.</p>
       </Card>
       <Card title="Демо-вход">
-        {!demo.demo_mode ? <p className="muted">Демо-режим выключен (DEMO_MODE=false).</p> : (
+        {!demo.demo_mode ? <p className="muted">Демо-режим выключен.</p> : (
           <ul className="accounts">{demo.accounts.map((a) => (
             <li key={a.key}><button onClick={() => enter(a)}>{a.label}</button><span className="muted">{a.note}</span></li>))}</ul>)}
-        <p className="muted">Каноническая демонстрация: «Alexey Demo» → тест → Evidence Profile → подключить ФСП ID → «Demo Corp» → потребность → подбор → приглашение → принять.</p>
+        <p className="muted">Основной сценарий: Алексей Демо → оценка компетенций → профиль подтверждённых компетенций → подключение ФСП ID → Демо-компания → потребность → подбор → приглашение → принятие → открытие контактов.</p>
       </Card>
     </div>
   );

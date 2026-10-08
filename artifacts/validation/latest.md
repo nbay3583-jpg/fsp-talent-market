@@ -68,13 +68,13 @@ Counts by source: evidence_matching=10, hard_filters_only=32, keyword_baseline=7
 
 ## Known limitations
 
-- Own dataset: the organisers did not provide a dataset or ground truth; labels were assigned by hand by the development team (not by independent experts), so the numbers measure agreement with our own judgement.
-- Small and designed: 32 synthetic candidates and 10 needs, built to contain conflict cases. Results do not estimate performance on real candidates or real vacancies.
-- Many candidates are 'perfect' fits by construction, which compresses nDCG/P@k differences between methods that already apply constraints.
-- Label/engine similarity: the labelling rubric (constraints, verified vs experience-only evidence, sublevel adjacency) was written by the same team as the matching policy and follows similar logic. nDCG@10 = 1.0 for evidence matching therefore mostly shows that the engine implements the intended policy, not that it generalises. R@10 is capped below 1 for needs with more than 10 relevant candidates.
-- The keyword baseline is a deliberately simple résumé keyword search, not a tuned search engine.
-- Skills outside the six Core competencies (PostgreSQL, Kafka) can only be evidenced by experience or claims.
-- Assessment: synthetic personas answer by rule, so grade accuracy and variant stability check the scoring pipeline, thresholds and content integrity. They are not test-retest reliability or psychometric calibration (no IRT/2PL is claimed).
-- Assessment depth is small: Junior has 2 items (python, sql only) and Senior has 4 (python, sql, api_fastapi, system_thinking); a random guesser is verified at a non-trivial rate on those short tests (see guessing_baseline).
-- Single-choice items only; no arbitrary code execution, plagiarism or proctoring checks.
-- Weights are initial tunable configuration; sensitivity configurations were fixed in advance, not optimised.
+- Собственный набор данных: организаторы не предоставили датасет и эталонную разметку; метки расставлены вручную командой разработки (не независимыми экспертами), поэтому цифры показывают согласие с нашей собственной оценкой.
+- Малый и специально составленный набор: 32 синтетических кандидата и 10 потребностей с конфликтными случаями. Результаты не оценивают качество на реальных кандидатах и реальных вакансиях.
+- Многие кандидаты по построению являются «идеальными» совпадениями, что сглаживает разницу nDCG/P@k между методами, которые уже применяют ограничения.
+- Сходство разметки и алгоритма: правила разметки (ограничения, подтверждённый опыт против опыта без проверки, соседние подуровни) написаны той же командой, что и политика подбора, и устроены схоже. Поэтому nDCG@10 = 1.0 у подбора по подтверждённым компетенциям в основном показывает, что алгоритм реализует задуманную политику, а не что он обобщается. R@10 ограничен сверху единицей для потребностей, у которых больше 10 релевантных кандидатов.
+- Базовый поиск по ключевым словам намеренно прост: это поиск по резюме, а не настроенная поисковая система.
+- Навыки вне шести основных компетенций (PostgreSQL, Kafka) подтверждаются только опытом или заявками.
+- Оценка: синтетические персоны отвечают по правилу, поэтому точность грейда и стабильность вариантов проверяют конвейер оценивания, пороги и целостность контента. Это не надёжность повторного тестирования и не психометрическая калибровка (IRT/2PL не заявляется).
+- Глубина оценки невелика: у Junior 2 задания (только Python и SQL), у Senior 4 (Python, SQL, API/FastAPI, системное мышление); случайно угадывающий проходит такие короткие оценки с заметной вероятностью (см. guessing_baseline).
+- Только задания с одним вариантом ответа; нет выполнения произвольного кода, проверки на плагиат и прокторинга.
+- Веса — начальная настраиваемая конфигурация; конфигурации чувствительности заданы заранее, а не подбирались.

@@ -462,7 +462,7 @@ def seed_matching_demo(
         select(Employer).where(Employer.contact_email == "hr@demo-corp.example")
     )
     if employer is None:
-        employer = Employer(company_name="Demo Corp", contact_email="hr@demo-corp.example")
+        employer = Employer(company_name="Демо-компания", contact_email="hr@demo-corp.example")
         session.add(employer)
         session.flush()
     from fsp_market.matching.models import EmployerNeed

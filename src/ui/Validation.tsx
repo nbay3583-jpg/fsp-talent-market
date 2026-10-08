@@ -16,7 +16,7 @@ interface Summary {
   limitations: string[];
 }
 
-const NAMES: Record<string, string> = { keyword_baseline: "Keyword baseline", hard_filters_only: "Hard filters only", evidence_matching: "Evidence matching (наша система)" };
+const NAMES: Record<string, string> = { keyword_baseline: "Поиск по ключевым словам", hard_filters_only: "Только обязательные ограничения", evidence_matching: "Подбор по подтверждённым компетенциям (наша система)" };
 
 export default function Validation() {
   const [s, setS] = useState<Summary | null>(null);
@@ -37,7 +37,7 @@ export default function Validation() {
         </tbody></table>
         <p className="muted">Порядок выдачи детерминирован: {s.deterministic_ordering ? "да" : "нет"}.</p>
       </Card>
-      <Card title="Assessment: reference-validation на синтетических персонах">
+      <Card title="Основная оценка: проверка на синтетических персонах">
         <ul>
           <li>Точность грейда относительно ожиданий: {f(s.assessment.grade_accuracy)} ({s.assessment.cases} кейсов)</li>
           <li>Стабильность вариантов: одинаковый результат в {f(s.assessment.variant_stability.identical_outcome_rate)} пар, макс. разница баллов {f(s.assessment.variant_stability.max_abs_score_diff)}</li>

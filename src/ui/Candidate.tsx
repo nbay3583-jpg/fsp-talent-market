@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, type Session } from "./api";
 import type { Catalog, Invitation } from "./types";
 import {
-  Badge, Card, Empty, ErrorBox, FORMAT_RU, GRADE_RU, Loading, SalaryBanner, STATUS_RU, VerificationBadge,
+  Badge, Card, Empty, ErrorBox, FORMAT_RU, GRADE_RU, Loading, SALARY_TYPE_RU, SalaryBanner, skillName, STATUS_RU, VerificationBadge,
 } from "./ui";
 import { ContactBox } from "./ui";
 
@@ -32,7 +32,7 @@ interface Profile {
 }
 
 const EVIDENCE_RU: Record<string, string> = {
-  CORE_ASSESSMENT: "Основной тест", TECHNOLOGY_ASSESSMENT: "Тест по технологии",
+  CORE_ASSESSMENT: "Основная оценка компетенций", TECHNOLOGY_ASSESSMENT: "Оценка по технологии",
   PROFESSIONAL_EXPERIENCE: "Профессиональный опыт", FSP_ACHIEVEMENT: "Достижение ФСП", RECENT_CHALLENGE: "Свежее задание",
 };
 const STRENGTH_RU: Record<string, string> = { HIGH: "высокая", MEDIUM: "средняя", LOW: "низкая" };
@@ -43,7 +43,7 @@ const SOURCE_RU: Record<string, string> = {
 export default function CandidateApp({ session, demoMode }: { session: Session; demoMode: boolean }) {
   const [tab, setTab] = useState<"profile" | "test" | "evidence" | "invitations">("profile");
   const tabs: [typeof tab, string][] = [
-    ["profile", "Профиль"], ["test", "Core Assessment"], ["evidence", "Evidence Profile"], ["invitations", "Приглашения"],
+    ["profile", "Профиль"], ["test", "Основная оценка"], ["evidence", "Профиль подтверждённых компетенций"], ["invitations", "Приглашения"],
   ];
   return (
     <>
@@ -99,7 +99,7 @@ function ProfileTab({ session }: { session: Session }) {
   return (
     <div className="grid">
       <Card title="Кандидат" aside={<VerificationBadge status={me.verification_status} />}>
-        <p className="muted">Заявленный вами уровень — это заявка. Платформенный уровень определяет только основной тест: не резюме, не достижения ФСП и не вакансия.</p>
+        <p className="muted">Заявленный грейд — это заявка. Подтверждённый грейд платформы определяет только основная оценка компетенций: не резюме, не достижения ФСП и не вакансия.</p>
         <label>Имя<input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} /></label>
         <label>Email (виден только вам)<input value={me.email} disabled /></label>
         <label>Телефон (скрыт до вашего согласия)<input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></label>
@@ -109,18 +109,18 @@ function ProfileTab({ session }: { session: Session }) {
               {catalog.specializations.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
             </select>
           </label>
-          <label>Целевой грейд
+          <label>Желаемый грейд
             <select value={form.claimed_grade} onChange={(e) => set("claimed_grade", e.target.value)}>
               {Object.keys(catalog.grades).map((g) => <option key={g} value={g}>{GRADE_RU[g]}</option>)}
             </select>
           </label>
         </div>
-        <p className="muted">Полный тест реализован для Backend / Python.</p>
+        <p className="muted">Полная оценка реализована для Backend / Python.</p>
       </Card>
       <Card title="Предпочтения для подбора">
         <div className="row">
           <label>Минимальная зарплата, ₽<input inputMode="numeric" value={form.salary_min} onChange={(e) => set("salary_min", e.target.value.replace(/\D/g, ""))} /></label>
-          <label>Тип<select value={form.salary_type} onChange={(e) => set("salary_type", e.target.value)}><option>GROSS</option><option>NET</option></select></label>
+          <label>Тип<select value={form.salary_type} onChange={(e) => set("salary_type", e.target.value)}><option value="GROSS">{SALARY_TYPE_RU.GROSS}</option><option value="NET">{SALARY_TYPE_RU.NET}</option></select></label>
         </div>
         <fieldset><legend>Формат работы</legend>
           {Object.entries(FORMAT_RU).map(([k, v]) => (
@@ -174,14 +174,14 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
   if (result) return <ResultCard result={result} goEvidence={goEvidence} again={() => setResult(null)} />;
   if (!attempt) {
     return (
-      <Card title="Основной тест (Core Assessment): Backend / Python">
-        <p>Короткий тест (около 3–5 минут): Python, SQL, API/FastAPI, тестирование, Docker, системное мышление. Задания параметризованы: у каждого кандидата свои варианты с тем же уровнем сложности и теми же критериями. Оценка полностью детерминирована — без LLM.</p>
+      <Card title="Основная оценка компетенций (Core Assessment): Backend / Python">
+        <p>Короткая оценка (около 3–5 минут): Python, SQL, API/FastAPI, тестирование, Docker, системное мышление. Задания параметризованы: у каждого кандидата свои варианты с тем же уровнем сложности и теми же критериями. Оценка полностью детерминирована — без нейросетей.</p>
         <label>Грейд, который вы подтверждаете
           <select value={grade} onChange={(e) => setGrade(e.target.value)}>
             {Object.entries(GRADE_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </label>
-        <button className="primary" disabled={busy} onClick={start}>Начать тест</button>
+        <button className="primary" disabled={busy} onClick={start}>Начать оценку</button>
         {err && <ErrorBox message={err} />}
       </Card>
     );
@@ -190,11 +190,11 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
   const mins = started ? Math.max(0, Math.round((Date.now() - started) / 60000)) : 0;
   return (
     <div>
-      <Card title={`Тест ${GRADE_RU[attempt.target_grade]} · ${attempt.tasks.length} заданий`} aside={<span className="muted">{mins} мин</span>}>
+      <Card title={`Оценка ${GRADE_RU[attempt.target_grade]} · ${attempt.tasks.length} заданий`} aside={<span className="muted">{mins} мин</span>}>
         {demoMode && <button onClick={fillReference}>Демо: заполнить эталонными ответами</button>}
       </Card>
       {attempt.tasks.map((t, i) => (
-        <Card key={t.variant_id} title={`${i + 1}. ${t.competency}`}>
+        <Card key={t.variant_id} title={`${i + 1}. ${skillName(t.competency)}`}>
           <pre className="prompt">{t.prompt}</pre>
           {Object.entries(t.options).map(([k, v]) => (
             <label key={k} className="option">
@@ -205,7 +205,7 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
         </Card>
       ))}
       <button className="primary" disabled={!done || busy} onClick={submit}>Отправить ответы</button>
-      {!done && <p className="muted">Ответьте на все задания, чтобы отправить тест.</p>}
+      {!done && <p className="muted">Ответьте на все задания, чтобы отправить ответы.</p>}
       {err && <ErrorBox message={err} />}
     </div>
   );
@@ -214,19 +214,19 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
 function ResultCard({ result, goEvidence, again }: { result: Result; goEvidence: () => void; again: () => void }) {
   const ok = result.verification_status === "VERIFIED";
   return (
-    <Card title="Результат Core Assessment" aside={<VerificationBadge status={result.verification_status} />}>
+    <Card title="Результат основной оценки компетенций" aside={<VerificationBadge status={result.verification_status} />}>
       <p className="big">Backend / {GRADE_RU[result.target_grade]}{ok && result.achieved_sublevel ? ` (${result.achieved_sublevel})` : ""}</p>
       {ok ? (
-        <p className="ok">Уровень подтверждён тестом. Он появился в вашем Evidence Profile как проверенное подтверждение навыков.</p>
+        <p className="ok">Уровень подтверждён тестом. Он появился в вашем профиле подтверждённых компетенций.</p>
       ) : (
         <p>
-          Уровень <b>{GRADE_RU[result.claimed_grade]}</b> пока не подтверждён. Вы остаётесь кандидатом с заявленным уровнем {GRADE_RU[result.claimed_grade]} (NOT VERIFIED) — платформа не понижает вас автоматически до Junior.
-          Можно пройти повторную попытку после паузы или тест другого уровня.
+          Грейд <b>{GRADE_RU[result.claimed_grade]}</b> пока не подтверждён. Заявленный грейд {GRADE_RU[result.claimed_grade]} сохраняется (не подтверждён) — платформа не понижает вас автоматически до Junior.
+          Можно пройти повторную попытку после паузы или оценку другого грейда.
         </p>
       )}
       <table className="table"><thead><tr><th>Компетенция</th><th>Результат</th></tr></thead>
-        <tbody>{Object.entries(result.competency_scores).map(([k, v]) => <tr key={k}><td>{k}</td><td>{Math.round(v * 100)}%</td></tr>)}</tbody></table>
-      <div className="row"><button className="primary" onClick={goEvidence}>Открыть Evidence Profile</button><button onClick={again}>Закрыть</button></div>
+        <tbody>{Object.entries(result.competency_scores).map(([k, v]) => <tr key={k}><td>{skillName(k)}</td><td>{Math.round(v * 100)}%</td></tr>)}</tbody></table>
+      <div className="row"><button className="primary" onClick={goEvidence}>Открыть профиль подтверждённых компетенций</button><button onClick={again}>Закрыть</button></div>
     </Card>
   );
 }
@@ -249,22 +249,22 @@ function EvidenceTab({ session }: { session: Session }) {
     } catch (e) { setFspMsg((e as Error).message); }
   };
   if (err) return <ErrorBox message={err} />;
-  if (!p) return <Loading what="Собираем Evidence Profile" />;
+  if (!p) return <Loading what="Собираем профиль подтверждённых компетенций" />;
   return (
     <div>
-      <Card title="Evidence Profile" aside={<VerificationBadge status={p.verification_status} />}>
+      <Card title="Профиль подтверждённых компетенций" aside={<VerificationBadge status={p.verification_status} />}>
         <p className="big">Backend / {p.claimed_grade ? GRADE_RU[p.claimed_grade] : "—"} (заявлено)
           {p.verified_grade && <> · <Badge tone="ok">подтверждено: {GRADE_RU[p.verified_grade]} {p.verified_sublevel}</Badge></>}</p>
-        {p.verification_status === "NOT_VERIFIED" && <p>Заявленный уровень не подтверждён. Он сохранён — платформа не заменяет его более низким.</p>}
-        {p.verification_status === "UNVERIFIED" && <p className="muted">Пройдите Core Assessment, чтобы подтвердить уровень.</p>}
+        {p.verification_status === "NOT_VERIFIED" && <p>Заявленный грейд не подтверждён. Он сохранён — платформа не заменяет его более низким.</p>}
+        {p.verification_status === "UNVERIFIED" && <p className="muted">Пройдите основную оценку компетенций, чтобы подтвердить грейд.</p>}
         <p className="muted">Здесь нет единого «рейтинга кандидата»: только заявки и то, чем они подтверждены.</p>
       </Card>
       {p.skills.length === 0 ? <Empty>Подтверждённых навыков пока нет. Заявки без подтверждения ничего не меняют.</Empty> : (
         <Card title="Навыки: заявка → подтверждение">
-          <table className="table"><thead><tr><th>Навык</th><th>Заявка (claim)</th><th>Подтверждение (evidence)</th><th>Уровень платформы</th></tr></thead>
+          <table className="table"><thead><tr><th>Навык</th><th>Заявка</th><th>Подтверждение</th><th>Подтверждённый грейд платформы</th></tr></thead>
             <tbody>{p.skills.map((s) => (
               <tr key={s.skill}>
-                <td><b>{s.name}</b></td>
+                <td><b>{skillName(s.skill, s.name)}</b></td>
                 <td>{s.claimed_level ? GRADE_RU[s.claimed_level] : "—"}<br /><span className="muted">{SOURCE_RU[s.claim_source] ?? s.claim_source}</span></td>
                 <td>{s.evidence.length === 0 ? <span className="muted">нет подтверждений</span> : s.evidence.map((e, i) => (
                   <div key={i}><Badge tone={e.type === "FSP_ACHIEVEMENT" ? "info" : "ok"}>{EVIDENCE_RU[e.type] ?? e.type}</Badge> сила: {STRENGTH_RU[e.strength] ?? e.strength}{e.title ? ` · ${e.title}` : ""}</div>
@@ -274,14 +274,14 @@ function EvidenceTab({ session }: { session: Session }) {
         </Card>
       )}
       {p.assessment && (
-        <Card title="Результат основного теста">
+        <Card title="Результат основной оценки">
           <p>{GRADE_RU[p.assessment.target_grade]}: <VerificationBadge status={p.assessment.verification_status} /> · {Math.round(p.assessment.score * 100)}% правильных ответов</p>
         </Card>
       )}
       <Card title="Достижения ФСП (внешнее подтверждение)">
         {p.fsp.has_history ? <p className="ok">Найдено подтверждений: {p.fsp.evidence_items}. Они привязаны к релевантным навыкам и не меняют ваш уровень.</p>
           : <Empty>Истории ФСП нет — это нормально. Отсутствие достижений не ухудшает ваш уровень и профиль.</Empty>}
-        <div className="row"><input placeholder="ФСП ID, например FSP-1001" value={fsp} onChange={(e) => setFsp(e.target.value)} /><button onClick={link} disabled={!fsp}>Подключить ФСП ID (mock)</button></div>
+        <div className="row"><input placeholder="ФСП ID, например FSP-1001" value={fsp} onChange={(e) => setFsp(e.target.value)} /><button onClick={link} disabled={!fsp}>Подключить ФСП ID (демо)</button></div>
         {fspMsg && <p role="status">{fspMsg}</p>}
       </Card>
     </div>
@@ -326,7 +326,7 @@ function InvitationsTab({ session }: { session: Session }) {
             </div>
           ) : open.status === "DECLINED" ? <p className="muted">Вы отклонили приглашение. Ваши контакты остались скрыты.</p>
             : <p className="ok">Вы приняли приглашение — работодатель теперь видит ваши контакты.</p>}
-          <p className="muted">Контакты станут доступны работодателю только если вы нажмёте «Принять».</p>
+          <p className="muted">Открытие контактов происходит только если вы нажмёте «Принять и открыть контакты».</p>
         </Card>
       )}
     </div>

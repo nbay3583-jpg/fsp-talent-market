@@ -2,6 +2,16 @@ import type { ReactNode } from "react";
 import type { Contacts, Reason } from "./types";
 
 export const GRADE_RU: Record<string, string> = { JUNIOR: "Junior", MIDDLE: "Middle", SENIOR: "Senior" };
+export const COMPETENCY_RU: Record<string, string> = {
+  python: "Python", sql: "SQL", api_fastapi: "API / FastAPI", testing: "Тестирование",
+  docker_basics: "Основы Docker", system_thinking: "Системное мышление", postgresql: "PostgreSQL", kafka: "Kafka",
+};
+/** Русское название навыка/компетенции по коду; неизвестные коды показываем как есть. */
+export const skillName = (code: string, fallback?: string): string => COMPETENCY_RU[code] ?? fallback ?? code;
+/** В текстах причин код навыка стоит в начале строки («api_fastapi: …»): подменяем его на русское название. */
+export const localizeReason = (r: { text: string; skill?: string | null }): string =>
+  r.skill && r.text.startsWith(`${r.skill}:`) ? `${skillName(r.skill)}:${r.text.slice(r.skill.length + 1)}` : r.text;
+export const SALARY_TYPE_RU: Record<string, string> = { GROSS: "До налогов (GROSS)", NET: "На руки (NET)" };
 export const FORMAT_RU: Record<string, string> = { REMOTE: "Удалённо", OFFICE: "Офис", HYBRID: "Гибрид" };
 export const STATUS_RU: Record<string, string> = {
   SENT: "Отправлено",
@@ -23,9 +33,9 @@ export function Badge({ tone, children }: { tone: "ok" | "warn" | "bad" | "info"
 }
 
 export function VerificationBadge({ status }: { status: string }) {
-  if (status === "VERIFIED") return <Badge tone="ok">✓ VERIFIED</Badge>;
-  if (status === "NOT_VERIFIED") return <Badge tone="warn">NOT VERIFIED</Badge>;
-  return <Badge tone="muted">Не проходил тест</Badge>;
+  if (status === "VERIFIED") return <Badge tone="ok">✓ Подтверждено</Badge>;
+  if (status === "NOT_VERIFIED") return <Badge tone="warn">Не подтверждено</Badge>;
+  return <Badge tone="muted">Оценка не пройдена</Badge>;
 }
 
 export function Card({ title, children, aside }: { title?: ReactNode; children: ReactNode; aside?: ReactNode }) {
@@ -57,7 +67,7 @@ export function FitBlock({ label, fit, why, gaps }: { label: string; fit: number
   return (
     <div className="fit">
       <div className="fit-label">
-        {label.startsWith("Соответствие") ? label : `Соответствие этой потребности: ${pct}%`}
+        {label.startsWith("Соответствие") ? label.replace("Соответствие этой потребности", "Соответствие потребности") : `Соответствие потребности: ${pct}%`}
         <span className="fit-note"> — только к этой потребности, не общий рейтинг кандидата</span>
       </div>
       <div className="bar" aria-hidden="true">
@@ -65,20 +75,20 @@ export function FitBlock({ label, fit, why, gaps }: { label: string; fit: number
       </div>
       <div className="why-gaps">
         <div>
-          <h4>WHY</h4>
+          <h4>Почему подходит</h4>
           {why.length === 0 && <p className="muted">Нет подтверждённых оснований</p>}
           <ul className="why">
             {why.map((r, i) => (
-              <li key={`${r.code}-${i}`} title={r.code}>✓ {r.text}</li>
+              <li key={`${r.code}-${i}`} title={r.code}>✓ {localizeReason(r)}</li>
             ))}
           </ul>
         </div>
         <div>
-          <h4>GAPS</h4>
+          <h4>Пробелы</h4>
           {gaps.length === 0 && <p className="muted">Пробелов не обнаружено</p>}
           <ul className="gaps">
             {gaps.map((r, i) => (
-              <li key={`${r.code}-${i}`} title={r.code}>△ {r.text}</li>
+              <li key={`${r.code}-${i}`} title={r.code}>△ {localizeReason(r)}</li>
             ))}
           </ul>
         </div>

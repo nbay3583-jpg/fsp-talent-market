@@ -22,20 +22,20 @@ describe("App shell", () => {
     localStorage.clear();
   });
 
-  it("shows Backend: ok and the demo entry when the API is healthy", async () => {
+  it("shows the healthy status and the demo entry when the API is healthy", async () => {
     stubFetch({
       "/health": { status: "ok" },
-      "/api/demo/config": { demo_mode: true, accounts: [{ key: "employer", role: "employer", label: "Demo Corp (работодатель)", fsp_id: null, note: "n" }] },
+      "/api/demo/config": { demo_mode: true, accounts: [{ key: "employer", role: "employer", label: "Демо-компания (работодатель)", fsp_id: null, note: "n" }] },
     });
     render(<App />);
-    expect(await screen.findByText("Backend: ok")).toBeTruthy();
-    expect(await screen.findByText("Demo Corp (работодатель)")).toBeTruthy();
+    expect(await screen.findByText("Система работает")).toBeTruthy();
+    expect(await screen.findByText("Демо-компания (работодатель)")).toBeTruthy();
   });
 
   it("shows an error state when the backend is unreachable", async () => {
     stubFetch({});
     render(<App />);
-    expect(await screen.findByText("Backend: unavailable")).toBeTruthy();
+    expect(await screen.findByText("Система недоступна")).toBeTruthy();
     expect((await screen.findAllByRole("alert")).length).toBeGreaterThan(0);
   });
 
@@ -57,18 +57,20 @@ describe("product components", () => {
     expect(screen.getByTestId("salary").textContent).toContain("NET");
   });
 
-  it("labels the fit as fit to THIS need and lists WHY and GAPS", () => {
+  it("labels the fit as fit to THIS need and lists why and gaps", () => {
     render(
       <FitBlock
-        label="Соответствие этой потребности: 86%"
+        label="Соответствие потребности: 86%"
         fit={0.86}
         why={[{ code: "SKILL_VERIFIED", text: "api_fastapi: навык подтверждён", skill: "api_fastapi" }]}
         gaps={[{ code: "SKILL_UNVERIFIED", text: "kafka: нет данных о навыке", skill: "kafka" }]}
       />,
     );
-    expect(screen.getByText(/Соответствие этой потребности: 86%/)).toBeTruthy();
-    expect(screen.getByText(/api_fastapi: навык подтверждён/)).toBeTruthy();
-    expect(screen.getByText(/kafka: нет данных о навыке/)).toBeTruthy();
+    expect(screen.getByText(/Соответствие потребности: 86%/)).toBeTruthy();
+    expect(screen.getByText(/API \/ FastAPI: навык подтверждён/)).toBeTruthy();
+    expect(screen.getByText("Почему подходит")).toBeTruthy();
+    expect(screen.getByText("Пробелы")).toBeTruthy();
+    expect(screen.getByText(/Kafka: нет данных о навыке/)).toBeTruthy();
     expect(screen.queryByText(/Talent Score/i)).toBeNull();
   });
 
@@ -83,7 +85,7 @@ describe("product components", () => {
 
   it("does not present NOT_VERIFIED as VERIFIED", () => {
     render(<VerificationBadge status="NOT_VERIFIED" />);
-    expect(screen.getByText("NOT VERIFIED")).toBeTruthy();
-    expect(screen.queryByText(/✓ VERIFIED/)).toBeNull();
+    expect(screen.getByText("Не подтверждено")).toBeTruthy();
+    expect(screen.queryByText(/✓ Подтверждено/)).toBeNull();
   });
 });

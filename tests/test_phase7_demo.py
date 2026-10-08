@@ -338,7 +338,7 @@ def test_profile_catalog_and_validation_summary(env):
 def test_employer_me_and_roles(env):
     client, _ = env
     eh, info = login(client, "employer")
-    assert client.get("/api/employers/me", headers=eh).json()["company_name"] == "Demo Corp"
+    assert client.get("/api/employers/me", headers=eh).json()["company_name"] == "Демо-компания"
     ch, _ = login(client, "candidate_alexey")
     assert client.get("/api/employers/me", headers=ch).status_code == 401
     assert info["role"] == "employer"

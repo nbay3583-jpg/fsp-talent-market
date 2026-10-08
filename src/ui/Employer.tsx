@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, type Session } from "./api";
 import type { Catalog, Fit, Invitation, MatchRow, Need, PublicCandidate } from "./types";
 import {
-  Badge, Card, ContactBox, Empty, ErrorBox, FitBlock, FORMAT_RU, GRADE_RU, Loading, SalaryBanner, salaryRange,
+  Badge, Card, ContactBox, Empty, ErrorBox, FitBlock, FORMAT_RU, GRADE_RU, Loading, SalaryBanner, salaryRange, SALARY_TYPE_RU, skillName,
   STATUS_RU, VerificationBadge,
 } from "./ui";
 
@@ -22,7 +22,7 @@ export default function EmployerApp({ session }: { session: Session }) {
   const [tab, setTab] = useState<"match" | "pool" | "invitations">("match");
   const [detail, setDetail] = useState<{ id: number; need: Need | null } | null>(null);
   const open = (id: number, need: Need | null) => { setDetail({ id, need }); window.scrollTo?.({ top: 0 }); };
-  const tabs: [typeof tab, string][] = [["match", "Подбор по потребности"], ["pool", "Весь пул"], ["invitations", "Отправленные приглашения"]];
+  const tabs: [typeof tab, string][] = [["match", "Подбор по потребности"], ["pool", "Весь пул кандидатов"], ["invitations", "Отправленные приглашения"]];
   return (
     <>
       <nav className="tabs" aria-label="Работодатель">
@@ -70,7 +70,7 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
   const rows = res ? (showAll ? res.results : res.results.slice(0, 5)) : [];
   return (
     <div className="grid">
-      <Card title="Новая потребность">
+      <Card title="Потребность работодателя">
         <label>Роль<input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
         <div className="row">
           <label>Грейд<select value={f.grade} onChange={(e) => setF({ ...f, grade: e.target.value, sub: catalog.grades[e.target.value][1] })}>
@@ -78,16 +78,16 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
           <label>Подуровень<select value={f.sub} onChange={(e) => setF({ ...f, sub: e.target.value })}>
             <option value="">любой</option>{catalog.grades[f.grade].map((s) => <option key={s}>{s}</option>)}</select></label>
         </div>
-        <fieldset><legend>Обязательные навыки (вес 1.0)</legend>
-          {catalog.skills.map((s) => <label key={s.code} className="check"><input type="checkbox" checked={f.req.includes(s.code)} disabled={f.opt.includes(s.code)} onChange={() => toggle("req", s.code)} />{s.name}{!s.verifiable && <span className="muted"> (опыт)</span>}</label>)}
+        <fieldset><legend>Обязательные навыки</legend>
+          {catalog.skills.map((s) => <label key={s.code} className="check"><input type="checkbox" checked={f.req.includes(s.code)} disabled={f.opt.includes(s.code)} onChange={() => toggle("req", s.code)} />{skillName(s.code, s.name)}{!s.verifiable && <span className="muted"> (опыт)</span>}</label>)}
         </fieldset>
-        <fieldset><legend>Желательные навыки (вес 0.4)</legend>
-          {catalog.skills.map((s) => <label key={s.code} className="check"><input type="checkbox" checked={f.opt.includes(s.code)} disabled={f.req.includes(s.code)} onChange={() => toggle("opt", s.code)} />{s.name}</label>)}
+        <fieldset><legend>Желательные навыки</legend>
+          {catalog.skills.map((s) => <label key={s.code} className="check"><input type="checkbox" checked={f.opt.includes(s.code)} disabled={f.req.includes(s.code)} onChange={() => toggle("opt", s.code)} />{skillName(s.code, s.name)}</label>)}
         </fieldset>
         <div className="row">
           <label>Зарплата от, ₽<input inputMode="numeric" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value.replace(/\D/g, "") })} /></label>
           <label>до, ₽<input inputMode="numeric" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value.replace(/\D/g, "") })} /></label>
-          <label>Тип<select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}><option>GROSS</option><option>NET</option></select></label>
+          <label>Тип<select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}><option value="GROSS">{SALARY_TYPE_RU.GROSS}</option><option value="NET">{SALARY_TYPE_RU.NET}</option></select></label>
         </div>
         <fieldset><legend>Формат работы</legend>
           {Object.entries(FORMAT_RU).map(([k, v]) => <label key={k} className="check"><input type="checkbox" checked={f.formats.includes(k)} onChange={() => toggle("formats", k)} />{v}</label>)}
@@ -104,13 +104,13 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
       </Card>
       <div>
         {busy && <Loading what="Подбираем" />}
-        {!res && !busy && <Empty>Опишите потребность — получите небольшой объяснимый список кандидатов с причинами (WHY) и пробелами (GAPS).</Empty>}
+        {!res && !busy && <Empty>Опишите потребность — получите небольшой объяснимый список кандидатов: почему подходит и какие пробелы.</Empty>}
         {res && need && (
           <>
             <Card title={`Подбор: ${need.title}`}>
-              <p>Рассмотрено кандидатов: {res.candidates_considered}. Жёсткие ограничения прошли: {res.matched_total}.</p>
+              <p>Рассмотрено кандидатов: {res.candidates_considered}. Обязательные ограничения прошли: {res.matched_total}.</p>
               {Object.keys(res.excluded_summary).length > 0 && (
-                <details><summary>Отсеяно по жёстким ограничениям</summary>
+                <details><summary>Отсеяно по обязательным ограничениям</summary>
                   <ul>{Object.entries(res.excluded_summary).map(([k, v]) => <li key={k}>{EXCLUSION_RU[k] ?? k}: {v}</li>)}</ul></details>)}
             </Card>
             {res.results.length === 0 && <Empty>Подходящих кандидатов нет. Попробуйте расширить вилку или формат работы.</Empty>}
@@ -144,21 +144,21 @@ function CandidatePanel({ session, id, need, close }: { session: Session; id: nu
     <Card title={d.display_name} aside={<><VerificationBadge status={d.verification_status} /><button onClick={close}>Закрыть</button></>}>
       <p className="muted">{d.claimed_grade ? GRADE_RU[d.claimed_grade] : "—"} (заявлено){d.verified_grade && ` · подтверждено ${GRADE_RU[d.verified_grade]} ${d.verified_sublevel}`} · {d.work_formats.map((x) => FORMAT_RU[x] ?? x).join(", ")}{d.location && ` · ${d.location}`}
         {d.salary_expectation && ` · ожидания от ${d.salary_expectation.min.toLocaleString("ru-RU")} ₽ ${d.salary_expectation.type}`}</p>
-      {d.verification_status !== "VERIFIED" && <p className="warn">Уровень кандидата не подтверждён тестом — в подборе он учитывается с понижением.</p>}
-      {d.fit && !d.fit.eligible && <p className="warn">Не проходит жёсткие ограничения этой потребности: {d.fit.exclusions?.map((x) => EXCLUSION_RU[x] ?? x).join(", ")}.</p>}
+      {d.verification_status !== "VERIFIED" && <p className="warn">Грейд кандидата не подтверждён основной оценкой — в подборе он учитывается с понижением.</p>}
+      {d.fit && !d.fit.eligible && <p className="warn">Не проходит обязательные ограничения этой потребности: {d.fit.exclusions?.map((x) => EXCLUSION_RU[x] ?? x).join(", ")}.</p>}
       {fit && fit.requirement_fit !== undefined && <FitBlock label={fit.requirement_fit_label ?? ""} fit={fit.requirement_fit} why={fit.why ?? []} gaps={fit.gaps ?? []} />}
       <h4>Навыки и подтверждения</h4>
       {d.skills.length === 0 ? <Empty>Подтверждённых навыков нет.</Empty> : (
         <table className="table"><thead><tr><th>Навык</th><th>Подтверждение</th></tr></thead><tbody>
           {d.skills.map((s) => (
-            <tr key={s.skill}><td>{s.skill}</td><td>
-              {s.verified_level ? <Badge tone="ok">проверено тестом: {GRADE_RU[s.verified_level]}</Badge> : s.claimed_only ? <Badge tone="muted">только заявлено</Badge> : null}
+            <tr key={s.skill}><td>{skillName(s.skill)}</td><td>
+              {s.verified_level ? <Badge tone="ok">подтверждено оценкой: {GRADE_RU[s.verified_level]}</Badge> : s.claimed_only ? <Badge tone="muted">только заявлено</Badge> : null}
               {s.has_professional_experience && <Badge tone="warn">опыт</Badge>}
               {s.fsp_achievements.map((a) => <Badge key={a} tone="info">ФСП: {a}</Badge>)}</td></tr>))}
         </tbody></table>)}
-      {!d.has_fsp && <p className="muted">Истории ФСП нет — это не снижает уровень кандидата.</p>}
+      {!d.has_fsp && <p className="muted">Истории ФСП нет — это не снижает грейд кандидата.</p>}
       <ContactBox unlocked={d.contact_status === "UNLOCKED"} contacts={d.contacts} />
-      {sent ? <p className="ok" role="status">Приглашение отправлено ({STATUS_RU[sent.status]}). Контакты откроются после согласия кандидата.</p>
+      {sent ? <p className="ok" role="status">Приглашение отправлено ({STATUS_RU[sent.status]}). Открытие контактов — только после согласия кандидата.</p>
         : d.contact_status === "LOCKED" && <InviteForm session={session} candidateId={d.candidate_id} need={need} done={(i) => { setSent(i); load(); }} />}
     </Card>
   );
@@ -185,11 +185,11 @@ function InviteForm({ session, candidateId, need, done }: { session: Session; ca
       <div className="row">
         <label>Зарплата от, ₽ *<input inputMode="numeric" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value.replace(/\D/g, "") })} /></label>
         <label>до, ₽ *<input inputMode="numeric" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value.replace(/\D/g, "") })} /></label>
-        <label>GROSS / NET *<select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}><option value="">выберите…</option><option>GROSS</option><option>NET</option></select></label>
+        <label>Тип зарплаты *<select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}><option value="">выберите…</option><option value="GROSS">{SALARY_TYPE_RU.GROSS}</option><option value="NET">{SALARY_TYPE_RU.NET}</option></select></label>
         <label>Формат<select value={f.format} onChange={(e) => setF({ ...f, format: e.target.value })}>{Object.entries(FORMAT_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
       </div>
       <label>Сообщение<textarea value={f.message} onChange={(e) => setF({ ...f, message: e.target.value })} /></label>
-      <p className="muted">Зарплатная вилка и тип (GROSS/NET) обязательны — сервер не примет приглашение без них.</p>
+      <p className="muted">Зарплатная вилка и тип зарплаты (GROSS — до налогов, NET — на руки) обязательны — сервер не примет приглашение без них.</p>
       <button className="primary" disabled={!ready} onClick={send}>Отправить приглашение</button>
       {err && <ErrorBox message={err} />}
     </div>
@@ -213,10 +213,10 @@ function PoolTab({ session, open }: { session: Session; open: (id: number) => vo
   return (
     <div className="grid">
       <Card title="Фильтры">
-        {sel("grade", Object.entries(GRADE_RU), "Грейд платформы")}
+        {sel("grade", Object.entries(GRADE_RU), "Подтверждённый грейд платформы")}
         {sel("sublevel", ["J1", "J2", "M1", "M2", "S1", "S2"].map((s) => [s, s]), "Подуровень")}
-        {sel("verification", [["VERIFIED", "VERIFIED"], ["NOT_VERIFIED", "NOT VERIFIED"], ["UNVERIFIED", "не проходил"]], "Статус подтверждения")}
-        {catalog && sel("skill", catalog.skills.map((s) => [s.code, s.name]), "Подтверждённый навык")}
+        {sel("verification", [["VERIFIED", "Подтверждено"], ["NOT_VERIFIED", "Не подтверждено"], ["UNVERIFIED", "Оценка не пройдена"]], "Статус подтверждения")}
+        {catalog && sel("skill", catalog.skills.map((s) => [s.code, skillName(s.code, s.name)]), "Подтверждённый навык")}
         {sel("has_fsp", [["true", "есть"], ["false", "нет"]], "Достижения ФСП")}
         {sel("work_format", Object.entries(FORMAT_RU), "Формат работы")}
         <label>Город<input value={q.location} onChange={(e) => setQ({ ...q, location: e.target.value })} /></label>
@@ -225,7 +225,7 @@ function PoolTab({ session, open }: { session: Session; open: (id: number) => vo
       <div>
         {err && <ErrorBox message={err} />}
         {!res ? <Loading /> : (<>
-          <p className="muted">Найдено: {res.total}. Контакты кандидатов скрыты до их согласия.</p>
+          <p className="muted">Найдено: {res.total}. Контакты кандидатов скрыты до их согласия (открытие контактов — только после принятия приглашения).</p>
           {res.candidates.length === 0 && <Empty>По этим фильтрам никого нет.</Empty>}
           {res.candidates.map((c) => (
             <Card key={c.candidate_id} title={c.display_name} aside={<VerificationBadge status={c.verification_status} />}>

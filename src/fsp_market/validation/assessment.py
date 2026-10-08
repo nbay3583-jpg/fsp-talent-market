@@ -338,7 +338,7 @@ def run_assessment_validation() -> dict[str, Any]:
             if not c["match"]
         ] + unstable
         return {
-            "kind": "MVP reference-solution validation (synthetic personas); not psychometric calibration",
+            "kind": "MVP-проверка на эталонных решениях (синтетические персоны); не психометрическая калибровка",
             "cases": n,
             "personas": [{"id": p["id"], "description": p["desc"]} for p in PERSONAS],
             "grade_accuracy": round(accuracy, 4),
