@@ -29,7 +29,7 @@ describe("App shell", () => {
     });
     render(<App />);
     expect(await screen.findByText("Система работает")).toBeTruthy();
-    expect(await screen.findByText("Демо-компания (работодатель)")).toBeTruthy();
+    expect(await screen.findByText("Демо-компания")).toBeTruthy();
   });
 
   it("shows an error state when the backend is unreachable", async () => {

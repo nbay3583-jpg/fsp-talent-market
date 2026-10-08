@@ -25,6 +25,7 @@ export default function EmployerApp({ session }: { session: Session }) {
   const tabs: [typeof tab, string][] = [["match", "Подбор по потребности"], ["pool", "Весь пул кандидатов"], ["invitations", "Отправленные приглашения"]];
   return (
     <>
+      <h2 className="section-title">Кабинет работодателя</h2>
       <nav className="tabs" aria-label="Работодатель">
         {tabs.map(([k, l]) => <button key={k} className={tab === k ? "tab active" : "tab"} onClick={() => { setTab(k); setDetail(null); }}>{l}</button>)}
       </nav>

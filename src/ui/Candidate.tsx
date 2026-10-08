@@ -47,6 +47,7 @@ export default function CandidateApp({ session, demoMode }: { session: Session; 
   ];
   return (
     <>
+      <h2 className="section-title">Кабинет кандидата</h2>
       <nav className="tabs" aria-label="Кандидат">
         {tabs.map(([k, label]) => (
           <button key={k} className={tab === k ? "tab active" : "tab"} onClick={() => setTab(k)}>{label}</button>

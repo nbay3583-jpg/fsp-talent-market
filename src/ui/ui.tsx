@@ -28,7 +28,7 @@ export function salaryRange(from: number, to: number, type: string): string {
   return `${money(from)}–${money(to)} ₽ · ${type}`;
 }
 
-export function Badge({ tone, children }: { tone: "ok" | "warn" | "bad" | "info" | "muted"; children: ReactNode }) {
+export function Badge({ tone, children }: { tone: "ok" | "warn" | "bad" | "info" | "muted" | "brand"; children: ReactNode }) {
   return <span className={`badge badge-${tone}`}>{children}</span>;
 }
 
