@@ -157,6 +157,18 @@ Swagger UI: `/docs`, схема: `/openapi.json`. Группы: `candidate` (р�
 
 Real FSP ID / Keycloak, подтверждение email, Technology Assessment (глубина по одной технологии), безопасный Python-runner (gVisor), второй трек специализации, калибровка заданий на реальных данных (IRT), semantic-реранкинг и разбор резюме (опционально, через адаптер, не влияющие на грейд).
 
+## Вход и учётные записи
+
+Регистрация: email + пароль (≥ 8 символов); кандидат подтверждает email по ссылке. Повторный вход: `POST /api/auth/login` (email + пароль) либо одноразовый код `POST /api/auth/code/request` → `POST /api/auth/code/verify` (он же восстановление доступа). 5 неверных паролей блокируют аккаунт на 15 минут; ответы не раскрывают, существует ли email. Токен живёт 12 часов. Демо-вход (`DEMO_MODE=true`) работает по-прежнему.
+
+## Публичный стенд (staging)
+
+`docker-compose.deploy.yml` + `.env.deploy` (из `.env.deploy.example`, секреты не в git): изолированные db/backend/frontend, frontend на `127.0.0.1:8720`, HTTPS даёт reverse proxy хоста. `ENVIRONMENT` не должен быть `production` при `DEMO_MODE=true`. Тома БД не удаляются при обновлении (`up -d --build`).
+
+## Ограничения MVP
+
+Email-доставка проверена только через OUTBOX/демо-ссылку (SMTP не подключён); интеграция с ФСП — mock-адаптер; валидация модели — на синтетических данных (см. `docs/VALIDATION.md`); браузерная проверка UI desktop/mobile вручную не проводилась.
+
 ## Команды разработки
 
 ```bash

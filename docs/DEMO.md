@@ -13,3 +13,7 @@ Canonical scenario and the decline path are in the root `README.md` (section "Д
 - a headless-Chrome run of the UI flow was used during development (candidate → employer → accept → contacts → pool → validation page).
 
 Validation page: header link "Валидация" (data from `artifacts/validation/latest.json`).
+
+## Тестовые роли и новые сценарии
+
+Кандидат: регистрация → письмо/демо-ссылка → выход → повторный вход паролем или кодом. Работодатель: подбор по потребности или самостоятельное приглашение из полного пула (`need_id=null`); тип зарплаты GROSS/NET переносится из потребности и может быть изменён вручную. Контакты видны только отправителю после ACCEPTED. Проверено автоматически: `tests/test_phase11_auth_invites.py`, `scripts/smoke.py`.
