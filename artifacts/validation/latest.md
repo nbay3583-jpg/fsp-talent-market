@@ -8,9 +8,9 @@ Dataset: version 1, sha256 `3dce3f9c8f7b4deb…`, 32 candidates, 10 needs, 320 l
 
 | method | P@3 | P@5 | R@10 | nDCG@10 | hard-constraint violations in top-10 |
 |---|---|---|---|---|---|
-| keyword baseline | 0.200 | 0.260 | 0.498 | 0.395 | 56/100 (56.0%) |
-| hard filters only | 0.800 | 0.660 | 0.885 | 0.816 | 0/70 (0.0%) |
-| evidence matching | 0.933 | 0.780 | 0.982 | 0.980 | 0/70 (0.0%) |
+| keyword baseline | 0.200 | 0.260 | 0.498 | 0.395 | 57/100 (57.0%) |
+| hard filters only | 0.800 | 0.660 | 0.924 | 0.841 | 0/70 (0.0%) |
+| evidence matching | 0.933 | 0.780 | 0.972 | 0.973 | 0/70 (0.0%) |
 
 Deterministic ordering (two runs identical): **True**
 
@@ -18,9 +18,9 @@ Deterministic ordering (two runs identical): **True**
 
 | config | P@5 | nDCG@10 | top-5 Jaccard vs default | top-1 same as default |
 |---|---|---|---|---|
-| default | 0.780 | 0.980 | 1.000 | 1.000 |
-| assessment_heavy | 0.780 | 0.979 | 1.000 | 0.900 |
-| fsp_heavy | 0.780 | 0.971 | 1.000 | 0.600 |
+| default | 0.780 | 0.973 | 1.000 | 1.000 |
+| assessment_heavy | 0.780 | 0.973 | 1.000 | 1.000 |
+| fsp_heavy | 0.780 | 0.965 | 1.000 | 0.700 |
 
 Configurations were fixed in advance and not tuned on the labels.
 
@@ -35,36 +35,36 @@ Configurations were fixed in advance and not tuned on the labels.
 
 | grade test | AUC (knowers vs others) | score margin | competencies covered | items per attempt |
 |---|---|---|---|---|
-| JUNIOR | 1.000 | 1.000 | 6/6 | 8 |
-| MIDDLE | 1.000 | 1.000 | 6/6 | 8 |
-| SENIOR | 1.000 | 1.000 | 6/6 | 8 |
+| JUNIOR | 1.000 | 1.000 | 6/6 | 11 |
+| MIDDLE | 1.000 | 1.000 | 6/6 | 11 |
+| SENIOR | 1.000 | 1.000 | 6/6 | 11 |
 
 Random-guess false verification rate (500 seeded guessers):
 
-- JUNIOR: 1.6% (8 items)
-- MIDDLE: 0.2% (8 items)
-- SENIOR: 0.0% (8 items)
+- JUNIOR: 0.2% (11 items)
+- MIDDLE: 0.0% (11 items)
+- SENIOR: 0.0% (11 items)
 
 Anchors: 
 
 ## Failure cases
 
-Total recorded: 104 (full list in `latest.json`). First entries per source:
+Total recorded: 101 (full list in `latest.json`). First entries per source:
 
 - `keyword_baseline:V-N01:V-C04:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 1; reason: candidate is NOT_VERIFIED; method ranks unverified context in the top-5
 - `keyword_baseline:V-N01:V-C24:top5-false-positive` expected: relevance 0 (<2); actual: returned at rank 2; reason: violates hard constraint(s): salary (method does not apply constraints)
 - `keyword_baseline:V-N01:V-C30:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 3; reason: candidate is UNVERIFIED; method ranks unverified context in the top-5
 - `keyword_baseline:V-N01:V-C05:missed-relevant` expected: relevance 2 in top-10; actual: not in top-10; reason: no keyword overlap with the need
 - `hard_filters_only:V-N01:V-C04:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 4; reason: candidate is NOT_VERIFIED; method ranks unverified context in the top-5
-- `hard_filters_only:V-N01:V-C18:missed-relevant` expected: relevance 3 in top-10; actual: not in top-10; reason: relevant candidate ranked 11, outside the top-10
-- `hard_filters_only:V-N01:V-C20:missed-relevant` expected: relevance 3 in top-10; actual: not in top-10; reason: relevant candidate ranked 13, outside the top-10
+- `hard_filters_only:V-N01:V-C20:missed-relevant` expected: relevance 3 in top-10; actual: not in top-10; reason: relevant candidate ranked 12, outside the top-10
 - `hard_filters_only:V-N02:V-C04:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 3; reason: candidate is NOT_VERIFIED; method ranks unverified context in the top-5
+- `hard_filters_only:V-N02:V-C08:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 5; reason: labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)
+- `evidence_matching:V-N02:V-C09:missed-relevant` expected: relevance 3 in top-10; actual: not in top-10; reason: relevant candidate ranked 11, outside the top-10
 - `evidence_matching:V-N03:V-C04:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 5; reason: candidate is NOT_VERIFIED; method ranks unverified context in the top-5
 - `evidence_matching:V-N04:V-C13:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 4; reason: candidate is NOT_VERIFIED; method ranks unverified context in the top-5
 - `evidence_matching:V-N05:V-C19:missed-relevant` expected: relevance 2 in top-10; actual: not in top-10; reason: relevant candidate ranked 11, outside the top-10
-- `evidence_matching:V-N06:V-C08:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 4; reason: candidate is NOT_VERIFIED; method ranks unverified context in the top-5
 
-Counts by source: evidence_matching=8, hard_filters_only=24, keyword_baseline=72
+Counts by source: evidence_matching=9, hard_filters_only=20, keyword_baseline=72
 
 ## Known limitations
 
@@ -75,6 +75,6 @@ Counts by source: evidence_matching=8, hard_filters_only=24, keyword_baseline=72
 - Базовый поиск по ключевым словам намеренно прост: это поиск по резюме, а не настроенная поисковая система.
 - Навыки вне шести основных компетенций (PostgreSQL, Kafka) подтверждаются только опытом или заявками.
 - Оценка: синтетические персоны отвечают по правилу, поэтому точность грейда и стабильность вариантов проверяют конвейер оценивания, пороги и целостность контента. Это не надёжность повторного тестирования и не психометрическая калибровка (IRT/2PL не заявляется).
-- Глубина оценки невелика: у Junior 2 задания (только Python и SQL), у Senior 4 (Python, SQL, API/FastAPI, системное мышление); случайно угадывающий проходит такие короткие оценки с заметной вероятностью (см. guessing_baseline).
+- Глубина оценки ограничена: по 11 заданий на грейд (6 компетенций), на семейство — 6–10 проверенных вариантов; вероятность пройти оценку случайным угадыванием оценена симуляцией (см. guessing_baseline), но это не психометрическая надёжность.
 - Только задания с одним вариантом ответа; нет выполнения произвольного кода, проверки на плагиат и прокторинга.
 - Веса — начальная настраиваемая конфигурация; конфигурации чувствительности заданы заранее, а не подбирались.

@@ -68,7 +68,7 @@ def test_taxonomy_and_sublevels(session):
 def test_seed_is_idempotent_and_parameterized(session):
     seed_backend_python(session)
     session.commit()
-    assert session.scalar(select(func.count(TaskFamily.id))) == 24
+    assert session.scalar(select(func.count(TaskFamily.id))) == 33
     n_variants = session.scalar(select(func.count(TaskVariant.id)))
     assert n_variants == session.scalar(select(func.count(TaskPreset.id))) >= 24 * 6
     seed_backend_python(session)

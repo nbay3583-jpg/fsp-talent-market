@@ -226,7 +226,7 @@ def test_anchor_handling_and_competency_coverage(result):
     assert a["anchors"] == []  # anchor calibration is NOT IMPLEMENTED: none may be claimed
     cov = a["coverage"]
     assert cov["competencies_covered"] == {"JUNIOR": 6, "MIDDLE": 6, "SENIOR": 6}
-    assert cov["items_per_attempt"] == {"JUNIOR": 8, "MIDDLE": 8, "SENIOR": 8}
+    assert cov["items_per_attempt"] == {"JUNIOR": 11, "MIDDLE": 11, "SENIOR": 11}
     assert (
         a["guessing_baseline"]["MIDDLE"]["false_verification_rate"]
         < a["guessing_baseline"]["JUNIOR"]["false_verification_rate"]

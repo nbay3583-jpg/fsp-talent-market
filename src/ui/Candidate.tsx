@@ -286,7 +286,7 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
   if (!attempt) {
     return (
       <Card title="Основная оценка компетенций (Core Assessment): Backend / Python">
-        <p>Короткая оценка (8 заданий, на выполнение отводится 12–18 минут): Python, SQL, API/FastAPI, тестирование, Docker, системное мышление. Задания параметризованы: у каждого кандидата свои варианты с тем же уровнем сложности и теми же критериями. Оценка полностью детерминирована — без нейросетей.</p>
+        <p>Короткая оценка (11 заданий, на выполнение отводится 15–23 минуты): Python, SQL, API/FastAPI, тестирование, Docker, системное мышление. Задания параметризованы: у каждого кандидата свои варианты с тем же уровнем сложности и теми же критериями. Оценка полностью детерминирована — без нейросетей.</p>
         <label>Грейд, который вы подтверждаете
           <select value={grade} onChange={(e) => setGrade(e.target.value)}>
             {Object.entries(GRADE_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}

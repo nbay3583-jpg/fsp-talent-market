@@ -25,7 +25,7 @@ import traceback
 from collections.abc import Callable
 from typing import Any
 
-RUBRIC_VERSION = "backend-core-2026.10.1"
+RUBRIC_VERSION = "backend-core-2026.10.2"
 SPECIALIZATION = {"code": "backend_python", "name": "Backend / Python"}
 COMPETENCIES = [
     {"code": "python", "name": "Python"},
@@ -37,9 +37,9 @@ COMPETENCIES = [
 ]
 LETTERS = "ABCD"
 
-# Time budget (seconds) for one attempt: 8 tasks per grade. Server-side `deadline_at` is derived
+# Time budget (seconds) for one attempt: 11 tasks per grade. Server-side `deadline_at` is derived
 # from this table (see assessments/service.py).
-TIME_LIMIT_SECONDS = {"JUNIOR": 12 * 60, "MIDDLE": 15 * 60, "SENIOR": 18 * 60}
+TIME_LIMIT_SECONDS = {"JUNIOR": 15 * 60, "MIDDLE": 19 * 60, "SENIOR": 23 * 60}
 
 
 # ------------------------------------------------------------------ helpers
@@ -807,6 +807,242 @@ def s_system_scenarios(rng: random.Random, i: int) -> dict[str, Any]:
     )
 
 
+# ------------------------------------------------------------------ extra families (2026.10.2)
+# Added to widen coverage: 11 tasks per grade instead of 8, same generator contract as above.
+
+
+def j_python_types(rng: random.Random, i: int) -> dict[str, Any]:
+    a, b = rng.randint(2, 9), rng.randint(2, 5)
+    w = rng.choice(["abc", "data", "fsp", "key"])
+    pool = [
+        (f"{a * b} / {b}", "float"), (f"{a * b} // {b}", "int"), (f"'{w}' * {b}", "str"),
+        (f"[{a}, {b}] + [{a}]", "list"), (f"({a},)", "tuple"), (f"{{'{w}': {a}}}", "dict"),
+        (f"{{{a}, {b}, {a}}}", "set"), (f"{a} > {b}", "bool"), (f"len('{w}')", "int"),
+        (f"'{w}'.split('a')", "list"), (f"{a} == {a}.0", "bool"), (f"round({a} / {b}, 1)", "float"),
+    ]
+    expr, answer = pool[i % len(pool)]
+    code = f"x = {expr}\nprint(type(x).__name__)"
+    correct = run_py(code)
+    assert correct == answer
+    wrongs = [t for t in ["int", "float", "str", "bool", "list", "tuple", "dict", "set"] if t != correct]
+    return choice(rng, correct, wrongs, "типы данных", snippet=code)
+
+
+def j_sql_order(rng: random.Random, i: int) -> dict[str, Any]:
+    t, _nr, num, _tr, txt, values = _TABLES[(i + 2) % len(_TABLES)]
+    nums = rng.sample([5, 12, 20, 45, 80, 120, 300, 450], 6)
+    rows = [(n, v, rng.choice(values)) for n, v in enumerate(nums, 1)]
+    k = i % 3
+    order, off = [("DESC", 0), ("ASC", 0), ("DESC", 2)][k]
+    query = f"SELECT {num} FROM {t} ORDER BY {num} {order} LIMIT 1 OFFSET {off}"
+    setup = [f"CREATE TABLE {t}(id INTEGER, {num} INTEGER, {txt} TEXT)"]
+    setup += [f"INSERT INTO {t} VALUES ({a}, {b}, '{c}')" for a, b, c in rows]
+    answer = _sqlite(setup, query)[0][0]
+    return {"type": "numeric", "correct": answer, "tolerance": 0, "dimension": "сортировка и LIMIT",
+            "options": None, "query": query, "table": t,
+            "data": _table_text(["id", num, txt], rows)}
+
+
+_METHODS = [
+    ("получить карточку {res} по идентификатору", "GET"),
+    ("создать новый элемент в коллекции {res}", "POST"),
+    ("полностью заменить существующий элемент {res}", "PUT"),
+    ("изменить одно поле существующего элемента {res}", "PATCH"),
+    ("удалить элемент {res}", "DELETE"),
+    ("получить список {res} с фильтром в query-параметрах", "GET"),
+    ("отправить форму заявки, после которой будет создан новый элемент {res}", "POST"),
+    ("обновить только статус элемента {res}, не трогая остальные поля", "PATCH"),
+]
+
+
+def j_http_method(rng: random.Random, i: int) -> dict[str, Any]:
+    action, answer = _METHODS[i % len(_METHODS)]
+    res = rng.choice(_RESOURCES)
+    wrongs = [m for m in ["GET", "POST", "PUT", "PATCH", "DELETE"] if m != answer]
+    return choice(rng, answer, wrongs, "методы HTTP", res=res, action=action.format(res=res))
+
+
+def m_python_comprehension(rng: random.Random, i: int) -> dict[str, Any]:
+    kind = i % 5
+    xs = rng.sample(range(2, 15), 5)
+    ws = rng.sample(["python", "api", "sql", "docker", "git", "test"], 4)
+    if kind == 0:
+        code = f"xs = {xs}\nprint(sorted(xs, key=lambda v: v % 5)[:3])"
+        mutants = [code.replace("v % 5", "v"), code.replace("[:3]", "[-3:]"),
+                   code.replace("sorted(", "sorted(reverse=True, iterable=").replace(", key", ", key", 1)]
+        mutants[2] = code.replace("key=lambda v: v % 5", "key=lambda v: -v")
+    elif kind == 1:
+        code = f"ws = {ws}\nd = {{w: len(w) for w in ws if len(w) > 3}}\nprint(len(d), sum(d.values()))"
+        mutants = [code.replace("> 3", ">= 3"), code.replace("> 3", "> 4"),
+                   code.replace("sum(d.values())", "sum(d)")]
+    elif kind == 2:
+        code = (f"a = {xs[:3]}\nb = {xs[2:]}\nprint(sorted(set(a) & set(b)), "
+                "len(set(a) | set(b)))")
+        mutants = [code.replace("&", "|"), code.replace("|", "&"),
+                   code.replace("a = ", "a = [0] + ")]
+    elif kind == 3:
+        code = (f"ws = {ws}\nprint(', '.join(f'{{i}}:{{w[0]}}' for i, w in enumerate(ws, 1)))")
+        mutants = [code.replace("enumerate(ws, 1)", "enumerate(ws)"), code.replace("w[0]", "w[-1]"),
+                   code.replace("enumerate(ws, 1)", "enumerate(ws[::-1], 1)")]
+    else:
+        code = (f"xs = {xs}\nys = [x for x in xs if x % 2 == 0]\nit = iter(ys)\nnext(it, None)\n"
+                "print(list(it), len(ys))")
+        mutants = [code.replace("next(it, None)\n", ""), code.replace("x % 2 == 0", "x % 2 == 1"),
+                   code.replace("print(list(it), len(ys))", "print(list(it), len(xs))")]
+    correct = run_py(code)
+    wrongs = [run_py_safe(m) for m in mutants]
+    if len(set(wrongs) - {correct}) < 3:
+        wrongs += [correct.replace("[", "[0, ", 1) if "[" in correct else correct + "0",
+                   correct[::-1], "ошибка выполнения"]
+    return choice(rng, correct, wrongs, "коллекции и генераторы", snippet=code)
+
+
+def m_sql_left_join(rng: random.Random, i: int) -> dict[str, Any]:
+    names = rng.sample(["Анна", "Борис", "Вера", "Глеб", "Дарья", "Егор"], 5)
+    customers = [(n + 1, nm) for n, nm in enumerate(names)]
+    orders = [(k + 1, rng.choice([1, 2, 3, 3, 1]), rng.choice([40, 90, 150, 220])) for k in range(6)]
+    kind = i % 3
+    if kind == 1:
+        orders[-1] = (orders[-1][0], None, orders[-1][2])  # the NOT IN / NULL trap
+    setup = ["CREATE TABLE customers(id INTEGER, name TEXT)",
+             "CREATE TABLE orders(id INTEGER, customer_id INTEGER, amount INTEGER)"]
+    setup += [f"INSERT INTO customers VALUES ({a}, '{b}')" for a, b in customers]
+    setup += [f"INSERT INTO orders VALUES ({a}, {'NULL' if b is None else b}, {c})" for a, b, c in orders]
+    if kind == 0:
+        query = ("SELECT c.name FROM customers c LEFT JOIN orders o ON o.customer_id = c.id "
+                 "WHERE o.id IS NULL")
+    elif kind == 1:
+        query = "SELECT name FROM customers WHERE id NOT IN (SELECT customer_id FROM orders)"
+    else:
+        query = "SELECT COUNT(*) FROM customers c LEFT JOIN orders o ON o.customer_id = c.id"
+    rows = _sqlite(setup, query)
+    answer = rows[0][0] if kind == 2 else len(rows)
+    ask = "Какое число вернёт запрос?" if kind == 2 else "Сколько строк вернёт запрос?"
+    return {"type": "numeric", "correct": answer, "tolerance": 0, "dimension": "соединения и NULL",
+            "options": None, "query": query, "ask": ask,
+            "customers": _table_text(["id", "name"], customers),
+            "orders": _table_text(["id", "customer_id", "amount"],
+                                  [(a, "NULL" if b is None else b, c) for a, b, c in orders])}
+
+
+_FACTS["HTTP"] = [
+    (True, "Идемпотентный метод при повторе того же запроса оставляет сервер в том же состоянии (например, `PUT`, `DELETE`)"),
+    (True, "Токен в заголовке `Authorization` не попадает в URL и поэтому реже оседает в логах прокси"),
+    (True, "Пароли в БД хранят в виде соленого хэша медленной функции (bcrypt, argon2), а не открытым текстом"),
+    (True, "CORS ограничивает доступ из браузера к чужому источнику, но не защищает API от прямых запросов"),
+    (True, "Все запросы с параметрами в SQL нужно передавать как параметры запроса, а не склеивать строкой"),
+    (True, "Ответ 401 означает, что клиент не аутентифицирован, 403 — что прав недостаточно"),
+    (False, "Метод `POST` по определению идемпотентен"),
+    (False, "Хэш пароля с короткой функцией (MD5) — достаточная защита, если добавить пароль в начало строки"),
+    (False, "Если API доступно только из браузера, проверку прав на сервере можно не делать"),
+    (False, "Код 500 разумно возвращать при неверном формате входных данных от клиента"),
+    (False, "JWT нельзя подделать, поэтому срок его действия указывать необязательно"),
+    (False, "HTTPS нужен только для запросов с паролем, остальные можно отправлять по HTTP"),
+]
+
+
+def m_api_http_security(rng: random.Random, i: int) -> dict[str, Any]:
+    return _fact_task(rng, _FACTS["HTTP"], "HTTP и безопасность API")
+
+
+def s_python_classes(rng: random.Random, i: int) -> dict[str, Any]:
+    kind = i % 5
+    a, b = rng.sample(["A", "B", "C", "D"], 2)
+    n = rng.randint(2, 5)
+    if kind == 0:
+        code = (f"class Base:\n    def hi(self):\n        return 'base'\n\nclass {a}(Base):\n"
+                "    def hi(self):\n        return 'a>' + super().hi()\n\n"
+                f"class {b}(Base):\n    def hi(self):\n        return 'b>' + super().hi()\n\n"
+                f"class Z({a}, {b}):\n    pass\n\nprint(Z().hi())")
+        mutants = [code.replace(f"Z({a}, {b})", f"Z({b}, {a})"),
+                   code.replace("'a>' + super().hi()", "'a>'"), code.replace("'b>' + super().hi()", "'b>'")]
+    elif kind == 1:
+        code = (f"class Box:\n    items = []\n    def __init__(self, v):\n        self.items.append(v)\n\n"
+                f"Box({n})\nBox({n + 1})\nprint(len(Box.items))")
+        mutants = [code.replace("self.items.append(v)", "self.items = [v]"),
+                   code.replace("    items = []\n", "").replace("def __init__(self, v):\n",
+                   "def __init__(self, v):\n        self.items = []\n"), code.replace("len(Box.items)", "Box.items[0]")]
+    elif kind == 2:
+        code = (f"class Temp:\n    def __init__(self):\n        self._c = {n * 10}\n    @property\n"
+                "    def f(self):\n        return self._c * 9 // 5 + 32\n\nt = Temp()\nt._c += 10\nprint(t.f)")
+        mutants = [code.replace("t._c += 10\n", ""), code.replace("+ 32", "+ 30"),
+                   code.replace("t._c += 10", "t._c -= 10")]
+    elif kind == 3:
+        code = (f"class Job:\n    def __init__(self, name):\n        self.name = name\n"
+                "    def __repr__(self):\n        return 'Job(' + self.name + ')'\n\n"
+                f"jobs = [Job('x'), Job('y{n}')]\nprint(jobs, str(jobs[0]))")
+        mutants = [code.replace("    def __repr__", "    def __str__"),
+                   code.replace("print(jobs, str(jobs[0]))", "print(jobs[0], jobs[1])"),
+                   code.replace("print(jobs, str(jobs[0]))", "print(str(jobs))")]
+    else:
+        code = (f"class Money:\n    def __init__(self, v):\n        self.v = v\n    def __eq__(self, o):\n"
+                "        return self.v == o.v\n    def __hash__(self):\n        return hash(self.v)\n\n"
+                f"s = {{Money({n}), Money({n})}}\nprint(len(s), Money({n}) == Money({n}))")
+        mutants = [code.replace("    def __hash__(self):\n        return hash(self.v)\n", ""),
+                   code.replace("return hash(self.v)", "return id(self)"),
+                   code.replace("Money(" + str(n) + ") == Money(" + str(n) + ")", "Money(" + str(n) + ") is Money(" + str(n) + ")")]
+    correct = run_py(code)
+    wrongs = [run_py_safe(m) for m in mutants]
+    if len(set(wrongs) - {correct}) < 3:
+        wrongs += pad_numeric(correct, []) + ["ошибка выполнения"]
+    return choice(rng, correct, wrongs, "объектная модель Python", snippet=code)
+
+
+def s_sql_cte(rng: random.Random, i: int) -> dict[str, Any]:
+    teams = rng.sample(["backend", "data", "mobile", "infra", "qa"], 3)
+    rows = [(k + 1, rng.choice(teams), rng.choice([90, 110, 130, 150, 180, 210])) for k in range(8)]
+    setup = ["CREATE TABLE staff(id INTEGER, team TEXT, salary INTEGER)"]
+    setup += [f"INSERT INTO staff VALUES ({a}, '{b}', {c})" for a, b, c in rows]
+    kind = i % 3
+    if kind == 0:
+        target = rng.randint(2, 8)
+        query = "SELECT id, salary - LAG(salary) OVER (ORDER BY id) AS pos FROM staff"
+        answer = dict(_sqlite(setup, query))[target]
+        ask = f"Какое значение столбца `pos` у строки с id = {target}?"
+    elif kind == 1:
+        query = ("WITH t AS (SELECT team, AVG(salary) AS a FROM staff GROUP BY team) "
+                 "SELECT team FROM t WHERE a > (SELECT AVG(salary) FROM staff)")
+        answer = len(_sqlite(setup, query))
+        ask = "Сколько строк вернёт запрос?"
+    else:
+        query = ("SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY team "
+                 "ORDER BY salary DESC, id) AS rn FROM staff) WHERE rn = 1")
+        answer = len(_sqlite(setup, query))
+        ask = "Сколько строк вернёт запрос?"
+    return {"type": "numeric", "correct": answer, "tolerance": 0, "dimension": "CTE и подзапросы",
+            "options": None, "query": query, "ask": ask,
+            "data": _table_text(["id", "team", "salary"], rows)}
+
+
+_SYSTEM_SENIOR_TRADEOFFS = [
+    ("Обработчик платежа может быть вызван повторно брокером сообщений (at-least-once), и клиента нельзя списать дважды",
+     "Сделать обработку идемпотентной: ключ операции + проверка/уникальное ограничение перед списанием"),
+    ("Нужно атомарно сохранить заказ и отправить событие в брокер; сервис иногда падает между этими шагами",
+     "Записывать событие в таблицу outbox в той же транзакции и публиковать из неё отдельным процессом"),
+    ("Миграция добавляет NOT NULL столбец в таблицу на сотни миллионов строк без простоя сервиса",
+     "Добавить столбец как nullable, заполнить пакетами в фоне, затем добавить ограничение"),
+    ("При истечении TTL популярного ключа кэша тысячи запросов одновременно идут в БД и перегружают её",
+     "Использовать блокировку перегенерации/«single flight» и случайный разброс TTL"),
+    ("Консьюмер не успевает за потоком сообщений, очередь растёт, память приложения исчерпывается",
+     "Ограничить размер очереди и применить backpressure: замедлять источник или отбрасывать/откладывать нагрузку"),
+    ("Чтение с реплики БД иногда возвращает данные, которых ещё нет после только что выполненной записи",
+     "Читать критичные после записи данные с primary либо учитывать лаг реплики (read-your-writes)"),
+    ("Сторонний сервис деградировал, и наши запросы к нему висят до таймаута, занимая все воркеры",
+     "Ввести короткие таймауты и circuit breaker, чтобы быстро отказывать и не исчерпывать воркеры"),
+    ("Нужно безопасно выкатить изменение формата ответа API, которым пользуются мобильные клиенты старых версий",
+     "Сохранять обратную совместимость: добавлять поля, версионировать API, удалять старое после миграции клиентов"),
+]
+
+
+def s_system_tradeoffs(rng: random.Random, i: int) -> dict[str, Any]:
+    scenario, answer = _SYSTEM_SENIOR_TRADEOFFS[i % len(_SYSTEM_SENIOR_TRADEOFFS)]
+    wrongs = [a for _, a in _SYSTEM_SENIOR_TRADEOFFS if a != answer]
+    return choice(rng, answer, wrongs, "компромиссы проектирования", scenario=scenario)
+
+
+_ST_METHOD = "Эндпоинт `/{res}`: нужно {action}. Какой HTTP-метод подходит лучше всего?"
+
+
 # ------------------------------------------------------------------ catalogue
 # structure strings only use {placeholders}; the learner sees them verbatim.
 
@@ -896,6 +1132,14 @@ def _build() -> None:
         _tpl(f"{p}.j.sys", "DETERMINISTIC_QUESTION", _ST_SYSTEM_TERM, j_system_term, 7,
              ["базовые понятия"])])
 
+    _family("JUNIOR", "python_types", "python", 1, [
+        _tpl(f"{p}.j.py_types", "CODE_READING", _ST_OUTPUT, j_python_types, 8, ["типы данных"])])
+    _family("JUNIOR", "sql_order", "sql", 1, [
+        _tpl(f"{p}.j.sql_ord", "NUMERIC_ANSWER", _ST_SQL_COUNT, j_sql_order, 6,
+             ["сортировка и LIMIT"])])
+    _family("JUNIOR", "http_method", "api_fastapi", 1, [
+        _tpl(f"{p}.j.method", "API_REASONING", _ST_METHOD, j_http_method, 8, ["методы HTTP"])])
+
     _family("MIDDLE", "python_semantics", "python", 2, [
         _tpl(f"{p}.m.py_sem", "CODE_READING", _ST_OUTPUT, m_python_output, 8,
              ["изменяемые аргументы", "ссылки и копии", "замыкания", "словари и итерация"])])
@@ -918,6 +1162,16 @@ def _build() -> None:
         _tpl(f"{p}.m.sys", "ARCHITECTURE_CASE", _ST_SCENARIO, m_system_scenarios, 6,
              ["выбор решения"])])
 
+    _family("MIDDLE", "python_collections", "python", 2, [
+        _tpl(f"{p}.m.py_col", "CODE_READING", _ST_OUTPUT, m_python_comprehension, 10,
+             ["коллекции и генераторы"])])
+    _family("MIDDLE", "sql_left_join", "sql", 2, [
+        _tpl(f"{p}.m.sql_left", "NUMERIC_ANSWER", _ST_SQL_JOIN, m_sql_left_join, 6,
+             ["соединения и NULL"])])
+    _family("MIDDLE", "api_http_security", "api_fastapi", 2, [
+        _tpl(f"{p}.m.api_sec", "MULTI_SELECT", _ST_FASTAPI, m_api_http_security, 8,
+             ["HTTP и безопасность API"])])
+
     _family("SENIOR", "python_semantics", "python", 3, [
         _tpl(f"{p}.s.py_sem", "CODE_READING", _ST_OUTPUT, s_python_semantics, 8,
              ["генераторы", "декораторы", "замыкания", "кэширование функций"])])
@@ -938,6 +1192,14 @@ def _build() -> None:
     _family("SENIOR", "system_reliability", "system_thinking", 3, [
         _tpl(f"{p}.s.sys", "ARCHITECTURE_CASE", _ST_SYSTEM_SENIOR, s_system_scenarios, 6,
              ["надёжность", "оценка ёмкости"])])
+    _family("SENIOR", "python_classes", "python", 3, [
+        _tpl(f"{p}.s.py_cls", "CODE_READING", _ST_OUTPUT, s_python_classes, 10,
+             ["объектная модель Python"])])
+    _family("SENIOR", "sql_cte", "sql", 3, [
+        _tpl(f"{p}.s.sql_cte", "NUMERIC_ANSWER", _ST_WINDOW, s_sql_cte, 6, ["CTE и подзапросы"])])
+    _family("SENIOR", "system_tradeoffs", "system_thinking", 3, [
+        _tpl(f"{p}.s.sys_trade", "ARCHITECTURE_CASE", _ST_SCENARIO, s_system_tradeoffs, 8,
+             ["компромиссы проектирования"])])
 
 
 _build()

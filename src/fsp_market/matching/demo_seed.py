@@ -170,7 +170,7 @@ C = [
         "hana",
         "Hana Almost",
         "MIDDLE",
-        ("MIDDLE", {"testing", "docker_basics", "system_thinking"}),  # 5/8: not verified
+        ("MIDDLE", {"testing", "docker_basics", "system_thinking", "api_fastapi"}),  # 5/11: not verified
         (205000, "GROSS"),
         [R],
         "Sochi",
@@ -185,7 +185,7 @@ C = [
         "julia",
         "Julia Mone",
         "MIDDLE",
-        ("MIDDLE", {"testing"}),  # 7/8 -> M2, a neighbour of the M3 target
+        ("MIDDLE", {"testing", "docker_basics"}),  # 9/11 -> M2, a neighbour of the M3 target
         (200000, "GROSS"),
         [R],
         "Tula",

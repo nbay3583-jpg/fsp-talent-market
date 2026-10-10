@@ -47,7 +47,7 @@ V, N = "VERIFIED", "NOT_VERIFIED"
 
 # knows: grades whose questions the persona answers correctly; slips: competencies answered wrongly
 # at that grade. expected: (status, sublevel) per attempted grade, derived by hand from the
-# thresholds (J .6 / M .7 / S .75), 8 items per grade, and the sublevel bands of taxonomy/grades.py.
+# thresholds (J .6 / M .7 / S .75), 11 items per grade, and the sublevel bands of taxonomy/grades.py.
 PERSONAS = [
     {
         "id": "P-JUNIOR",
@@ -79,23 +79,23 @@ PERSONAS = [
     },
     {
         "id": "P-MIDDLE-HIGH",
-        "desc": "Middle, slips on testing (7/8 = 0.875 -> M2)",
+        "desc": "Middle, slips on testing + docker (9/11 = 0.818 -> M2)",
         "knows": ["JUNIOR", "MIDDLE"],
-        "slips": {"MIDDLE": ["testing"]},
+        "slips": {"MIDDLE": ["testing", "docker_basics"]},
         "expected": {"JUNIOR": (V, "J3"), "MIDDLE": (V, "M2"), "SENIOR": (N, None)},
     },
     {
         "id": "P-MIDDLE-LOW",
-        "desc": "Middle, slips on testing + docker + system (5/8 = 0.625 < 0.7)",
+        "desc": "Middle, slips on testing + docker + system + API (6/11 = 0.545 < 0.7)",
         "knows": ["JUNIOR", "MIDDLE"],
-        "slips": {"MIDDLE": ["testing", "docker_basics", "system_thinking"]},
+        "slips": {"MIDDLE": ["testing", "docker_basics", "system_thinking", "api_fastapi"]},
         "expected": {"JUNIOR": (V, "J3"), "MIDDLE": (N, None), "SENIOR": (N, None)},
     },
     {
         "id": "P-SENIOR-EDGE",
-        "desc": "Senior, slips on system thinking (7/8 = 0.875 -> S2)",
+        "desc": "Senior, slips on testing (10/11 = 0.909 -> S2)",
         "knows": GRADES,
-        "slips": {"SENIOR": ["system_thinking"]},
+        "slips": {"SENIOR": ["testing"]},
         "expected": {"JUNIOR": (V, "J3"), "MIDDLE": (V, "M3"), "SENIOR": (V, "S2")},
     },
 ]

@@ -12,7 +12,7 @@ The Core Assessment is the **only** source of the platform grade.
 - **Task Variant** is a concrete instance: prompt, options, `seed`, expected behaviour, scoring contract, `is_anchor`.
 - Variants of one family change domain, schema, endpoint, numbers or scenario; they keep competency, difficulty, rubric dimensions and scoring contract. Rendering is a pure function (`assessments/variants.py`): same template + preset + seed ⇒ same variant.
 
-Seed content: six competencies (Python, SQL, API/FastAPI, Testing, Docker basics, System thinking), 12 families (Junior: python, sql; Middle: all six; Senior: python, api, sql, system thinking), 2 variants each, one anchor (`api_validation`). Formats used: code reading, SQL reasoning, API reasoning, deterministic/rubric questions (single choice). No arbitrary code execution.
+Seed content (rubric `backend-core-2026.10.2`): six competencies (Python, SQL, API/FastAPI, Testing, Docker basics, System thinking), **11 task families per grade** (33 total), 6–10 verified presets (variants) per family; 11 tasks per attempt (time limits 15 / 19 / 23 min for Junior / Middle / Senior). Formats used: code reading, SQL reasoning, API reasoning, deterministic/rubric questions (single choice). No arbitrary code execution.
 
 ## Flow and scoring
 
@@ -27,7 +27,7 @@ Seed content: six competencies (Python, SQL, API/FastAPI, Testing, Docker basics
 
 - Different attempts get different variants of the same family; surface data, options and the position of the correct option differ, so a memorised "A, C, B…" sheet or a pasted answer to one variant does not carry over to its sibling.
 - Answer keys are server-side only; submissions are validated against the assigned set; failed targets have a cooldown, so brute force by retries is slow.
-- Honest limits: each family currently has **2** variants, so collusion resistance is modest; the parameter-preset design is meant to scale to many more; there is no proctoring or plagiarism detection (roadmap). Short tests (Junior 2 items, Senior 4) are guessable at a measurable rate — see validation results.
+- Honest limits: each family has 6–10 variants, so collusion resistance is moderate; the parameter-preset design is meant to scale to many more; there is no proctoring or plagiarism detection (roadmap). Attempts are 11 items; the guessing baseline is simulated in the validation results.
 
 ## Comparability and "no calibration" statement
 
