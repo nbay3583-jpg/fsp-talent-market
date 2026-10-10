@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { api, loadSession, saveSession, type Role, type Session } from "./api";
 import CandidateApp from "./Candidate";
 import EmployerApp from "./Employer";
+import Assistant from "./Assistant";
 import Validation from "./Validation";
 import { TeamSurvey } from "./TeamFit";
 import { Badge, Card, ErrorBox, GRADE_RU } from "./ui";
@@ -63,6 +64,7 @@ export default function App() {
         {surveyToken ? <TeamSurvey token={surveyToken} /> : view === "validation" ? <Validation /> : !session ? <Login demo={demo} onSession={signIn} /> :
           session.role === "candidate" ? <CandidateApp session={session} demoMode={demo.demo_mode} /> : <EmployerApp session={session} />}
       </main>
+      <Assistant role={session?.role ?? null} />
     </div>
   );
 }

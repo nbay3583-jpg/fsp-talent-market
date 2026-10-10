@@ -206,3 +206,16 @@ button.primary:active:not(:disabled) { background: linear-gradient(180deg, #4a40
 .rec details summary { cursor: pointer; }
 button.link { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; }
 @media (max-width: 560px) { .scale-opts { grid-template-columns: 1fr; } }
+
+/* site helper */
+.assistant-fab { position: fixed; right: 16px; bottom: 16px; z-index: 20; background: var(--brand); color: var(--brand-ink); border: 0; border-radius: 999px; padding: 10px 16px; font-weight: 600; box-shadow: var(--shadow); cursor: pointer; }
+.assistant { position: fixed; right: 16px; bottom: 16px; z-index: 20; width: min(360px, calc(100vw - 32px)); max-height: min(560px, 80vh); display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow); padding: 12px; gap: 8px; }
+.assistant-head { display: flex; justify-content: space-between; align-items: center; }
+.assistant-log { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; min-height: 120px; }
+.bubble { padding: 8px 10px; border-radius: 10px; font-size: 14px; line-height: 1.4; max-width: 92%; }
+.bubble.bot { background: var(--brand-soft); align-self: flex-start; }
+.bubble.me { background: var(--brand); color: var(--brand-ink); align-self: flex-end; }
+.assistant-hints { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 4px 10px; font-size: 13px; cursor: pointer; color: inherit; }
+.assistant-form { display: flex; gap: 6px; }
+.assistant-form input { flex: 1; min-width: 0; }

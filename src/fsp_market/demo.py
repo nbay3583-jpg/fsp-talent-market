@@ -1,6 +1,6 @@
 """Demo state: python -m fsp_market.demo {seed|reset|accounts}  (run `alembic upgrade head` first).
 
-seed   idempotent: assessment content, 22 matching-demo candidates, two FRESH canonical-demo
+seed   idempotent: assessment content, 22 matching-demo candidates + 34 extra generated profiles (58 total incl. 2 fresh), two FRESH canonical-demo
        candidates (never assessed), the demo employer. Safe to re-run.
 reset  deletes ALL application rows, then seeds again -> canonical demo is back to its start.
        The validation dataset is separate (in-memory, see fsp_market.validation) and is not touched.
@@ -21,6 +21,7 @@ from fsp_market.common.enums import Grade, SalaryType
 from fsp_market.config import get_settings
 from fsp_market.db import Base, get_engine
 from fsp_market.evidence.service import add_professional_experience
+from fsp_market.matching.demo_extra import seed_demo_extra
 from fsp_market.matching.demo_seed import seed_matching_demo
 from fsp_market.taxonomy.models import Specialization
 
@@ -78,6 +79,7 @@ FRESH = (
 
 def seed(session: Session) -> dict:
     ids = seed_matching_demo(session, with_need=False)
+    seed_demo_extra(session)
     spec = session.scalar(select(Specialization).where(Specialization.code == "backend_python"))
     for email, name, phone, salary in FRESH:
         if session.scalar(select(Candidate).where(Candidate.email == email)) is None:
