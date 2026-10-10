@@ -11,7 +11,8 @@ from dataclasses import asdict, dataclass, field
 @dataclass(frozen=True)
 class MatchingPolicy:
     # Component weights (starting heuristics from the architecture doc). `context` is the
-    # optional semantic component: not used in P0 (no LLM), so it is excluded from the sum.
+    # Experience Context Fit: deterministic stack/keyword overlap of DECLARED work experience
+    # with the need (no LLM). It never counts as verification.
     weights: dict[str, float] = field(
         default_factory=lambda: {
             "skill_coverage": 0.40,
@@ -28,6 +29,7 @@ class MatchingPolicy:
         "professional",
         "fsp",
         "freshness",
+        "context",
     )
     required_skill_weight: float = 1.0
     optional_skill_weight: float = 0.4

@@ -22,6 +22,7 @@ export interface PublicCandidate {
   location: string | null;
   salary_expectation: { min: number; type: string } | null;
   has_fsp: boolean;
+  work_experience?: { position: string; company: string; start_date: string; end_date: string | null; stack: string[]; confirmed: boolean }[];
   skills: SkillView[];
 }
 export interface Fit {

@@ -91,6 +91,8 @@ def update_preferences(
     from fsp_market.candidates.models import Candidate
 
     cand = session.get(Candidate, candidate_id)
+    if body.profile_visible and not cand.email_verified:
+        raise HTTPException(status_code=403, detail="email_not_verified")
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(
             cand, field, [str(v) for v in value] if field == "work_formats" and value else value

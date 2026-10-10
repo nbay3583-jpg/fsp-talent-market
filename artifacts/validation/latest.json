@@ -2392,6 +2392,7 @@
     "top5_jaccard_vs_default": 1.0,
     "weights": {
      "assessment": 0.4,
+     "context": 0.05,
      "freshness": 0.1,
      "fsp": 0.1,
      "professional": 0.15,
@@ -2407,6 +2408,7 @@
     "top5_jaccard_vs_default": 1.0,
     "weights": {
      "assessment": 0.2,
+     "context": 0.05,
      "freshness": 0.1,
      "fsp": 0.1,
      "professional": 0.15,
@@ -2422,6 +2424,7 @@
     "top5_jaccard_vs_default": 1.0,
     "weights": {
      "assessment": 0.2,
+     "context": 0.05,
      "freshness": 0.1,
      "fsp": 0.3,
      "professional": 0.15,
@@ -2465,7 +2468,8 @@
    "assessment",
    "professional",
    "fsp",
-   "freshness"
+   "freshness",
+   "context"
   ],
   "cross_grade_tolerance": true,
   "freshness_full_days": 180,

@@ -45,7 +45,7 @@ Random-guess false verification rate (500 seeded guessers):
 - MIDDLE: 0.2% (8 items)
 - SENIOR: 0.0% (8 items)
 
-Anchors:
+Anchors: 
 
 ## Failure cases
 

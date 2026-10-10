@@ -50,3 +50,12 @@ class Candidate(Base):
     profile_visible: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     open_to_invitations: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     phone: Mapped[str | None] = mapped_column(String(32), nullable=True)  # private contact
+    # Email verification: only a SHA-256 of the one-time token is stored.
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    email_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    email_token_expires: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    email_token_sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )

@@ -199,7 +199,8 @@ def test_fit_is_deterministic_and_relevant_fsp_only_helps_relevant_skills():
 
 def test_weights_are_configured_in_one_policy():
     assert abs(sum(DEFAULT_POLICY.weights.values()) - 1.0) < 1e-9
-    assert "context" not in DEFAULT_POLICY.active_components  # no LLM / semantic in P0
+    # context = deterministic Experience Context Fit (declared experience, no LLM)
+    assert "context" in DEFAULT_POLICY.active_components
 
 
 # ---------------------------------------------------------------- API + demo data
@@ -446,14 +447,18 @@ def test_candidate_preferences_endpoint(env):
         "/api/candidates", json={"email": "p@x.io", "full_name": "P Q", "claimed_grade": "MIDDLE"}
     ).json()
     ch = {"Authorization": f"Bearer {cand['access_token']}"}
-    r = env.patch(
-        "/api/candidates/me/preferences",
-        headers=ch,
-        json={
-            "salary_min": 180000,
-            "salary_type": "NET",
-            "work_formats": ["REMOTE"],
-            "profile_visible": True,
-        },
-    )
+    prefs = {
+        "salary_min": 180000,
+        "salary_type": "NET",
+        "work_formats": ["REMOTE"],
+        "profile_visible": True,
+    }
+    # publishing the profile requires a confirmed email
+    blocked = env.patch("/api/candidates/me/preferences", headers=ch, json=prefs)
+    assert blocked.status_code == 403
+    from fsp_market.notifications.email import OUTBOX
+
+    token = OUTBOX[-1]["body"].split("verify_email=")[1].split()[0]
+    assert env.post("/api/auth/verify-email", json={"token": token}).status_code == 200
+    r = env.patch("/api/candidates/me/preferences", headers=ch, json=prefs)
     assert r.status_code == 200

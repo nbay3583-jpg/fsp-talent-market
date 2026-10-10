@@ -31,6 +31,7 @@ from fsp_market.assessments.service import (
     start_attempt,
     submit_answers,
 )
+from fsp_market.auth.email_verification import confirm, cooldown_left, issue_verification
 from fsp_market.auth.tokens import create_token
 from fsp_market.candidates.models import Candidate
 from fsp_market.common.enums import AttemptStatus, Grade
@@ -155,8 +156,39 @@ def register(body: RegisterIn, session: Session = SessionDep) -> dict[str, Any]:
     except IntegrityError as exc:
         session.rollback()
         raise HTTPException(status_code=409, detail="email already registered") from exc
+    issue_verification(session, candidate)
+    session.commit()
     token = create_token(candidate.id, get_settings().jwt_secret)
-    return {"candidate_id": candidate.id, "access_token": token}
+    return {"candidate_id": candidate.id, "access_token": token, "email_verification_sent": True}
+
+
+class VerifyEmailIn(BaseModel):
+    token: str = Field(min_length=10, max_length=200)
+
+
+@router.post("/auth/verify-email")
+def verify_email(body: VerifyEmailIn, session: Session = SessionDep) -> dict[str, Any]:
+    cand = confirm(session, body.token)
+    if cand is None:
+        session.rollback()
+        raise HTTPException(status_code=400, detail="invalid or expired token")
+    session.commit()
+    return {"email_verified": True}
+
+
+@router.post("/candidates/me/email/resend")
+def resend_verification(
+    candidate_id: int = CandidateDep, session: Session = SessionDep
+) -> dict[str, Any]:
+    cand = session.get(Candidate, candidate_id)
+    if cand.email_verified:
+        return {"email_verified": True, "sent": False}
+    wait = cooldown_left(cand)
+    if wait:
+        raise HTTPException(status_code=429, detail=f"retry in {wait}s")
+    issue_verification(session, cand)
+    session.commit()
+    return {"email_verified": False, "sent": True}
 
 
 def _expire_if_needed(session: Session, attempt: AssessmentAttempt) -> bool:
@@ -278,6 +310,7 @@ def _candidate_me(session: Session, cand: Candidate) -> dict[str, Any]:
         "id": cand.id,
         "full_name": cand.full_name,
         "email": cand.email,  # own data: the candidate may see it
+        "email_verified": cand.email_verified,
         "phone": cand.phone,
         "specialization": spec.code if spec else None,
         "claimed_grade": cand.claimed_grade,

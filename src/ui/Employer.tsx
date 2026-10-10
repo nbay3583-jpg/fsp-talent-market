@@ -154,9 +154,15 @@ function CandidatePanel({ session, id, need, close }: { session: Session; id: nu
           {d.skills.map((s) => (
             <tr key={s.skill}><td>{skillName(s.skill)}</td><td>
               {s.verified_level ? <Badge tone="ok">подтверждено оценкой: {GRADE_RU[s.verified_level]}</Badge> : s.claimed_only ? <Badge tone="muted">только заявлено</Badge> : null}
-              {s.has_professional_experience && <Badge tone="warn">опыт</Badge>}
+              {s.has_professional_experience && <Badge tone="muted">опыт (не подтверждён)</Badge>}
               {s.fsp_achievements.map((a) => <Badge key={a} tone="info">ФСП: {a}</Badge>)}</td></tr>))}
         </tbody></table>)}
+      {d.work_experience && d.work_experience.length > 0 && (
+        <>
+          <h4>Заявленный опыт работы <Badge tone="muted">не подтверждён</Badge></h4>
+          <ul>{d.work_experience.map((e, i) => (
+            <li key={i}>{e.position}, {e.company} · {e.start_date} — {e.end_date ?? "по настоящее время"}{e.stack.length > 0 && ` · ${e.stack.map((s) => skillName(s)).join(", ")}`}</li>))}</ul>
+        </>)}
       {!d.has_fsp && <p className="muted">Истории ФСП нет — это не снижает грейд кандидата.</p>}
       <ContactBox unlocked={d.contact_status === "UNLOCKED"} contacts={d.contacts} />
       {sent ? <p className="ok" role="status">Приглашение отправлено ({STATUS_RU[sent.status]}). Открытие контактов — только после согласия кандидата.</p>

@@ -25,6 +25,16 @@ export default function App() {
     return () => { cancelled = true; };
   }, []);
 
+  const [notice, setNotice] = useState("");
+  useEffect(() => {  // link from the confirmation email: /?verify_email=<token>
+    const token = new URLSearchParams(window.location.search).get("verify_email");
+    if (!token) return;
+    api("/api/auth/verify-email", { body: { token } })
+      .then(() => setNotice("Email подтверждён. Теперь можно публиковать профиль для подбора."))
+      .catch(() => setNotice("Ссылка подтверждения недействительна или устарела. Запросите новую в профиле."))
+      .finally(() => window.history.replaceState(null, "", window.location.pathname));
+  }, []);
+
   const signIn = (s: Session | null) => { saveSession(s); setSession(s); setView("app"); };
 
   return (
@@ -40,6 +50,7 @@ export default function App() {
         </div>
       </header>
       <main>
+        {notice && <p className="ok" role="status">{notice}</p>}
         {health === "unavailable" && <ErrorBox message="Система недоступна. Проверьте, что сервис запущен (docker compose up)." />}
         {view === "validation" ? <Validation /> : !session ? <Login demo={demo} onSession={signIn} /> :
           session.role === "candidate" ? <CandidateApp session={session} demoMode={demo.demo_mode} /> : <EmployerApp session={session} />}

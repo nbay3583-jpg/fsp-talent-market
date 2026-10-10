@@ -7,7 +7,7 @@ import {
 import { ContactBox } from "./ui";
 
 interface Me {
-  id: number; full_name: string; email: string; phone: string | null; specialization: string | null;
+  id: number; full_name: string; email: string; email_verified: boolean; phone: string | null; specialization: string | null;
   claimed_grade: string | null; verification_status: string; verified_grade: string | null;
   preferences: {
     salary_min: number | null; salary_type: string | null; work_formats: string[]; location: string | null;
@@ -28,16 +28,20 @@ interface Profile {
   skills: {
     skill: string; name: string; claimed_level: string | null; claim_source: string; verified_level: string | null;
     verified_sublevel: string | null;
-    evidence: { type: string; strength: string; level: string | null; title: string | null }[];
+    confirmed: boolean;
+    evidence: { type: string; confirmed: boolean; level: string | null; title: string | null }[];
   }[];
   fsp: { has_history: boolean; evidence_items: number };
 }
 
 const EVIDENCE_RU: Record<string, string> = {
   CORE_ASSESSMENT: "Основная оценка компетенций", TECHNOLOGY_ASSESSMENT: "Оценка по технологии",
-  PROFESSIONAL_EXPERIENCE: "Профессиональный опыт", FSP_ACHIEVEMENT: "Достижение ФСП", RECENT_CHALLENGE: "Свежее задание",
+  PROFESSIONAL_EXPERIENCE: "Опыт из резюме", FSP_ACHIEVEMENT: "Достижение ФСП", RECENT_CHALLENGE: "Свежее задание",
 };
-const STRENGTH_RU: Record<string, string> = { HIGH: "высокая", MEDIUM: "средняя", LOW: "низкая" };
+interface Job {
+  id: number; company: string; position: string; start_date: string; end_date: string | null;
+  stack: string[]; tasks: string; projects: string; achievements: string;
+}
 const SOURCE_RU: Record<string, string> = {
   self_reported: "заявлено кандидатом", core_assessment: "создано тестом", fsp: "из данных ФСП", experience: "опыт",
 };
@@ -60,6 +64,87 @@ export default function CandidateApp({ session, demoMode }: { session: Session; 
       {tab === "evidence" && <EvidenceTab session={session} />}
       {tab === "invitations" && <InvitationsTab session={session} />}
     </>
+  );
+}
+
+function EmailBanner({ session }: { session: Session }) {
+  const [msg, setMsg] = useState("");
+  const resend = async () => {
+    try {
+      await api("/api/candidates/me/email/resend", { method: "POST", token: session.token });
+      setMsg("Письмо отправлено. Перейдите по ссылке из письма.");
+    } catch (e) { setMsg((e as Error).message); }
+  };
+  return (
+    <div className="warn">
+      <p>Email не подтверждён: до подтверждения профиль нельзя опубликовать для подбора.</p>
+      <button onClick={resend}>Отправить письмо ещё раз</button>
+      {msg && <p role="status">{msg}</p>}
+    </div>
+  );
+}
+
+const EMPTY_JOB = { company: "", position: "", start_date: "", end_date: "", stack: [] as string[], tasks: "", projects: "", achievements: "" };
+
+function ExperienceCard({ session, skills }: { session: Session; skills: { code: string; name: string }[] }) {
+  const [jobs, setJobs] = useState<Job[] | null>(null);
+  const [f, setF] = useState(EMPTY_JOB);
+  const [editing, setEditing] = useState<number | null>(null);
+  const [err, setErr] = useState("");
+  const load = useCallback(() => {
+    api<{ items: Job[] }>("/api/candidates/me/experience", { token: session.token }).then((r) => setJobs(r.items)).catch((e: Error) => setErr(e.message));
+  }, [session.token]);
+  useEffect(load, [load]);
+  const save = async () => {
+    setErr("");
+    const body = { ...f, end_date: f.end_date || null };
+    try {
+      if (editing === null) await api("/api/candidates/me/experience", { token: session.token, body });
+      else await api(`/api/candidates/me/experience/${editing}`, { method: "PATCH", token: session.token, body });
+      setF(EMPTY_JOB); setEditing(null); load();
+    } catch (e) { setErr((e as Error).message); }
+  };
+  const remove = async (id: number) => {
+    try { await api(`/api/candidates/me/experience/${id}`, { method: "DELETE", token: session.token }); load(); }
+    catch (e) { setErr((e as Error).message); }
+  };
+  const edit = (j: Job) => { setEditing(j.id); setF({ ...j, end_date: j.end_date ?? "" }); };
+  const toggle = (code: string) => setF({ ...f, stack: f.stack.includes(code) ? f.stack.filter((x) => x !== code) : [...f.stack, code] });
+  return (
+    <Card title="Опыт работы" aside={<Badge tone="muted">не подтверждено платформой</Badge>}>
+      <p className="muted">Опыт из резюме — это контекст для подбора. Он не подтверждает навыки и не меняет грейд: подтверждение даёт только оценка и достижения ФСП.</p>
+      {jobs && jobs.length === 0 && <Empty>Опыт пока не добавлен.</Empty>}
+      {jobs?.map((j) => (
+        <div key={j.id} className="job">
+          <b>{j.position}</b>, {j.company} · {j.start_date} — {j.end_date ?? "по настоящее время"}
+          {j.stack.length > 0 && <div>{j.stack.map((s) => <Badge key={s} tone="muted">{skillName(s)}</Badge>)}</div>}
+          {j.tasks && <p>Задачи: {j.tasks}</p>}
+          {j.projects && <p>Проекты: {j.projects}</p>}
+          {j.achievements && <p>Достижения: {j.achievements}</p>}
+          <div className="row"><button onClick={() => edit(j)}>Изменить</button><button onClick={() => remove(j.id)}>Удалить</button></div>
+        </div>
+      ))}
+      <h4>{editing === null ? "Добавить место работы" : "Изменить место работы"}</h4>
+      <div className="row">
+        <label>Компания<input value={f.company} onChange={(e) => setF({ ...f, company: e.target.value })} /></label>
+        <label>Должность<input value={f.position} onChange={(e) => setF({ ...f, position: e.target.value })} /></label>
+      </div>
+      <div className="row">
+        <label>Начало<input type="date" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} /></label>
+        <label>Окончание (пусто — работаю сейчас)<input type="date" value={f.end_date} onChange={(e) => setF({ ...f, end_date: e.target.value })} /></label>
+      </div>
+      <fieldset><legend>Стек</legend>
+        {skills.map((s) => <label key={s.code} className="check"><input type="checkbox" checked={f.stack.includes(s.code)} onChange={() => toggle(s.code)} />{skillName(s.code, s.name)}</label>)}
+      </fieldset>
+      <label>Задачи<textarea value={f.tasks} onChange={(e) => setF({ ...f, tasks: e.target.value })} /></label>
+      <label>Проекты<textarea value={f.projects} onChange={(e) => setF({ ...f, projects: e.target.value })} /></label>
+      <label>Достижения<textarea value={f.achievements} onChange={(e) => setF({ ...f, achievements: e.target.value })} /></label>
+      {err && <ErrorBox message={err} />}
+      <div className="row">
+        <button className="primary" disabled={!f.company || !f.position || !f.start_date} onClick={save}>{editing === null ? "Добавить" : "Сохранить"}</button>
+        {editing !== null && <button onClick={() => { setEditing(null); setF(EMPTY_JOB); }}>Отмена</button>}
+      </div>
+    </Card>
   );
 }
 
@@ -95,7 +180,8 @@ function ProfileTab({ session }: { session: Session }) {
         phone: form.phone || null, salary_min: form.salary_min ? Number(form.salary_min) : null,
         salary_type: form.salary_min ? form.salary_type : null, work_formats: form.formats.length ? form.formats : null,
         location: form.location || null, available_in_days: form.available_in_days ? Number(form.available_in_days) : null,
-        profile_visible: form.visible, open_to_invitations: form.open } });
+        ...(me.email_verified || !form.visible ? { profile_visible: form.visible } : {}),
+        open_to_invitations: form.open } });
       setSaved(true);
     } catch (e) { setErr((e as Error).message); }
   };
@@ -105,6 +191,7 @@ function ProfileTab({ session }: { session: Session }) {
         <p className="muted">Заявленный грейд — это заявка. Подтверждённый грейд платформы определяет только основная оценка компетенций: не резюме, не достижения ФСП и не вакансия.</p>
         <label>Имя<input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} /></label>
         <label>Email (виден только вам)<input value={me.email} disabled /></label>
+        {me.email_verified ? <p className="ok">Email подтверждён.</p> : <EmailBanner session={session} />}
         <label>Телефон (скрыт до вашего согласия)<input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></label>
         <div className="row">
           <label>Специализация
@@ -120,6 +207,7 @@ function ProfileTab({ session }: { session: Session }) {
         </div>
         <p className="muted">Полная оценка реализована для Backend / Python.</p>
       </Card>
+      <ExperienceCard session={session} skills={catalog.skills} />
       <Card title="Предпочтения для подбора">
         <div className="row">
           <label>Минимальная зарплата, ₽<input inputMode="numeric" value={form.salary_min} onChange={(e) => set("salary_min", e.target.value.replace(/\D/g, ""))} /></label>
@@ -287,7 +375,7 @@ function EvidenceTab({ session }: { session: Session }) {
                 <td><b>{skillName(s.skill, s.name)}</b></td>
                 <td>{s.claimed_level ? GRADE_RU[s.claimed_level] : "—"}<br /><span className="muted">{SOURCE_RU[s.claim_source] ?? s.claim_source}</span></td>
                 <td>{s.evidence.length === 0 ? <span className="muted">нет подтверждений</span> : s.evidence.map((e, i) => (
-                  <div key={i}><Badge tone={e.type === "FSP_ACHIEVEMENT" ? "info" : "ok"}>{EVIDENCE_RU[e.type] ?? e.type}</Badge> сила: {STRENGTH_RU[e.strength] ?? e.strength}{e.title ? ` · ${e.title}` : ""}</div>
+                  <div key={i}><Badge tone={e.confirmed ? (e.type === "FSP_ACHIEVEMENT" ? "info" : "ok") : "muted"}>{e.confirmed ? "Подтверждено" : "Не подтверждено"}</Badge> {EVIDENCE_RU[e.type] ?? e.type}{e.title ? ` · ${e.title}` : ""}</div>
                 ))}</td>
                 <td>{s.verified_level ? <Badge tone="ok">{GRADE_RU[s.verified_level]} {s.verified_sublevel}</Badge> : <Badge tone="muted">не подтверждён</Badge>}</td>
               </tr>))}</tbody></table>

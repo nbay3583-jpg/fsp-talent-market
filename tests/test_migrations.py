@@ -40,10 +40,10 @@ def test_downgrade_removes_app_meta_table(tmp_path: Path) -> None:
     assert "app_meta" not in table_names
 
 
-def test_head_revision_is_0006(tmp_path: Path) -> None:
+def test_head_revision_is_0007(tmp_path: Path) -> None:
     config = _build_config(tmp_path)
     script_dir = ScriptDirectory.from_config(config)
-    assert script_dir.get_heads() == ["0006"]
+    assert script_dir.get_heads() == ["0007"]
 
 
 def test_domain_tables_created_and_removed(tmp_path: Path) -> None:

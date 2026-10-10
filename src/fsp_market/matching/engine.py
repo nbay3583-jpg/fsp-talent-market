@@ -18,6 +18,8 @@ from fsp_market.common.enums import (
     Sublevel,
     VerificationStatus,
 )
+import re
+
 from fsp_market.matching.facts import CandidateFacts, NeedSkillSpec, NeedSpec
 from fsp_market.matching.policy import DEFAULT_POLICY, MatchingPolicy
 from fsp_market.taxonomy.grades import GRADE_SUBLEVELS
@@ -149,6 +151,64 @@ def _freshness(latest: datetime | None, now: datetime, policy: MatchingPolicy) -
     return round(1.0 - (age - policy.freshness_full_days) / span, 4)
 
 
+_WORD = re.compile(r"[a-zа-яё0-9+#.]{4,}", re.IGNORECASE)
+_STOP = frozenset(
+    "this that with from have will your about работа работы работать требуется ищем нужен "
+    "опыт опыта опытом знание знания умение навыки компания команда разработчик разработка "
+    "backend python developer engineer middle junior senior senior".split()
+)
+
+
+def _words(text: str) -> set[str]:
+    return {w.lower().strip(".") for w in _WORD.findall(text)} - _STOP
+
+
+def context_fit(need: NeedSpec, c: CandidateFacts, now: datetime) -> tuple[float, list[Reason]]:
+    """Explainable overlap between the candidate's DECLARED jobs and the need: skills in the job
+    stack (weighted by the need) and domain words shared with the vacancy text. Always labelled as
+    not confirmed by the platform; it never replaces verification."""
+    if not c.experience or not need.skills:
+        return 0.0, []
+    total_w = sum(s.weight for s in need.skills) or 1.0
+    stacks = {code for e in c.experience for code in e.stack}
+    hit = [s for s in need.skills if s.code in stacks]
+    stack_score = sum(s.weight for s in hit) / total_w
+    need_words = _words(f"{need.title} {need.description}") - {s.code.lower() for s in need.skills}
+    have_words = set().union(*(_words(e.text) for e in c.experience))
+    shared = sorted(need_words & have_words)
+    kw_score = min(1.0, len(shared) / min(len(need_words), 5)) if need_words else 0.0
+    # recent jobs count fully, jobs ended long ago lose weight (same horizon as freshness)
+    latest_end = max((e.end or now.date()) for e in c.experience)
+    recency = 1.0 if (now.date() - latest_end).days <= 730 else 0.5
+    score = round(min(1.0, (0.7 * stack_score + 0.3 * kw_score) * recency), 4)
+    reasons: list[Reason] = []
+    if hit:
+        job = next(e for e in c.experience if set(e.stack) & {s.code for s in hit})
+        reasons.append(
+            Reason(
+                "CONTEXT_FIT",
+                f"В заявленном опыте («{job.position}», {job.company}) совпадают технологии "
+                f"вакансии: {', '.join(sorted(s.code for s in hit))} — не подтверждено платформой",
+            )
+        )
+    if shared:
+        reasons.append(
+            Reason(
+                "CONTEXT_TASKS",
+                f"В описании задач и проектов есть слова из вакансии: {', '.join(shared[:5])} "
+                "— не подтверждено платформой",
+            )
+        )
+    if not hit and not shared:
+        reasons.append(
+            Reason(
+                "CONTEXT_NO_OVERLAP",
+                "Заявленный опыт работы не пересекается с технологиями и задачами вакансии",
+            )
+        )
+    return score, reasons
+
+
 def requirement_fit(
     need: NeedSpec,
     c: CandidateFacts,
@@ -215,14 +275,14 @@ def requirement_fit(
             why.append(
                 Reason(
                     "SKILL_EXPERIENCE",
-                    f"{spec.code}: есть профессиональный опыт ({tag})",
+                    f"{spec.code}: заявлен опыт, не подтверждён ({tag})",
                     spec.code,
                 )
             )
             gaps.append(
                 Reason(
                     "WEAK_EVIDENCE",
-                    f"{spec.code}: подтверждение слабое — только опыт, без проверки платформой",
+                    f"{spec.code}: не подтверждён — опыт из резюме платформа не проверяла",
                     spec.code,
                 )
             )
@@ -270,7 +330,11 @@ def requirement_fit(
     if shared:
         why.append(Reason("WORK_FORMAT_MATCH", f"Формат работы совпадает: {', '.join(shared)}"))
 
+    ctx, ctx_reasons = context_fit(need, c, now)
+    for r in ctx_reasons:
+        (gaps if r.code == "CONTEXT_NO_OVERLAP" else why).append(r)
     components = {
+        "context": ctx,
         "skill_coverage": round(cov / total_w, 4),
         "assessment": assessment,
         "professional": round(prof / total_w, 4),

@@ -75,9 +75,13 @@ def build_evidence_profile(session: Session, candidate_id: int) -> dict[str, Any
                 "claim_source": claim.source,
                 "verified_level": _value(verified.level) if verified else None,
                 "verified_sublevel": _value(verified.sublevel) if verified else None,
+                "confirmed": verified is not None
+                or any(e.evidence_type == EvidenceType.FSP_ACHIEVEMENT for e in evidence),
                 "evidence": [
                     {
                         "type": _value(e.evidence_type),
+                        # binary for the UI; `strength` stays an internal ranking attribute
+                        "confirmed": e.evidence_type != EvidenceType.PROFESSIONAL_EXPERIENCE,
                         "strength": _value(e.strength),
                         "level": _value(e.level),
                         "title": e.title,

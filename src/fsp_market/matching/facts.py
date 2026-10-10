@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -16,6 +16,7 @@ from fsp_market.common.enums import (
     Sublevel,
     VerificationStatus,
 )
+from fsp_market.experience.models import WorkExperience
 from fsp_market.matching.models import EmployerNeed, NeedSkill
 from fsp_market.skills.models import Skill, SkillClaim, SkillEvidence, VerifiedSkillLevel
 
@@ -29,6 +30,18 @@ class SkillFacts:
     experience: bool = False  # PROFESSIONAL_EXPERIENCE evidence
     fsp_titles: tuple[str, ...] = ()
     latest_evidence_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class ExperienceFacts:
+    """A declared job (never verified): used only for the explainable Experience Context Fit."""
+
+    company: str
+    position: str
+    stack: tuple[str, ...]
+    text: str  # tasks + projects + achievements
+    start: date
+    end: date | None
 
 
 @dataclass(frozen=True)
@@ -47,6 +60,7 @@ class CandidateFacts:
     profile_visible: bool
     open_to_invitations: bool
     skills: dict[str, SkillFacts] = field(default_factory=dict)
+    experience: tuple[ExperienceFacts, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -68,6 +82,8 @@ class NeedSpec:
     location: str | None
     max_start_days: int | None
     skills: tuple[NeedSkillSpec, ...]
+    title: str = ""
+    description: str = ""
 
 
 def load_need_spec(session: Session, need: EmployerNeed) -> NeedSpec:
@@ -87,6 +103,8 @@ def load_need_spec(session: Session, need: EmployerNeed) -> NeedSpec:
         work_formats=tuple(need.work_formats),
         location=need.location,
         max_start_days=need.max_start_days,
+        title=need.title,
+        description=need.description or "",
         skills=tuple(
             NeedSkillSpec(code, ns.importance == "REQUIRED", ns.weight) for ns, code in rows
         ),
@@ -132,6 +150,23 @@ def load_candidate_facts(
                 select(VerifiedSkillLevel).where(VerifiedSkillLevel.claim_id.in_(list(by_claim)))
             ):
                 by_claim[v.claim_id]["verified"] = (Grade(v.level), v.sublevel)
+    exp: dict[int, list[ExperienceFacts]] = {i: [] for i in ids}
+    if ids:
+        for w in session.scalars(
+            select(WorkExperience)
+            .where(WorkExperience.candidate_id.in_(ids))
+            .order_by(WorkExperience.start_date.desc(), WorkExperience.id)
+        ):
+            exp[w.candidate_id].append(
+                ExperienceFacts(
+                    company=w.company,
+                    position=w.position,
+                    stack=tuple(w.stack or ()),
+                    text=" ".join((w.position, w.tasks, w.projects, w.achievements)),
+                    start=w.start_date,
+                    end=w.end_date,
+                )
+            )
     out = {}
     for c in candidates:
         sk = {}
@@ -161,5 +196,6 @@ def load_candidate_facts(
             profile_visible=c.profile_visible,
             open_to_invitations=c.open_to_invitations,
             skills=sk,
+            experience=tuple(exp[c.id]),
         )
     return out

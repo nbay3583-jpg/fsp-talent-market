@@ -203,6 +203,18 @@ def public_candidate(c: Candidate, f: CandidateFacts) -> dict[str, Any]:
         ),
         "available_in_days": c.available_in_days,
         "has_fsp": any(s.fsp_titles for s in f.skills.values()),
+        # declared job history: context only, never verification
+        "work_experience": [
+            {
+                "position": e.position,
+                "company": e.company,
+                "start_date": e.start.isoformat(),
+                "end_date": e.end.isoformat() if e.end else None,
+                "stack": list(e.stack),
+                "confirmed": False,
+            }
+            for e in f.experience
+        ],
         "skills": [
             {
                 "skill": s.code,

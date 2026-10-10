@@ -438,6 +438,7 @@ def seed_matching_demo(
             work_formats=fmts,
             location=loc,
             profile_visible=vis,
+            email_verified=True,
             open_to_invitations=openi,
             available_in_days=14,
             phone=f"+7-900-000-{len(key):02d}{ord(key[0]):03d}",

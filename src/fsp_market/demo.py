@@ -93,6 +93,7 @@ def seed(session: Session) -> dict:
                 location="Moscow",
                 available_in_days=14,
                 profile_visible=True,
+                email_verified=True,
                 open_to_invitations=True,
             )
             session.add(row)
