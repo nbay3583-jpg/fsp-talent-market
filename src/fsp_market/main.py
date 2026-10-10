@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from fsp_market import __version__
+from fsp_market.api.auth_routes import router as auth_router
 from fsp_market.api.demo_routes import router as demo_router
 from fsp_market.api.employer_routes import router as employer_router
 from fsp_market.api.invitation_routes import router as invitation_router
@@ -49,6 +50,7 @@ def health() -> HealthResponse:
 
 
 app.include_router(api_router)
+app.include_router(auth_router)
 app.include_router(employer_router)
 app.include_router(invitation_router)
 app.include_router(experience_router)

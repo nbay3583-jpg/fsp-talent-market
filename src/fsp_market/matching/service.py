@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, object_session
 
 from fsp_market.candidates.models import Candidate
 from fsp_market.common.enums import SkillImportance, Sublevel, VerificationStatus
@@ -188,10 +188,13 @@ def _display_name(full_name: str) -> str:
 
 def public_candidate(c: Candidate, f: CandidateFacts) -> dict[str, Any]:
     """Employer-safe view: NO email, phone, full name or FSP member id."""
+    sess = object_session(c)
+    spec = sess.get(Specialization, c.specialization_id) if sess and c.specialization_id else None
     return {
         "candidate_id": c.id,
         "display_name": _display_name(c.full_name),
         "specialization_id": c.specialization_id,
+        "specialization": spec.name if spec else None,
         "claimed_grade": c.claimed_grade,
         "verification_status": c.verification_status,
         "verified_grade": c.verified_grade,

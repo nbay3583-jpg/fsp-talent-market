@@ -14,6 +14,9 @@ export interface SkillView {
 export interface PublicCandidate {
   candidate_id: number;
   display_name: string;
+  specialization?: string | null;
+  invitation_id?: number | null;
+  invitation_status?: string | null;
   claimed_grade: string | null;
   verification_status: string;
   verified_grade: string | null;
@@ -50,6 +53,8 @@ export interface Contacts {
 export interface Invitation {
   id: number;
   candidate_id?: number;
+  need_id?: number | null;
+  candidate?: { display_name: string; specialization: string | null; claimed_grade: string | null; verification_status: string; verified_grade: string | null; verified_sublevel: string | null } | null;
   company: string;
   role: string;
   description: string;
@@ -85,4 +90,5 @@ export interface Need {
   salary_type: "GROSS" | "NET";
   work_formats: string[];
   location: string | null;
+  description?: string | null;
 }

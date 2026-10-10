@@ -7,6 +7,7 @@ from typing import Any, Self
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from fsp_market.api.deps import CandidateDep, EmployerDep, SessionDep
@@ -15,6 +16,7 @@ from fsp_market.invitations import service
 from fsp_market.invitations.models import Invitation
 
 router = APIRouter(prefix="/api", tags=["invitations"])
+_TEMPLATES = {"работа в команде", "team work", "работа в команде мечты"}
 
 
 class InvitationIn(BaseModel):
@@ -23,17 +25,21 @@ class InvitationIn(BaseModel):
     match_run_id: int | None = None
     company: str | None = Field(default=None, max_length=255)
     role: str | None = Field(default=None, max_length=255)
-    description: str = Field(min_length=1)
+    description: str = Field(min_length=20, max_length=4000)
     salary_from: int = Field(gt=0)
     salary_to: int = Field(gt=0)
     salary_type: SalaryType  # GROSS / NET must be stated explicitly
     work_format: WorkFormat
-    message: str = Field(min_length=1)
+    message: str = Field(min_length=1, max_length=2000)
 
     @model_validator(mode="after")
     def _range(self) -> Self:
         if self.salary_to < self.salary_from:
             raise ValueError("salary_to must be >= salary_from")
+        if self.description.strip().casefold().rstrip(".!") in _TEMPLATES:
+            raise ValueError("description must describe tasks, requirements and conditions")
+        if self.need_id is None and not (self.role or "").strip():
+            raise ValueError("role is required for a standalone invitation")
         return self
 
 
@@ -61,7 +67,13 @@ def send(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except service.InvitationError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError as exc:  # concurrent duplicate caught by the partial unique index
+        session.rollback()
+        raise HTTPException(
+            status_code=409, detail="an active invitation to this candidate already exists"
+        ) from exc
     return service.employer_view(session, inv)
 
 

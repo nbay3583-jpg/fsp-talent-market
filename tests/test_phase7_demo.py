@@ -115,7 +115,7 @@ def test_canonical_demo_accept_path(env):
             "candidate_id": cid,
             "need_id": need["id"],
             "match_run_id": run["run_id"],
-            "description": "FastAPI platform team",
+            "description": "Разработка и поддержка backend-сервисов на FastAPI и PostgreSQL в продуктовой команде",
             "salary_from": 220000,
             "salary_to": 250000,
             "salary_type": "GROSS",
@@ -173,7 +173,7 @@ def test_canonical_demo_decline_path_and_no_fsp_candidate(env):
         json={
             "candidate_id": cid,
             "need_id": need["id"],
-            "description": "d",
+            "description": "Разработка и поддержка backend-сервисов на FastAPI и PostgreSQL в продуктовой команде",
             "salary_from": 210000,
             "salary_to": 240000,
             "salary_type": "NET",

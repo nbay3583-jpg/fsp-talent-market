@@ -36,6 +36,12 @@ export default function App() {
       .finally(() => window.history.replaceState(null, "", window.location.pathname));
   }, []);
 
+  useEffect(() => {
+    const onExpired = () => { saveSession(null); setSession(null); setNotice("Сессия истекла. Войдите снова."); };
+    window.addEventListener("fsp:unauthorized", onExpired);
+    return () => window.removeEventListener("fsp:unauthorized", onExpired);
+  }, []);
+
   const surveyToken = new URLSearchParams(window.location.search).get("team_survey");
   const signIn = (s: Session | null) => { saveSession(s); setSession(s); setView("app"); };
 
@@ -64,7 +70,7 @@ export default function App() {
 function Login({ demo, onSession }: { demo: DemoConfig; onSession: (s: Session) => void }) {
   const [err, setErr] = useState("");
   const [mode, setMode] = useState<Role>("candidate");
-  const [f, setF] = useState({ email: "", name: "", grade: "MIDDLE", company: "" });
+  const [f, setF] = useState({ email: "", name: "", grade: "MIDDLE", company: "", password: "" });
   const enter = async (a: DemoAccount) => {
     setErr("");
     try {
@@ -76,10 +82,10 @@ function Login({ demo, onSession }: { demo: DemoConfig; onSession: (s: Session) 
     setErr("");
     try {
       if (mode === "candidate") {
-        const r = await api<{ candidate_id: number; access_token: string }>("/api/candidates", { body: { email: f.email, full_name: f.name, claimed_grade: f.grade } });
+        const r = await api<{ candidate_id: number; access_token: string }>("/api/candidates", { body: { email: f.email, full_name: f.name, claimed_grade: f.grade, password: f.password } });
         onSession({ role: "candidate", token: r.access_token, id: r.candidate_id });
       } else {
-        const r = await api<{ employer_id: number; access_token: string }>("/api/employers", { body: { company_name: f.company, contact_email: f.email } });
+        const r = await api<{ employer_id: number; access_token: string }>("/api/employers", { body: { company_name: f.company, contact_email: f.email, password: f.password } });
         onSession({ role: "employer", token: r.access_token, id: r.employer_id });
       }
     } catch (e) { setErr((e as Error).message); }
@@ -129,6 +135,9 @@ function Login({ demo, onSession }: { demo: DemoConfig; onSession: (s: Session) 
         })}</ul>)}
       <div className="scenario"><h4>Сценарий демонстрации</h4><p>Основной сценарий: Алексей Демо → оценка компетенций → профиль подтверждённых компетенций → подключение ФСП ID → Демо-компания → потребность → подбор → приглашение → принятие → открытие контактов.</p></div>
 
+      <h2 className="section-title">Вход в аккаунт</h2>
+      <SignIn onSession={onSession} demoMode={demo.demo_mode} />
+
       <h2 className="section-title">Регистрация</h2>
       <div className="signup" ref={signup}>
         <Card>
@@ -137,10 +146,60 @@ function Login({ demo, onSession }: { demo: DemoConfig; onSession: (s: Session) 
           {mode === "candidate" ? <label>Имя<input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label> : <label>Компания<input value={f.company} onChange={(e) => setF({ ...f, company: e.target.value })} /></label>}
           <label>Email<input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
           {mode === "candidate" && <label>Желаемый грейд<select value={f.grade} onChange={(e) => setF({ ...f, grade: e.target.value })}>{Object.entries(GRADE_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>}
-          <button className="primary" disabled={!f.email || (mode === "candidate" ? !f.name : !f.company)} onClick={register}>Создать аккаунт</button>
-          <p className="muted">В демо вход выдаётся при регистрации (без паролей); в боевой версии вход будет через ФСП ID.</p>
+          <label>Пароль (не короче 8 символов)<input type="password" autoComplete="new-password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></label>
+          <button className="primary" disabled={!f.email || f.password.length < 8 || (mode === "candidate" ? !f.name : !f.company)} onClick={register}>Создать аккаунт</button>
+          <p className="muted">Позже вы сможете войти по email и паролю или по одноразовому коду из письма.</p>
         </Card>
       </div>
+    </div>
+  );
+}
+
+type Step = "password" | "code" | "verify";
+
+/** Вход в существующий аккаунт: пароль либо одноразовый код из письма (он же восстановление доступа). */
+function SignIn({ onSession, demoMode }: { onSession: (s: Session) => void; demoMode: boolean }) {
+  const [role, setRole] = useState<Role>("candidate");
+  const [step, setStep] = useState<Step>("password");
+  const [f, setF] = useState({ email: "", password: "", code: "", newPassword: "" });
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+  type Out = { role: Role; id: number; access_token: string };
+  const done = (r: Out) => onSession({ role: r.role, token: r.access_token, id: r.id });
+  const wrap = async (fn: () => Promise<void>) => { setErr(""); try { await fn(); } catch (e) { setErr((e as Error).message === "invalid credentials" ? "Неверный email или пароль." : (e as Error).message); } };
+  const login = () => wrap(async () => done(await api<Out>("/api/auth/login", { body: { role, email: f.email, password: f.password } })));
+  const request = () => wrap(async () => {
+    const r = await api<{ demo_code?: string }>("/api/auth/code/request", { body: { role, email: f.email } });
+    setMsg(r.demo_code ? `Демо-режим: почта не настроена, код ${r.demo_code}` : "Если такой аккаунт есть, мы отправили код на email. Он действует 15 минут.");
+    setStep("verify");
+  });
+  const verify = () => wrap(async () => done(await api<Out>("/api/auth/code/verify", { body: { role, email: f.email, code: f.code, ...(f.newPassword ? { new_password: f.newPassword } : {}) } })));
+  return (
+    <div className="signup">
+      <Card>
+        {err && <ErrorBox message={err} />}
+        <div className="row">
+          <button className={role === "candidate" ? "tab active" : "tab"} onClick={() => setRole("candidate")}>Кандидат</button>
+          <button className={role === "employer" ? "tab active" : "tab"} onClick={() => setRole("employer")}>Работодатель</button>
+        </div>
+        <label>Email<input type="email" autoComplete="username" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
+        {step === "password" ? (
+          <>
+            <label>Пароль<input type="password" autoComplete="current-password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></label>
+            <button className="primary" disabled={!f.email || !f.password} onClick={login}>Войти</button>
+            <button className="link" disabled={!f.email} onClick={request}>Войти по коду из письма / забыли пароль</button>
+          </>
+        ) : (
+          <>
+            {msg && <p className="muted" role="status">{msg}</p>}
+            <label>Код из письма<input inputMode="numeric" maxLength={6} value={f.code} onChange={(e) => setF({ ...f, code: e.target.value.replace(/\D/g, "") })} /></label>
+            <label>Новый пароль (необязательно, не короче 8 символов)<input type="password" autoComplete="new-password" value={f.newPassword} onChange={(e) => setF({ ...f, newPassword: e.target.value })} /></label>
+            <button className="primary" disabled={f.code.length !== 6 || (!!f.newPassword && f.newPassword.length < 8)} onClick={verify}>Подтвердить и войти</button>
+            <button className="link" onClick={() => { setStep("password"); setMsg(""); }}>← Вход по паролю</button>
+          </>
+        )}
+        {demoMode && <p className="muted">Демо-аккаунты выше входят без пароля.</p>}
+      </Card>
     </div>
   );
 }

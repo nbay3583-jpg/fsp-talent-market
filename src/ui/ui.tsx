@@ -14,6 +14,21 @@ export const localizeReason = (r: { text: string; skill?: string | null }): stri
 const SUB_RU: Record<string, string> = { "1": "базовый", "2": "уверенный", "3": "сильный" };
 /** «M2 · уверенный»: подуровень внутри грейда определяет только тест. */
 export const subLabel = (s: string | null | undefined): string => (s ? `${s} · ${SUB_RU[s.slice(1)] ?? ""}` : "—");
+/** Грейд + подуровень + специализация одной строкой: «Backend / Python · Middle (заявлено) · подтверждено Middle M2 · уверенный». */
+export function gradeLine(c: { specialization?: string | null; claimed_grade: string | null; verified_grade: string | null; verified_sublevel: string | null }): string {
+  const parts = [c.specialization ?? "Специализация не указана", `${c.claimed_grade ? GRADE_RU[c.claimed_grade] : "—"} (заявлено)`];
+  if (c.verified_grade) parts.push(`подтверждено ${GRADE_RU[c.verified_grade]} ${subLabel(c.verified_sublevel)}`);
+  return parts.join(" · ");
+}
+export const OPEN_INVITE = ["SENT", "VIEWED", "ACCEPTED", "CONTACTS_UNLOCKED"];
+const INVITE_STATUS_RU: Record<string, string> = {
+  SENT: "Приглашение отправлено", VIEWED: "Приглашение просмотрено", ACCEPTED: "Приглашение принято",
+  CONTACTS_UNLOCKED: "Принято · контакты открыты", DECLINED: "Приглашение отклонено",
+};
+export function InviteBadge({ status }: { status?: string | null }) {
+  if (!status) return <Badge tone="muted">приглашения нет</Badge>;
+  return <Badge tone={status === "DECLINED" ? "bad" : status === "SENT" || status === "VIEWED" ? "info" : "ok"}>{INVITE_STATUS_RU[status] ?? status}</Badge>;
+}
 export const SALARY_TYPE_RU: Record<string, string> = { GROSS: "До налогов (GROSS)", NET: "На руки (NET)" };
 export const FORMAT_RU: Record<string, string> = { REMOTE: "Удалённо", OFFICE: "Офис", HYBRID: "Гибрид" };
 export const STATUS_RU: Record<string, string> = {

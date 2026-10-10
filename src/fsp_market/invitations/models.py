@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fsp_market.common.enums import InvitationStatus, SalaryType, WorkFormat
@@ -14,6 +14,17 @@ class Invitation(Base):
     """Salary-backed, addressed offer. Salary is mandatory and visible to the candidate up front."""
 
     __tablename__ = "invitations"
+    __table_args__ = (
+        # backend-level duplicate guard: one live invitation per employer+candidate pair
+        Index(
+            "uq_invitations_one_open_per_pair",
+            "employer_id",
+            "candidate_id",
+            unique=True,
+            postgresql_where=text("status IN ('SENT','VIEWED','ACCEPTED','CONTACTS_UNLOCKED')"),
+            sqlite_where=text("status IN ('SENT','VIEWED','ACCEPTED','CONTACTS_UNLOCKED')"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     employer_id: Mapped[int] = mapped_column(Integer, ForeignKey("employers.id"))

@@ -18,6 +18,7 @@ from fsp_market.candidates.models import Candidate
 from fsp_market.common.enums import VerificationStatus
 from fsp_market.config import get_settings
 from fsp_market.employers.models import Employer
+from fsp_market.invitations import service as invitation_service
 from fsp_market.matching import service as matching
 from fsp_market.matching.engine import hard_filter, requirement_fit
 from fsp_market.matching.facts import load_candidate_facts, load_need_spec
@@ -291,6 +292,9 @@ def employer_recommendations(
                 ],
             }
         )
+    invitation_service.annotate(
+        session, employer_id, [c["candidate"] for it in items for c in it["candidates"]]
+    )
     return {"items": items}
 
 
@@ -345,12 +349,15 @@ def list_favorites(employer_id: int = EmployerDep, session: Session = SessionDep
         )
     }
     facts = load_candidate_facts(session, list(cands.values()))
+    cards = [matching.public_candidate(cands[f.candidate_id], facts[f.candidate_id]) for f in favs if f.candidate_id in cands]
+    invitation_service.annotate(session, employer_id, cards)
+    by_id = {c["candidate_id"]: c for c in cards}
     return {
         "items": [
             {
                 "note": f.note,
                 "need_id": f.need_id,
-                "candidate": matching.public_candidate(cands[f.candidate_id], facts[f.candidate_id]),
+                "candidate": by_id[f.candidate_id],
             }
             for f in favs
             if f.candidate_id in cands

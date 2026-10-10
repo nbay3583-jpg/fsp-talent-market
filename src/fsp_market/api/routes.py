@@ -31,6 +31,7 @@ from fsp_market.assessments.service import (
     submit_answers,
     utcnow,
 )
+from fsp_market.auth.credentials import hash_password
 from fsp_market.auth.email_verification import confirm, cooldown_left, issue_verification
 from fsp_market.auth.tokens import create_token
 from fsp_market.candidates.models import Candidate
@@ -51,6 +52,7 @@ class RegisterIn(BaseModel):
     full_name: str = Field(min_length=1, max_length=255)
     specialization: str = "backend_python"
     claimed_grade: Grade
+    password: str | None = Field(default=None, min_length=8, max_length=200)  # enables password sign-in
 
 
 class StartIn(BaseModel):
@@ -149,6 +151,7 @@ def register(body: RegisterIn, session: Session = SessionDep) -> dict[str, Any]:
         full_name=body.full_name,
         specialization_id=spec.id,
         claimed_grade=body.claimed_grade,
+        password_hash=hash_password(body.password) if body.password else None,
     )
     session.add(candidate)
     try:

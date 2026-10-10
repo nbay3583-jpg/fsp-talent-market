@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type Session } from "./api";
 import type { Catalog, Need, PublicCandidate, Reason } from "./types";
-import { Badge, Card, COMPETENCY_RU, Empty, ErrorBox, FORMAT_RU, GRADE_RU, Loading, money, skillName } from "./ui";
+import { Badge, Card, COMPETENCY_RU, Empty, ErrorBox, FORMAT_RU, GRADE_RU, gradeLine, InviteBadge, Loading, money, skillName } from "./ui";
 
 interface Axis { key: string; label: string; low: string; high: string }
 interface Questions { axes: Axis[]; note: string; career_goals: Record<string, string> }
@@ -164,7 +164,7 @@ export function EmployerFit({ session, open }: { session: Session; open: (id: nu
         {favs!.length === 0 ? <Empty>Избранное пусто. Сохраняйте интерес в карточке кандидата — приглашение при этом не отправляется.</Empty> : favs!.map((f) => (
           <div key={f.candidate.candidate_id} className="job">
             <b>{f.candidate.display_name}</b> {f.candidate.verified_grade ? <Badge tone="ok">{GRADE_RU[f.candidate.verified_grade]} {f.candidate.verified_sublevel}</Badge> : <Badge tone="muted">не подтверждён</Badge>}
-            {f.candidate.work_formats.length > 0 && <> · {f.candidate.work_formats.map((x) => FORMAT_RU[x] ?? x).join(", ")}</>}
+            <p className="muted">{gradeLine(f.candidate)}{f.candidate.work_formats.length > 0 && <> · {f.candidate.work_formats.map((x) => FORMAT_RU[x] ?? x).join(", ")}</>} · <InviteBadge status={f.candidate.invitation_status} /></p>
             {f.note && <p>Заметка: {f.note}</p>}
             <div className="row"><button onClick={() => open(f.candidate.candidate_id, needs.find((n) => n.id === f.need_id) ?? null)}>Открыть карточку</button><button onClick={() => unfav(f.candidate.candidate_id)}>Убрать</button></div>
           </div>))}
@@ -173,7 +173,7 @@ export function EmployerFit({ session, open }: { session: Session; open: (id: nu
         <Card key={r.need_id} title={`Рекомендации: ${r.title}`}>
           {r.candidates.length === 0 ? <Empty>Подходящих кандидатов пока нет.</Empty> : r.candidates.map((c) => (
             <div key={c.candidate.candidate_id} className="job">
-              <b>{c.candidate.display_name}</b> · требования: {pct(c.requirement_fit)} · ожидания кандидата: {c.reverse_fit === null ? "Недостаточно данных" : pct(c.reverse_fit)}
+              <b>{c.candidate.display_name}</b> <span className="muted">{gradeLine(c.candidate)}</span> <InviteBadge status={c.candidate.invitation_status} /> · требования: {pct(c.requirement_fit)} · ожидания кандидата: {c.reverse_fit === null ? "Недостаточно данных" : pct(c.reverse_fit)}
               <Reasons why={c.why} gaps={c.gaps} />
               <button onClick={() => open(c.candidate.candidate_id, needs.find((n) => n.id === r.need_id) ?? null)}>Открыть карточку</button>
             </div>))}

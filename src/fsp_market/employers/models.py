@@ -3,10 +3,11 @@ from __future__ import annotations
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
+from fsp_market.auth.credentials import CredentialsMixin
 from fsp_market.db import Base
 
 
-class Employer(Base):
+class Employer(CredentialsMixin, Base):
     __tablename__ = "employers"
 
     id: Mapped[int] = mapped_column(primary_key=True)

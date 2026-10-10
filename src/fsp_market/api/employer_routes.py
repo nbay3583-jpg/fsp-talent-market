@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from fsp_market.api.deps import CandidateDep, EmployerDep, SessionDep
+from fsp_market.auth.credentials import hash_password
 from fsp_market.auth.tokens import create_token
 from fsp_market.common.enums import Grade, SalaryType, Sublevel, WorkFormat
 from fsp_market.config import get_settings
@@ -29,6 +30,7 @@ router = APIRouter(prefix="/api", tags=["employer"])
 class EmployerRegisterIn(BaseModel):
     company_name: str = Field(min_length=1, max_length=255)
     contact_email: str = Field(min_length=3, max_length=255)
+    password: str | None = Field(default=None, min_length=8, max_length=200)
 
 
 class NeedIn(BaseModel):
@@ -67,7 +69,11 @@ def _own_need(session: Session, need_id: int, employer_id: int) -> EmployerNeed:
 
 @router.post("/employers", status_code=201)
 def register_employer(body: EmployerRegisterIn, session: Session = SessionDep) -> dict[str, Any]:
-    employer = Employer(company_name=body.company_name, contact_email=body.contact_email)
+    employer = Employer(
+        company_name=body.company_name,
+        contact_email=body.contact_email,
+        password_hash=hash_password(body.password) if body.password else None,
+    )
     session.add(employer)
     try:
         session.commit()
@@ -156,7 +162,9 @@ def run_match(
     need = _own_need(session, need_id, employer_id)
     run = service.run_match(session, need)
     session.commit()
-    return service.run_results(session, run, limit=limit)
+    out = service.run_results(session, run, limit=limit)
+    _annotate(session, employer_id, [r["candidate"] for r in out["results"]])
+    return out
 
 
 @router.get("/employer/match-runs/{run_id}")
@@ -174,7 +182,7 @@ def get_match_run(
     if run is None:
         raise HTTPException(status_code=404, detail="match run not found")
     _own_need(session, run.need_id, employer_id)
-    return service.run_results(
+    out = service.run_results(
         session,
         run,
         limit=limit,
@@ -183,6 +191,8 @@ def get_match_run(
         verified_only=verified_only,
         skill=skill,
     )
+    _annotate(session, employer_id, [r["candidate"] for r in out["results"]])
+    return out
 
 
 @router.get("/employer/pool")
@@ -201,7 +211,7 @@ def pool(
     employer_id: int = EmployerDep,
     session: Session = SessionDep,
 ) -> dict[str, Any]:
-    return service.full_pool(
+    out = service.full_pool(
         session,
         specialization=specialization,
         grade=grade,
@@ -215,6 +225,12 @@ def pool(
         limit=limit,
         offset=offset,
     )
+    _annotate(session, employer_id, out["candidates"])
+    return out
+
+
+def _annotate(session: Session, employer_id: int, cards: list[dict[str, Any]]) -> None:
+    invitation_service.annotate(session, employer_id, cards)
 
 
 @router.get("/employer/candidates/{candidate_id}")
@@ -235,6 +251,7 @@ def candidate_detail(
         rev = reverse_for(session, session.get(Candidate, candidate_id), need)
         detail["compat"] = {"reverse_fit": rev["score"], "why": rev["why"],
                             "gaps": rev["gaps"], "work_style": rev["work_style"]}
+    _annotate(session, employer_id, [detail])
     contacts = invitation_service.unlocked_contacts(session, employer_id, candidate_id)
     detail["contact_status"] = "UNLOCKED" if contacts else "LOCKED"
     if contacts:  # only after the candidate accepted this employer's invitation

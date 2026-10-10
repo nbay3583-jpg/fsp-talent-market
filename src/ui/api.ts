@@ -64,6 +64,9 @@ export async function api<T>(
   } catch {
     /* empty body */
   }
+  if (res.status === 401 && opts.token) {
+    window.dispatchEvent(new Event("fsp:unauthorized"));  // сессия истекла: приложение вернёт на экран входа
+  }
   if (!res.ok) {
     throw new ApiError(res.status, describe((data as { detail?: unknown } | null)?.detail));
   }

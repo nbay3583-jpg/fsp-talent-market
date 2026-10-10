@@ -58,7 +58,7 @@ def employer(client, email):
 def invite_body(candidate_id, **kw):
     body = {
         "candidate_id": candidate_id,
-        "description": "Build FastAPI services",
+        "description": "Разработка и поддержка backend-сервисов на FastAPI и PostgreSQL в продуктовой команде",
         "salary_from": 220000,
         "salary_to": 250000,
         "salary_type": "GROSS",

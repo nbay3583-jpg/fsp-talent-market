@@ -188,10 +188,51 @@ def candidate_view(inv: Invitation) -> dict[str, Any]:
     }
 
 
+def invitation_statuses(session: Session, employer_id: int, candidate_ids: list[int]) -> dict[int, dict]:
+    """Latest invitation (id, status) of this employer per candidate, for pool/shortlist/profile."""
+    if not candidate_ids:
+        return {}
+    rows = session.scalars(
+        select(Invitation)
+        .where(Invitation.employer_id == employer_id, Invitation.candidate_id.in_(candidate_ids))
+        .order_by(Invitation.id)
+    )
+    return {r.candidate_id: {"invitation_id": r.id, "invitation_status": str(r.status)} for r in rows}
+
+
+def annotate(session: Session, employer_id: int, candidates: list[dict[str, Any]]) -> None:
+    """Adds invitation_id / invitation_status (or None) to public candidate dicts in place."""
+    found = invitation_statuses(session, employer_id, [c["candidate_id"] for c in candidates])
+    for c in candidates:
+        info = found.get(c["candidate_id"], {})
+        c["invitation_id"] = info.get("invitation_id")
+        c["invitation_status"] = info.get("invitation_status")
+
+
 def employer_view(session: Session, inv: Invitation) -> dict[str, Any]:
+    from fsp_market.matching.facts import load_candidate_facts
+    from fsp_market.matching.service import public_candidate
+
+    cand = session.get(Candidate, inv.candidate_id)
+    card = public_candidate(cand, load_candidate_facts(session, [cand])[cand.id]) if cand else None
     out = {
         "id": inv.id,
         "candidate_id": inv.candidate_id,
+        "candidate": (
+            {
+                k: card[k]
+                for k in (
+                    "display_name",
+                    "specialization",
+                    "claimed_grade",
+                    "verification_status",
+                    "verified_grade",
+                    "verified_sublevel",
+                )
+            }
+            if card
+            else None
+        ),
         "need_id": inv.need_id,
         **terms(inv),
         "status": inv.status,

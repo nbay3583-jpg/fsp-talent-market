@@ -77,7 +77,7 @@ detail = call("GET", f"/api/employer/candidates/{cid}?need_id={need['id']}", e)
 check(detail["contact_status"] == "LOCKED" and "alexey@demo.example" not in json.dumps(detail), "contacts hidden before acceptance")
 
 # invitation -> accept -> unlock
-inv = call("POST", "/api/employer/invitations", e, {"candidate_id": cid, "need_id": need["id"], "description": "FastAPI platform team", "salary_from": 220000,
+inv = call("POST", "/api/employer/invitations", e, {"candidate_id": cid, "need_id": need["id"], "description": "Разработка и поддержка backend-сервисов на FastAPI и PostgreSQL в продуктовой команде", "salary_from": 220000,
            "salary_to": 250000, "salary_type": "GROSS", "work_format": "REMOTE", "message": "Hello!"}, 201)
 seen = call("GET", f"/api/candidates/me/invitations/{inv['id']}", a["access_token"])
 check((seen["salary_from"], seen["salary_to"], seen["salary_type"]) == (220000, 250000, "GROSS"), "candidate sees salary + GROSS before accepting")
@@ -92,7 +92,7 @@ check(take_assessment(m["access_token"])["verification_status"] == "VERIFIED", "
 check(call("POST", "/api/candidates/me/fsp", m["access_token"], {"fsp_id": m["fsp_id"]}) == {"evidence_added": 0, "has_history": False}, "no FSP history handled")
 run2 = call("POST", f"/api/employer/needs/{need['id']}/match?limit=20", e, expect=201)
 mc = next(r["candidate"]["candidate_id"] for r in run2["results"] if r["candidate"]["display_name"] == "Mila N.")
-inv2 = call("POST", "/api/employer/invitations", e, {"candidate_id": mc, "need_id": need["id"], "description": "d", "salary_from": 210000, "salary_to": 240000,
+inv2 = call("POST", "/api/employer/invitations", e, {"candidate_id": mc, "need_id": need["id"], "description": "Разработка и поддержка backend-сервисов на FastAPI и PostgreSQL в продуктовой команде", "salary_from": 210000, "salary_to": 240000,
             "salary_type": "NET", "work_format": "REMOTE", "message": "m"}, 201)
 check(call("POST", f"/api/candidates/me/invitations/{inv2['id']}/decline", m["access_token"])["status"] == "DECLINED", "DECLINE")
 after2 = call("GET", f"/api/employer/invitations/{inv2['id']}", e)

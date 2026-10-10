@@ -5,11 +5,12 @@ from datetime import datetime
 from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
+from fsp_market.auth.credentials import CredentialsMixin
 from fsp_market.common.enums import Grade, SalaryType, Sublevel, VerificationStatus
 from fsp_market.db import Base
 
 
-class Candidate(Base):
+class Candidate(CredentialsMixin, Base):
     __tablename__ = "candidates"
 
     id: Mapped[int] = mapped_column(primary_key=True)
