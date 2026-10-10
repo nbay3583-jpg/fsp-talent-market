@@ -7,6 +7,7 @@ measures fit to ONE need; it is not a Talent Score.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -18,8 +19,6 @@ from fsp_market.common.enums import (
     Sublevel,
     VerificationStatus,
 )
-import re
-
 from fsp_market.matching.facts import CandidateFacts, NeedSkillSpec, NeedSpec
 from fsp_market.matching.policy import DEFAULT_POLICY, MatchingPolicy
 from fsp_market.taxonomy.grades import GRADE_SUBLEVELS
@@ -157,9 +156,7 @@ def _freshness(latest: datetime | None, now: datetime, policy: MatchingPolicy) -
 
 _WORD = re.compile(r"[a-zа-яё0-9+#.]{4,}", re.IGNORECASE)
 _STOP = frozenset(
-    "this that with from have will your about работа работы работать требуется ищем нужен "
-    "опыт опыта опытом знание знания умение навыки компания команда разработчик разработка "
-    "backend python developer engineer middle junior senior senior".split()
+    ["this", "that", "with", "from", "have", "will", "your", "about", "работа", "работы", "работать", "требуется", "ищем", "нужен", "опыт", "опыта", "опытом", "знание", "знания", "умение", "навыки", "компания", "команда", "разработчик", "разработка", "backend", "python", "developer", "engineer", "middle", "junior", "senior", "senior"]
 )
 
 

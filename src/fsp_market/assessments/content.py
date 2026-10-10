@@ -56,7 +56,7 @@ def run_py(code: str) -> str:
 def run_py_safe(code: str) -> str:
     try:
         return run_py(code)
-    except Exception as exc:  # a mutant may legitimately crash: its outcome is a distractor
+    except Exception as exc:  # noqa: BLE001 - a mutant may legitimately crash: its outcome is a distractor
         return type(exc).__name__
 
 
@@ -64,7 +64,7 @@ def failing_line(code: str) -> tuple[str, int]:
     """(exception name, line number inside <task>) of the first uncaught error in `code`."""
     try:
         run_py(code)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - any task error is data here
         frames = [f for f in traceback.extract_tb(exc.__traceback__) if f.filename == "<task>"]
         if frames:
             return type(exc).__name__, frames[-1].lineno
@@ -239,7 +239,7 @@ def j_sql_select(rng: random.Random, i: int) -> dict[str, Any]:
 
 
 def j_sql_count(rng: random.Random, i: int) -> dict[str, Any]:
-    t, num_ru, num, txt_ru, txt, values = _TABLES[(i + 1) % len(_TABLES)]
+    t, _num_ru, num, _txt_ru, txt, values = _TABLES[(i + 1) % len(_TABLES)]
     rows = [(n, rng.choice([5, 12, 20, 45, 80, 120, 300]), rng.choice(values)) for n in range(1, 9)]
     thr, val = rng.choice([10, 20, 50]), values[0]
     kind = i % 3
@@ -366,7 +366,7 @@ def m_python_output(rng: random.Random, i: int) -> dict[str, Any]:
         k, m = rng.randint(3, 5), rng.randint(2, 6)
         code = f"funcs = []\nfor i in range({k}):\n    funcs.append(lambda: i * {m})\nprint([f() for f in funcs])"
         mutants = [code.replace("lambda: i", "lambda i=i: i"),
-                   code.replace(f"print([f() for f in funcs])", "print(len(funcs))"),
+                   code.replace("print([f() for f in funcs])", "print(len(funcs))"),
                    code.replace(f"range({k})", f"range({k - 1})")]
         dim = "замыкания"
     else:
@@ -411,7 +411,7 @@ def m_python_exceptions(rng: random.Random, i: int) -> dict[str, Any]:
                 f"{fn}({n})")
         mutants = [code.replace("continue", "break"), code.replace("i == 1", "i == 0"),
                    code.replace("        finally:\n            print('f')\n", "        finally:\n            pass\n")]
-    fmt = lambda s: s.replace("\n", ", ")  # noqa: E731
+    fmt = lambda s: s.replace("\n", ", ")
     correct = fmt(run_py(code))
     wrongs = pad_lines(correct, [fmt(run_py_safe(m)) for m in mutants])
     return choice(rng, correct, wrongs, "порядок выполнения", snippet=code)
@@ -639,8 +639,8 @@ def s_python_semantics(rng: random.Random, i: int) -> dict[str, Any]:
         dim = "замыкания"
     else:
         k = rng.randint(3, 4)
-        code = (f"from functools import lru_cache\ncalls = []\n\n@lru_cache(maxsize=None)\n"
-                f"def sq(x):\n    calls.append(x)\n    return x * x\n\nfor v in [1, 2, 1, 3, 2, 1]:\n    sq(v)\nprint(len(calls), sq.cache_info().hits)")
+        code = ("from functools import lru_cache\ncalls = []\n\n@lru_cache(maxsize=None)\n"
+                "def sq(x):\n    calls.append(x)\n    return x * x\n\nfor v in [1, 2, 1, 3, 2, 1]:\n    sq(v)\nprint(len(calls), sq.cache_info().hits)")
         mutants = [code.replace("@lru_cache(maxsize=None)\n", ""),
                    code.replace("[1, 2, 1, 3, 2, 1]", f"[1, 2, 3, {k}, 1, 2]"),
                    code.replace("maxsize=None", "maxsize=1")]
@@ -680,7 +680,7 @@ def s_python_context(rng: random.Random, i: int) -> dict[str, Any]:
                 f"print(f({n}))")
         mutants = [code.replace("i == 2", "i == 9"), code.replace("out.append('x')", "pass"),
                    code.replace("    finally:\n        out.append('f')\n", "")]
-    fmt = lambda s: s.replace("\n", ", ")  # noqa: E731
+    fmt = lambda s: s.replace("\n", ", ")
     correct = fmt(run_py(code))
     wrongs = pad_lines(correct, [fmt(run_py_safe(m)) for m in mutants])
     return choice(rng, correct, wrongs, "потоки управления", snippet=code)
@@ -694,7 +694,7 @@ def s_sql_window(rng: random.Random, i: int) -> dict[str, Any]:
     kind = i % 2
     target = rng.choice(rows)[0]
     if kind == 0:
-        expr = f"RANK() OVER (PARTITION BY team ORDER BY salary DESC)"
+        expr = "RANK() OVER (PARTITION BY team ORDER BY salary DESC)"
         ask = "Какое значение столбца `pos` у строки с id = {t}?"
     else:
         expr = "SUM(salary) OVER (PARTITION BY team ORDER BY id)"

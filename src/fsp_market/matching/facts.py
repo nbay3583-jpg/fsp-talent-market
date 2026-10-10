@@ -162,7 +162,7 @@ def load_candidate_facts(
                     company=w.company,
                     position=w.position,
                     stack=tuple(w.stack or ()),
-                    text=" ".join((w.position, w.tasks, w.projects, w.achievements)),
+                    text=f"{w.position} {w.tasks} {w.projects} {w.achievements}",
                     start=w.start_date,
                     end=w.end_date,
                 )

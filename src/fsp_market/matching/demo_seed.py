@@ -14,11 +14,11 @@ from sqlalchemy.orm import Session
 from fsp_market.assessments.models import TaskFamily, TaskTemplate
 from fsp_market.assessments.seed import seed_backend_python
 from fsp_market.assessments.service import (
-    score_attempt,
     attempt_variants,
-    wrong_answer,
+    score_attempt,
     start_attempt,
     submit_answers,
+    wrong_answer,
 )
 from fsp_market.candidates.models import Candidate
 from fsp_market.common.enums import Grade, SalaryType, Sublevel

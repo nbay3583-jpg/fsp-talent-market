@@ -19,17 +19,17 @@ from fsp_market.assessments.models import (
 from fsp_market.assessments.service import (
     AssessmentError,
     CooldownError,
-    score_attempt,
-    attempt_variants,
     DeadlinePassed,
+    attempt_variants,
     ensure_deadline,
     finalize_expired,
     is_expired,
     remaining_seconds,
     save_draft,
-    utcnow,
+    score_attempt,
     start_attempt,
     submit_answers,
+    utcnow,
 )
 from fsp_market.auth.email_verification import confirm, cooldown_left, issue_verification
 from fsp_market.auth.tokens import create_token
