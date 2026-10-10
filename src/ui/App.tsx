@@ -3,6 +3,7 @@ import { api, loadSession, saveSession, type Role, type Session } from "./api";
 import CandidateApp from "./Candidate";
 import EmployerApp from "./Employer";
 import Validation from "./Validation";
+import { TeamSurvey } from "./TeamFit";
 import { Badge, Card, ErrorBox, GRADE_RU } from "./ui";
 
 interface DemoAccount { key: string; role: Role; label: string; fsp_id: string | null; note: string }
@@ -35,6 +36,7 @@ export default function App() {
       .finally(() => window.history.replaceState(null, "", window.location.pathname));
   }, []);
 
+  const surveyToken = new URLSearchParams(window.location.search).get("team_survey");
   const signIn = (s: Session | null) => { saveSession(s); setSession(s); setView("app"); };
 
   return (
@@ -52,7 +54,7 @@ export default function App() {
       <main>
         {notice && <p className="ok" role="status">{notice}</p>}
         {health === "unavailable" && <ErrorBox message="Система недоступна. Проверьте, что сервис запущен (docker compose up)." />}
-        {view === "validation" ? <Validation /> : !session ? <Login demo={demo} onSession={signIn} /> :
+        {surveyToken ? <TeamSurvey token={surveyToken} /> : view === "validation" ? <Validation /> : !session ? <Login demo={demo} onSession={signIn} /> :
           session.role === "candidate" ? <CandidateApp session={session} demoMode={demo.demo_mode} /> : <EmployerApp session={session} />}
       </main>
     </div>

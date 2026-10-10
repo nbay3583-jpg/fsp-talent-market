@@ -5,6 +5,7 @@ import {
   Badge, Card, Empty, ErrorBox, FORMAT_RU, GRADE_RU, Loading, SALARY_TYPE_RU, SalaryBanner, skillName, STATUS_RU, VerificationBadge,
 } from "./ui";
 import { ContactBox } from "./ui";
+import { CandidateFit } from "./TeamFit";
 
 interface Me {
   id: number; full_name: string; email: string; email_verified: boolean; phone: string | null; specialization: string | null;
@@ -47,9 +48,9 @@ const SOURCE_RU: Record<string, string> = {
 };
 
 export default function CandidateApp({ session, demoMode }: { session: Session; demoMode: boolean }) {
-  const [tab, setTab] = useState<"profile" | "test" | "evidence" | "invitations">("profile");
+  const [tab, setTab] = useState<"profile" | "test" | "evidence" | "invitations" | "fit">("profile");
   const tabs: [typeof tab, string][] = [
-    ["profile", "Профиль"], ["test", "Основная оценка"], ["evidence", "Профиль подтверждённых компетенций"], ["invitations", "Приглашения"],
+    ["profile", "Профиль"], ["test", "Основная оценка"], ["evidence", "Профиль подтверждённых компетенций"], ["fit", "Рекомендации"], ["invitations", "Приглашения"],
   ];
   return (
     <>
@@ -62,6 +63,7 @@ export default function CandidateApp({ session, demoMode }: { session: Session; 
       {tab === "profile" && <ProfileTab session={session} />}
       {tab === "test" && <AssessmentTab session={session} demoMode={demoMode} goEvidence={() => setTab("evidence")} />}
       {tab === "evidence" && <EvidenceTab session={session} />}
+      {tab === "fit" && <CandidateFit session={session} />}
       {tab === "invitations" && <InvitationsTab session={session} />}
     </>
   );

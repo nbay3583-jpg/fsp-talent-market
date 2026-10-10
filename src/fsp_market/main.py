@@ -11,6 +11,7 @@ from fsp_market.api.routes import router as api_router
 from fsp_market.api.validation_routes import router as validation_router
 from fsp_market.config import get_settings
 from fsp_market.experience.routes import router as experience_router
+from fsp_market.teamfit.routes import router as teamfit_router
 
 
 class HealthResponse(BaseModel):
@@ -51,5 +52,6 @@ app.include_router(api_router)
 app.include_router(employer_router)
 app.include_router(invitation_router)
 app.include_router(experience_router)
+app.include_router(teamfit_router)
 app.include_router(demo_router)
 app.include_router(validation_router)

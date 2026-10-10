@@ -80,11 +80,15 @@ def salary_compatible(need: NeedSpec, c: CandidateFacts, policy: MatchingPolicy)
 
 
 def hard_filter(
-    need: NeedSpec, c: CandidateFacts, policy: MatchingPolicy = DEFAULT_POLICY
+    need: NeedSpec,
+    c: CandidateFacts,
+    policy: MatchingPolicy = DEFAULT_POLICY,
+    ignore_visibility: bool = False,
 ) -> list[str]:
-    """Returns exclusion codes; an empty list means the candidate enters scoring."""
+    """Returns exclusion codes; an empty list means the candidate enters scoring.
+    `ignore_visibility` is only for a candidate looking at needs for themselves."""
     out: list[str] = []
-    if not c.profile_visible:
+    if not c.profile_visible and not ignore_visibility:
         out.append(NOT_VISIBLE)
     if not c.open_to_invitations:
         out.append(NOT_OPEN)

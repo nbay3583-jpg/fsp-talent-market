@@ -228,6 +228,13 @@ def candidate_detail(
     detail = service.candidate_detail(session, candidate_id, need)
     if detail is None:
         raise HTTPException(status_code=404, detail="candidate not found")
+    if need is not None:  # bilateral view: does the vacancy/team meet the candidate's wishes
+        from fsp_market.candidates.models import Candidate
+        from fsp_market.teamfit.routes import reverse_for
+
+        rev = reverse_for(session, session.get(Candidate, candidate_id), need)
+        detail["compat"] = {"reverse_fit": rev["score"], "why": rev["why"],
+                            "gaps": rev["gaps"], "work_style": rev["work_style"]}
     contacts = invitation_service.unlocked_contacts(session, employer_id, candidate_id)
     detail["contact_status"] = "UNLOCKED" if contacts else "LOCKED"
     if contacts:  # only after the candidate accepted this employer's invitation

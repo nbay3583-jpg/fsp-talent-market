@@ -29,6 +29,9 @@ class EmployerNeed(Base):
     location: Mapped[str | None] = mapped_column(String(128), nullable=True)
     max_start_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     description: Mapped[str] = mapped_column(Text, default="")
+    # Team profile inputs: the manager's work-style answers and the hash of the anonymous survey link.
+    work_style: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    team_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

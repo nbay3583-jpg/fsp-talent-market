@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type Session } from "./api";
+import { EmployerFit } from "./TeamFit";
 import type { Catalog, Fit, Invitation, MatchRow, Need, PublicCandidate } from "./types";
 import {
   Badge, Card, ContactBox, Empty, ErrorBox, FitBlock, FORMAT_RU, GRADE_RU, Loading, SalaryBanner, salaryRange, SALARY_TYPE_RU, skillName,
   STATUS_RU, VerificationBadge,
 } from "./ui";
 
-interface Detail extends PublicCandidate { fit: Fit | null; contact_status: "LOCKED" | "UNLOCKED"; contacts?: { full_name: string; email: string; phone: string | null } }
+interface Detail extends PublicCandidate { compat?: { reverse_fit: number | null; why: { text: string }[]; gaps: { text: string }[] }; fit: Fit | null; contact_status: "LOCKED" | "UNLOCKED"; contacts?: { full_name: string; email: string; phone: string | null } }
 interface MatchResponse {
   run_id: number; candidates_considered: number; matched_total: number; excluded_summary: Record<string, number>; results: MatchRow[];
 }
@@ -19,10 +20,10 @@ const EXCLUSION_RU: Record<string, string> = {
 };
 
 export default function EmployerApp({ session }: { session: Session }) {
-  const [tab, setTab] = useState<"match" | "pool" | "invitations">("match");
+  const [tab, setTab] = useState<"match" | "pool" | "fit" | "invitations">("match");
   const [detail, setDetail] = useState<{ id: number; need: Need | null } | null>(null);
   const open = (id: number, need: Need | null) => { setDetail({ id, need }); window.scrollTo?.({ top: 0 }); };
-  const tabs: [typeof tab, string][] = [["match", "Подбор по потребности"], ["pool", "Весь пул кандидатов"], ["invitations", "Отправленные приглашения"]];
+  const tabs: [typeof tab, string][] = [["match", "Подбор по потребности"], ["pool", "Весь пул кандидатов"], ["fit", "Избранное и рекомендации"], ["invitations", "Отправленные приглашения"]];
   return (
     <>
       <h2 className="section-title">Кабинет работодателя</h2>
@@ -32,6 +33,7 @@ export default function EmployerApp({ session }: { session: Session }) {
       {detail && <CandidatePanel session={session} id={detail.id} need={detail.need} close={() => setDetail(null)} />}
       {tab === "match" && <MatchTab session={session} open={open} />}
       {tab === "pool" && <PoolTab session={session} open={(id) => open(id, null)} />}
+      {tab === "fit" && <EmployerFit session={session} open={open} />}
       {tab === "invitations" && <SentTab session={session} />}
     </>
   );
@@ -148,6 +150,12 @@ function CandidatePanel({ session, id, need, close }: { session: Session; id: nu
       {d.verification_status !== "VERIFIED" && <p className="warn">Грейд кандидата не подтверждён основной оценкой — в подборе он учитывается с понижением.</p>}
       {d.fit && !d.fit.eligible && <p className="warn">Не проходит обязательные ограничения этой потребности: {d.fit.exclusions?.map((x) => EXCLUSION_RU[x] ?? x).join(", ")}.</p>}
       {fit && fit.requirement_fit !== undefined && <FitBlock label={fit.requirement_fit_label ?? ""} fit={fit.requirement_fit} why={fit.why ?? []} gaps={fit.gaps ?? []} />}
+      {d.compat && (
+        <>
+          <h4>Ожидания кандидата и вакансия {d.compat.reverse_fit !== null && <Badge tone="info">{Math.round(d.compat.reverse_fit * 100)}%</Badge>}</h4>
+          <ul>{d.compat.why.map((r, i) => <li key={i} className="ok">{r.text}</li>)}{d.compat.gaps.map((r, i) => <li key={i} className="warn">{r.text}</li>)}</ul>
+          {d.compat.why.length + d.compat.gaps.length === 0 && <p className="muted">Кандидат не указал интересы и цели — оценить ожидания нельзя.</p>}
+        </>)}
       <h4>Навыки и подтверждения</h4>
       {d.skills.length === 0 ? <Empty>Подтверждённых навыков нет.</Empty> : (
         <table className="table"><thead><tr><th>Навык</th><th>Подтверждение</th></tr></thead><tbody>
@@ -164,10 +172,27 @@ function CandidatePanel({ session, id, need, close }: { session: Session; id: nu
             <li key={i}>{e.position}, {e.company} · {e.start_date} — {e.end_date ?? "по настоящее время"}{e.stack.length > 0 && ` · ${e.stack.map((s) => skillName(s)).join(", ")}`}</li>))}</ul>
         </>)}
       {!d.has_fsp && <p className="muted">Истории ФСП нет — это не снижает грейд кандидата.</p>}
+      <FavoriteButton session={session} candidateId={d.candidate_id} needId={need?.id ?? null} />
       <ContactBox unlocked={d.contact_status === "UNLOCKED"} contacts={d.contacts} />
       {sent ? <p className="ok" role="status">Приглашение отправлено ({STATUS_RU[sent.status]}). Открытие контактов — только после согласия кандидата.</p>
         : d.contact_status === "LOCKED" && <InviteForm session={session} candidateId={d.candidate_id} need={need} done={(i) => { setSent(i); load(); }} />}
     </Card>
+  );
+}
+
+function FavoriteButton({ session, candidateId, needId }: { session: Session; candidateId: number; needId: number | null }) {
+  const [msg, setMsg] = useState("");
+  const [note, setNote] = useState("");
+  const save = async () => {
+    try { await api("/api/employer/favorites", { token: session.token, body: { candidate_id: candidateId, need_id: needId, note } }); setMsg("Сохранено в избранное. Кандидат ничего не получает."); }
+    catch (e) { setMsg((e as Error).message); }
+  };
+  return (
+    <div className="row">
+      <input placeholder="Заметка (необязательно)" value={note} onChange={(e) => setNote(e.target.value)} />
+      <button onClick={save}>★ В избранное</button>
+      {msg && <span role="status">{msg}</span>}
+    </div>
   );
 }
 

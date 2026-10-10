@@ -8,6 +8,7 @@ from fsp_market.invitations import models as invitations_models
 from fsp_market.matching import models as matching_models
 from fsp_market.skills import models as skills_models
 from fsp_market.taxonomy import models as taxonomy_models
+from fsp_market.teamfit import models as teamfit_models
 
 __all__ = [
     "assessments_models",
@@ -18,4 +19,5 @@ __all__ = [
     "matching_models",
     "skills_models",
     "taxonomy_models",
+    "teamfit_models",
 ]

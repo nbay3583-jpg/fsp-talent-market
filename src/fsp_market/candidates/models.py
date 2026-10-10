@@ -50,6 +50,10 @@ class Candidate(Base):
     profile_visible: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     open_to_invitations: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     phone: Mapped[str | None] = mapped_column(String(32), nullable=True)  # private contact
+    # Matching 2.0: interests (skill codes), career goal and the voluntary work-style answers.
+    interests: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    career_goal: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    work_style: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # Email verification: only a SHA-256 of the one-time token is stored.
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     email_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
