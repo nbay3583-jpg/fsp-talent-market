@@ -1,4 +1,5 @@
 # Материалы для сдачи
 
+- `FSP_Talent_Market_presentation.pdf` — PDF той же презентации.
 - `FSP_Talent_Market_presentation.pptx` — на основе шаблона ЛЦТ2026, слайды 7–11 (обязательная структура). Поля «[заполнить]» (капитан, состав команды, история) заполняет команда: данных о ней в репозитории нет.
 - Архитектура: `../ARCHITECTURE.md`; matching: `../MATCHING.md`; подтверждение грейда: `../ASSESSMENT.md`; валидация: `../VALIDATION.md`, `../VALIDATION_METHOD.md`; ограничения MVP: раздел в `../../README.md`.
