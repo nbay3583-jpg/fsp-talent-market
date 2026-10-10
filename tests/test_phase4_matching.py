@@ -462,3 +462,19 @@ def test_candidate_preferences_endpoint(env):
     assert env.post("/api/auth/verify-email", json={"token": token}).status_code == 200
     r = env.patch("/api/candidates/me/preferences", headers=ch, json=prefs)
     assert r.status_code == 200
+
+
+def test_ats_export_csv_and_json_are_private_and_owner_only(env):
+    h = employer(env, "ats@x.io")
+    _, res = run(env, h)
+    rid = res["run_id"]
+    js = env.get(f"/api/employer/match-runs/{rid}/export?format=json", headers=h)
+    assert js.status_code == 200 and "attachment" in js.headers["content-disposition"]
+    rows = js.json()["candidates"]
+    assert [r["rank"] for r in rows] == sorted(r["rank"] for r in rows) and len(rows) == len(res["results"])
+    csv_text = env.get(f"/api/employer/match-runs/{rid}/export", headers=h).text
+    assert csv_text.lstrip("﻿").startswith("rank,candidate_id,display_name")
+    for secret in ("@demo.example", "+7-900", "Anna Verified"):
+        assert secret not in csv_text and secret not in js.text
+    other = employer(env, "other-ats@x.io")
+    assert env.get(f"/api/employer/match-runs/{rid}/export", headers=other).status_code == 404

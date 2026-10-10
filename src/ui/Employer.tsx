@@ -38,6 +38,17 @@ export default function EmployerApp({ session }: { session: Session }) {
   );
 }
 
+async function download(session: Session, runId: number, format: "csv" | "json"): Promise<void> {
+  const r = await fetch(`/api/employer/match-runs/${runId}/export?format=${format}`, { headers: { authorization: `Bearer ${session.token}` } });
+  if (!r.ok) return;
+  const url = URL.createObjectURL(await r.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `fsp-match-run-${runId}.${format}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function MatchTab({ session, open }: { session: Session; open: (id: number, need: Need | null) => void }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [needs, setNeeds] = useState<Need[]>([]);
@@ -111,6 +122,9 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
           <>
             <Card title={`Подбор: ${need.title}`}>
               <p>Рассмотрено кандидатов: {res.candidates_considered}. Обязательные ограничения прошли: {res.matched_total}.</p>
+              <p className="row">Экспорт в ATS (без контактов):
+                <button className="link" onClick={() => void download(session, res.run_id, "csv")}>CSV</button>
+                <button className="link" onClick={() => void download(session, res.run_id, "json")}>JSON</button></p>
               {Object.keys(res.excluded_summary).length > 0 && (
                 <details><summary>Отсеяно по обязательным ограничениям</summary>
                   <ul>{Object.entries(res.excluded_summary).map(([k, v]) => <li key={k}>{EXCLUSION_RU[k] ?? k}: {v}</li>)}</ul></details>)}

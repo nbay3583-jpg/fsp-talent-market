@@ -6,9 +6,12 @@ matching.service.public_candidate. Contact unlock belongs to a later phase.
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+import csv
+import io
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -193,6 +196,78 @@ def get_match_run(
     )
     _annotate(session, employer_id, [r["candidate"] for r in out["results"]])
     return out
+
+
+CSV_COLUMNS = [
+    "rank", "candidate_id", "display_name", "specialization", "claimed_grade", "verification_status",
+    "verified_grade", "verified_sublevel", "requirement_fit", "work_formats", "location",
+    "salary_min", "salary_type", "available_in_days", "verified_skills", "why_codes", "gap_codes",
+]
+
+
+def _csv_safe(value: Any) -> Any:
+    """Neutralise spreadsheet formula injection in text cells."""
+    if isinstance(value, str) and value[:1] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + value
+    return value
+
+
+def _export_row(r: dict[str, Any]) -> dict[str, Any]:
+    c = r["candidate"]
+    sal = c.get("salary_expectation") or {}
+    return {
+        "rank": r["rank"],
+        "candidate_id": c["candidate_id"],
+        "display_name": c["display_name"],
+        "specialization": c.get("specialization"),
+        "claimed_grade": str(c["claimed_grade"]),
+        "verification_status": str(c["verification_status"]),
+        "verified_grade": str(c["verified_grade"]) if c.get("verified_grade") else None,
+        "verified_sublevel": str(c["verified_sublevel"]) if c.get("verified_sublevel") else None,
+        "requirement_fit": r["requirement_fit"],
+        "work_formats": [str(f) for f in c.get("work_formats", [])],
+        "location": c.get("location"),
+        "salary_min": sal.get("min"),
+        "salary_type": str(sal["type"]) if sal.get("type") else None,
+        "available_in_days": c.get("available_in_days"),
+        "verified_skills": [s["skill"] for s in c.get("skills", []) if s.get("verified_level")],
+        "why_codes": [w.get("code") for w in r.get("why", [])],
+        "gap_codes": [g.get("code") for g in r.get("gaps", [])],
+    }
+
+
+@router.get("/employer/match-runs/{run_id}/export")
+def export_match_run(
+    run_id: int,
+    format: Literal["csv", "json"] = "csv",  # noqa: A002 - public query parameter name
+    employer_id: int = EmployerDep,
+    session: Session = SessionDep,
+) -> Response:
+    """ATS-friendly export of a stored run. Same privacy as the UI: no email, phone or full name."""
+    run = session.get(MatchRun, run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="match run not found")
+    _own_need(session, run.need_id, employer_id)
+    out = service.run_results(session, run, limit=1000)
+    rows = [_export_row(r) for r in out["results"]]
+    name = f"fsp-match-run-{run_id}"
+    if format == "json":
+        return JSONResponse(
+            {"run_id": run_id, "need_id": run.need_id, "candidates": rows},
+            headers={"Content-Disposition": f'attachment; filename="{name}.json"'},
+        )
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=CSV_COLUMNS)
+    writer.writeheader()
+    for row in rows:
+        writer.writerow({
+            k: _csv_safe(";".join(map(str, v)) if isinstance(v, list) else v) for k, v in row.items()
+        })
+    return Response(
+        "\ufeff" + buf.getvalue(),  # BOM: Excel opens UTF-8 CSV correctly
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{name}.csv"'},
+    )
 
 
 @router.get("/employer/pool")

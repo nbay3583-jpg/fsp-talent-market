@@ -41,3 +41,7 @@ Each reason has a machine code and Russian text, built only from facts in the da
 ## Privacy
 
 Employer views (`matching/service.py: public_candidate`) show an abbreviated name, levels, verified skills, evidence summary, salary expectation. No email, phone, full name or FSP member id. Contacts appear only through an accepted invitation (see `invitations/`).
+
+## ATS export
+
+`GET /api/employer/match-runs/{run_id}/export?format=csv|json` returns the stored run (rank, candidate id, abbreviated name, grades, fit, formats, location, salary expectation, verified skills, WHY/GAP codes). Owner-only; no contacts. CSV has a UTF-8 BOM and neutralises formula-injection prefixes.
