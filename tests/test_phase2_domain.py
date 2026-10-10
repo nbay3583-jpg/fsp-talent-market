@@ -16,7 +16,8 @@ from fsp_market.assessments.seed import seed_backend_python
 from fsp_market.assessments.service import (
     CooldownError,
     score_attempt,
-    select_variants,
+    attempt_variants,
+    wrong_answer,
     start_attempt,
     submit_answers,
 )
@@ -50,9 +51,8 @@ def session():
 def _take(session, grade: Grade, correct: bool, now: datetime):
     attempt = start_attempt(session, 1, grade, now=now)
     answers = {}
-    for v in select_variants(session, grade, attempt.id):
-        right = v.scoring_contract["correct"]
-        answers[v.id] = right if correct else next(k for k in "ABCD" if k != right)
+    for v in attempt_variants(session, attempt):
+        answers[v.id] = v.scoring_contract["correct"] if correct else wrong_answer(v)
     submit_answers(session, attempt.id, answers, now=now)
     return score_attempt(session, attempt.id, now=now)
 
@@ -62,22 +62,26 @@ def test_taxonomy_and_sublevels(session):
     codes = set(session.scalars(select(Competency.code)))
     assert codes == {"python", "sql", "api_fastapi", "testing", "docker_basics", "system_thinking"}
     assert {s: g for s, g in SUBLEVEL_GRADE.items()}[Sublevel.M2] == Grade.MIDDLE
-    assert len(Sublevel) == 6
+    assert len(Sublevel) == 9
 
 
 def test_seed_is_idempotent_and_parameterized(session):
     seed_backend_python(session)
     session.commit()
-    assert session.scalar(select(func.count(TaskFamily.id))) == 12
-    assert session.scalar(select(func.count(TaskTemplate.id))) == 12
-    assert session.scalar(select(func.count(TaskPreset.id))) == 24
+    assert session.scalar(select(func.count(TaskFamily.id))) == 24
+    n_variants = session.scalar(select(func.count(TaskVariant.id)))
+    assert n_variants == session.scalar(select(func.count(TaskPreset.id))) >= 24 * 6
+    seed_backend_python(session)
+    session.commit()
+    assert session.scalar(select(func.count(TaskVariant.id))) == n_variants  # idempotent
     for family in session.scalars(select(TaskFamily)):
         variants = session.scalars(
             select(TaskVariant).join(TaskTemplate).where(TaskTemplate.family_id == family.id)
         ).all()
-        assert len(variants) >= 2
-        assert len({v.prompt for v in variants}) == len(variants)  # surface differs
-        assert {v.scoring_contract["type"] for v in variants} == {"choice"}  # contract fixed
+        assert len(variants) >= 6
+        shown = {(v.prompt, repr(v.input_data["options"])) for v in variants}
+        assert len(shown) == len(variants)  # what the learner sees differs
+        assert {v.scoring_contract["points"] for v in variants} == {1.0}  # contract fixed
         dims = {r["dimension"] for r in family.rubric}
         assert {v.scoring_contract["dimension"] for v in variants} <= dims
 
@@ -87,7 +91,7 @@ def test_passed_middle_is_verified_with_core_evidence(session):
     cand = session.get(Candidate, 1)
     assert result.verification_status == VerificationStatus.VERIFIED
     assert (cand.verified_grade, cand.claimed_grade) == (Grade.MIDDLE, Grade.MIDDLE)
-    assert cand.verified_sublevel == Sublevel.M2
+    assert cand.verified_sublevel == Sublevel.M3  # perfect score -> advanced Middle
     ev = session.scalars(select(SkillEvidence)).all()
     assert ev and {e.evidence_type for e in ev} == {EvidenceType.CORE_ASSESSMENT}
     assert session.scalar(select(func.count(VerifiedSkillLevel.id))) >= 5

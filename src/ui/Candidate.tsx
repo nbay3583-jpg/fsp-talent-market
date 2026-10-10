@@ -14,7 +14,9 @@ interface Me {
     available_in_days: number | null; profile_visible: boolean; open_to_invitations: boolean;
   };
 }
-interface Task { variant_id: number; competency: string; prompt: string; options: Record<string, string> }
+interface Task { variant_id: number; competency: string; prompt: string; answer_type: "single" | "multi" | "number"; options: Record<string, string> | null }
+type Answer = string | string[]
+interface Attempt { attempt_id: number; target_grade: string; tasks: Task[]; remaining_seconds: number; saved_answers?: Record<string, Answer> }
 interface Result {
   verification_status: string; claimed_grade: string; target_grade: string; achieved_sublevel: string | null;
   score: number; competency_scores: Record<string, number>;
@@ -144,24 +146,25 @@ function ProfileTab({ session }: { session: Session }) {
 
 function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; demoMode: boolean; goEvidence: () => void }) {
   const [grade, setGrade] = useState("MIDDLE");
-  const [attempt, setAttempt] = useState<{ attempt_id: number; target_grade: string; tasks: Task[] } | null>(null);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [attempt, setAttempt] = useState<Attempt | null>(null);
+  const [answers, setAnswers] = useState<Record<number, Answer>>({});
+  const [left, setLeft] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const [started, setStarted] = useState<number | null>(null);
-  const start = async () => {
+    const start = async () => {
     setErr(""); setResult(null); setBusy(true);
     try {
-      const a = await api<{ attempt_id: number; target_grade: string; tasks: Task[] }>("/api/assessments", { token: session.token, body: { target_grade: grade } });
-      setAttempt(a); setAnswers({}); setStarted(Date.now());
+      const a = await api<Attempt>("/api/assessments", { token: session.token, body: { target_grade: grade } });
+      setAttempt(a); setLeft(a.remaining_seconds);
+      setAnswers(Object.fromEntries(Object.entries(a.saved_answers ?? {}).map(([k, v]) => [Number(k), v])));
     } catch (e) {
       setErr(e instanceof ApiError && e.status === 409 ? `Повторная попытка пока недоступна: ${e.message}` : (e as Error).message);
     } finally { setBusy(false); }
   };
   const fillReference = async () => {
     if (!attempt) return;
-    const r = await api<{ answers: Record<string, string> }>(`/api/demo/assessments/${attempt.attempt_id}/reference-answers`, { token: session.token });
+    const r = await api<{ answers: Record<string, Answer> }>(`/api/demo/assessments/${attempt.attempt_id}/reference-answers`, { token: session.token });
     setAnswers(Object.fromEntries(Object.entries(r.answers).map(([k, v]) => [Number(k), v])));
   };
   const submit = async () => {
@@ -172,11 +175,20 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
       setResult(r); setAttempt(null);
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
+  useEffect(() => {  // countdown is driven by the server deadline; the client only renders it
+    if (!attempt) return;
+    const t = setInterval(() => setLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [attempt]);
+  const setAnswer = (id: number, v: Answer) => {
+    setAnswers((prev) => ({ ...prev, [id]: v }));
+    if (attempt) api(`/api/assessments/${attempt.attempt_id}/answers`, { method: "PUT", token: session.token, body: { answers: { [id]: v } } }).catch(() => undefined);
+  };
   if (result) return <ResultCard result={result} goEvidence={goEvidence} again={() => setResult(null)} />;
   if (!attempt) {
     return (
       <Card title="Основная оценка компетенций (Core Assessment): Backend / Python">
-        <p>Короткая оценка (около 3–5 минут): Python, SQL, API/FastAPI, тестирование, Docker, системное мышление. Задания параметризованы: у каждого кандидата свои варианты с тем же уровнем сложности и теми же критериями. Оценка полностью детерминирована — без нейросетей.</p>
+        <p>Короткая оценка (8 заданий, на выполнение отводится 12–18 минут): Python, SQL, API/FastAPI, тестирование, Docker, системное мышление. Задания параметризованы: у каждого кандидата свои варианты с тем же уровнем сложности и теми же критериями. Оценка полностью детерминирована — без нейросетей.</p>
         <label>Грейд, который вы подтверждаете
           <select value={grade} onChange={(e) => setGrade(e.target.value)}>
             {Object.entries(GRADE_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -187,26 +199,33 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
       </Card>
     );
   }
-  const done = attempt.tasks.every((t) => answers[t.variant_id]);
-  const mins = started ? Math.max(0, Math.round((Date.now() - started) / 60000)) : 0;
+  const done = attempt.tasks.every((t) => { const a = answers[t.variant_id]; return Array.isArray(a) ? a.length > 0 : !!a; });
+  const mm = String(Math.floor(left / 60)).padStart(2, "0"), ss = String(left % 60).padStart(2, "0");
   return (
     <div>
-      <Card title={`Оценка ${GRADE_RU[attempt.target_grade]} · ${attempt.tasks.length} заданий`} aside={<span className="muted">{mins} мин</span>}>
+      <Card title={`Оценка ${GRADE_RU[attempt.target_grade]} · ${attempt.tasks.length} заданий`} aside={<span className={left <= 60 ? "bad" : "muted"} role="timer">Осталось {mm}:{ss}</span>}>
         {demoMode && <button onClick={fillReference}>Демо: заполнить эталонными ответами</button>}
       </Card>
       {attempt.tasks.map((t, i) => (
         <Card key={t.variant_id} title={`${i + 1}. ${skillName(t.competency)}`}>
           <pre className="prompt">{t.prompt}</pre>
-          {Object.entries(t.options).map(([k, v]) => (
+          {t.answer_type === "number" ? (
+            <input inputMode="decimal" aria-label="Ответ" value={(answers[t.variant_id] as string) ?? ""} onChange={(e) => setAnswer(t.variant_id, e.target.value.replace(/[^0-9.,-]/g, ""))} />
+          ) : Object.entries(t.options ?? {}).map(([k, v]) => (
             <label key={k} className="option">
-              <input type="radio" name={`q${t.variant_id}`} checked={answers[t.variant_id] === k} onChange={() => setAnswers({ ...answers, [t.variant_id]: k })} />
+              {t.answer_type === "multi" ? (
+                <input type="checkbox" checked={((answers[t.variant_id] as string[]) ?? []).includes(k)}
+                  onChange={() => { const cur = (answers[t.variant_id] as string[]) ?? []; setAnswer(t.variant_id, cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k]); }} />
+              ) : (
+                <input type="radio" name={`q${t.variant_id}`} checked={answers[t.variant_id] === k} onChange={() => setAnswer(t.variant_id, k)} />
+              )}
               <b>{k}</b> <span>{v}</span>
             </label>
           ))}
         </Card>
       ))}
       <button className="primary" disabled={!done || busy} onClick={submit}>Отправить ответы</button>
-      {!done && <p className="muted">Ответьте на все задания, чтобы отправить ответы.</p>}
+      {!done && <p className="muted">Ответьте на все задания, чтобы отправить ответы. Ответы сохраняются автоматически; по истечении времени отправятся сохранённые.</p>}
       {err && <ErrorBox message={err} />}
     </div>
   );

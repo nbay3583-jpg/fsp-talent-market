@@ -215,7 +215,7 @@ function PoolTab({ session, open }: { session: Session; open: (id: number) => vo
     <div className="grid">
       <Card title="Фильтры">
         {sel("grade", Object.entries(GRADE_RU), "Подтверждённый грейд платформы")}
-        {sel("sublevel", ["J1", "J2", "M1", "M2", "S1", "S2"].map((s) => [s, s]), "Подуровень")}
+        {sel("sublevel", ["J1", "J2", "J3", "M1", "M2", "M3", "S1", "S2", "S3"].map((s) => [s, s]), "Подуровень")}
         {sel("verification", [["VERIFIED", "Подтверждено"], ["NOT_VERIFIED", "Не подтверждено"], ["UNVERIFIED", "Оценка не пройдена"]], "Статус подтверждения")}
         {catalog && sel("skill", catalog.skills.map((s) => [s.code, skillName(s.code, s.name)]), "Подтверждённый навык")}
         {sel("has_fsp", [["true", "есть"], ["false", "нет"]], "Достижения ФСП")}

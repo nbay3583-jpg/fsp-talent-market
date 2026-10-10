@@ -18,9 +18,14 @@ from sqlalchemy.orm import Session
 
 import fsp_market.models  # noqa: F401
 from fsp_market.assessments.models import TaskFamily, TaskTemplate, TaskVariant
-from fsp_market.assessments.scoring import PASS_THRESHOLD
+from fsp_market.assessments.scoring import PASS_THRESHOLD, score_answer
 from fsp_market.assessments.seed import seed_backend_python
-from fsp_market.assessments.service import score_attempt, start_attempt, submit_answers
+from fsp_market.assessments.service import (
+    score_attempt,
+    start_attempt,
+    submit_answers,
+    wrong_answer,
+)
 from fsp_market.candidates.models import Candidate
 from fsp_market.common.enums import Grade
 from fsp_market.db import Base
@@ -29,7 +34,7 @@ from fsp_market.validation import metrics
 
 NOW = datetime(2026, 10, 6, tzinfo=UTC)
 GRADES = ["JUNIOR", "MIDDLE", "SENIOR"]
-SUBLEVELS = ["J1", "J2", "M1", "M2", "S1", "S2"]
+SUBLEVELS = ["J1", "J2", "J3", "M1", "M2", "M3", "S1", "S2", "S3"]
 EXPECTED_COMPETENCIES = [
     "python",
     "sql",
@@ -42,28 +47,28 @@ V, N = "VERIFIED", "NOT_VERIFIED"
 
 # knows: grades whose questions the persona answers correctly; slips: competencies answered wrongly
 # at that grade. expected: (status, sublevel) per attempted grade, derived by hand from the
-# thresholds (J .6 / M .7 / S .75) and the item counts (J 2, M 6, S 4); sublevel 2nd if score >= .85.
+# thresholds (J .6 / M .7 / S .75), 8 items per grade, and the sublevel bands of taxonomy/grades.py.
 PERSONAS = [
     {
         "id": "P-JUNIOR",
         "desc": "knows Junior material only",
         "knows": ["JUNIOR"],
         "slips": {},
-        "expected": {"JUNIOR": (V, "J2"), "MIDDLE": (N, None), "SENIOR": (N, None)},
+        "expected": {"JUNIOR": (V, "J3"), "MIDDLE": (N, None), "SENIOR": (N, None)},
     },
     {
         "id": "P-MIDDLE",
         "desc": "knows Junior + Middle material",
         "knows": ["JUNIOR", "MIDDLE"],
         "slips": {},
-        "expected": {"JUNIOR": (V, "J2"), "MIDDLE": (V, "M2"), "SENIOR": (N, None)},
+        "expected": {"JUNIOR": (V, "J3"), "MIDDLE": (V, "M3"), "SENIOR": (N, None)},
     },
     {
         "id": "P-SENIOR",
         "desc": "knows everything",
         "knows": GRADES,
         "slips": {},
-        "expected": {"JUNIOR": (V, "J2"), "MIDDLE": (V, "M2"), "SENIOR": (V, "S2")},
+        "expected": {"JUNIOR": (V, "J3"), "MIDDLE": (V, "M3"), "SENIOR": (V, "S3")},
     },
     {
         "id": "P-WEAK",
@@ -74,24 +79,24 @@ PERSONAS = [
     },
     {
         "id": "P-MIDDLE-HIGH",
-        "desc": "Middle, slips on testing (5/6 = 0.833 -> M1)",
+        "desc": "Middle, slips on testing (7/8 = 0.875 -> M2)",
         "knows": ["JUNIOR", "MIDDLE"],
         "slips": {"MIDDLE": ["testing"]},
-        "expected": {"JUNIOR": (V, "J2"), "MIDDLE": (V, "M1"), "SENIOR": (N, None)},
+        "expected": {"JUNIOR": (V, "J3"), "MIDDLE": (V, "M2"), "SENIOR": (N, None)},
     },
     {
         "id": "P-MIDDLE-LOW",
-        "desc": "Middle, slips on testing + docker (4/6 = 0.667 < 0.7)",
+        "desc": "Middle, slips on testing + docker + system (5/8 = 0.625 < 0.7)",
         "knows": ["JUNIOR", "MIDDLE"],
-        "slips": {"MIDDLE": ["testing", "docker_basics"]},
-        "expected": {"JUNIOR": (V, "J2"), "MIDDLE": (N, None), "SENIOR": (N, None)},
+        "slips": {"MIDDLE": ["testing", "docker_basics", "system_thinking"]},
+        "expected": {"JUNIOR": (V, "J3"), "MIDDLE": (N, None), "SENIOR": (N, None)},
     },
     {
         "id": "P-SENIOR-EDGE",
-        "desc": "Senior, slips on system thinking (3/4 = 0.75 -> S1)",
+        "desc": "Senior, slips on system thinking (7/8 = 0.875 -> S2)",
         "knows": GRADES,
         "slips": {"SENIOR": ["system_thinking"]},
-        "expected": {"JUNIOR": (V, "J2"), "MIDDLE": (V, "M2"), "SENIOR": (V, "S1")},
+        "expected": {"JUNIOR": (V, "J3"), "MIDDLE": (V, "M3"), "SENIOR": (V, "S2")},
     },
 ]
 KNOWLEDGE_RANK = {"P-WEAK": 0, "P-JUNIOR": 1, "P-MIDDLE": 2, "P-SENIOR": 3}
@@ -125,15 +130,9 @@ def _competency(session: Session, family: TaskFamily) -> str:
     return session.scalar(select(Competency.code).where(Competency.id == family.competency_id))
 
 
-def _wrong_option(variant: TaskVariant) -> str:
-    return next(
-        k for k in sorted(variant.input_data["options"]) if k != variant.scoring_contract["correct"]
-    )
-
-
-def _answer(persona: dict, grade: str, comp: str, variant: TaskVariant) -> str:
+def _answer(persona: dict, grade: str, comp: str, variant: TaskVariant):
     knows = grade in persona["knows"] and comp not in persona["slips"].get(grade, [])
-    return variant.scoring_contract["correct"] if knows else _wrong_option(variant)
+    return variant.scoring_contract["correct"] if knows else wrong_answer(variant)
 
 
 def _take(
@@ -144,12 +143,14 @@ def _take(
     )
     session.add(cand)
     session.flush()
-    attempt = start_attempt(session, cand.id, Grade(grade), now=NOW)
-    answers = {}
+    chosen = []
     for fam in _families(session, grade):
         variants = _variants(session, fam)
-        v = variants[rotation % len(variants)]  # force a specific equivalent variant
-        answers[v.id] = _answer(persona, grade, _competency(session, fam), v)
+        chosen.append((fam, variants[rotation % len(variants)]))  # force a specific variant
+    attempt = start_attempt(
+        session, cand.id, Grade(grade), now=NOW, seed=rotation, variant_ids=[v.id for _, v in chosen]
+    )
+    answers = {v.id: _answer(persona, grade, _competency(session, fam), v) for fam, v in chosen}
     submit_answers(session, attempt.id, answers, now=NOW)
     r = score_attempt(session, attempt.id, now=NOW)
     return {
@@ -169,18 +170,24 @@ def _rubric_checks(session: Session) -> dict[str, Any]:
         variants = _variants(session, fam)
         if len(variants) < 2:
             problems.append(f"{fam.code}: fewer than 2 variants")
-        if len({v.prompt for v in variants}) != len(variants):
-            problems.append(f"{fam.code}: duplicate variant prompts")
-        if len({(v.scoring_contract["type"], v.scoring_contract["points"]) for v in variants}) != 1:
-            problems.append(f"{fam.code}: scoring contract differs between variants")
+        shown = {(v.prompt, repr(v.input_data["options"])) for v in variants}
+        if len(shown) != len(variants):
+            problems.append(f"{fam.code}: duplicate variants")
+        if {v.scoring_contract["points"] for v in variants} != {1.0}:
+            problems.append(f"{fam.code}: scoring points differ between variants")
         for v in variants:
             sc, opts = v.scoring_contract, v.input_data["options"]
             if sc["dimension"] not in dims:
                 problems.append(f"{v.code}: dimension {sc['dimension']!r} not in family rubric")
-            if sc["correct"] not in opts or len(opts) < 2:
+            if sc["type"] == "numeric":
+                continue
+            correct = sc["correct"] if sc["type"] == "set" else [sc["correct"]]
+            if not opts or len(opts) < 2 or any(c not in opts for c in correct):
                 problems.append(f"{v.code}: correct option missing from options")
             if len(set(opts.values())) != len(opts):
                 problems.append(f"{v.code}: duplicate option texts")
+            if sc["type"] == "choice" and len(opts) != 4:
+                problems.append(f"{v.code}: expected 4 options")
     return {"violations": len(problems), "details": problems}
 
 
@@ -188,10 +195,9 @@ def _coverage(session: Session) -> dict[str, Any]:
     matrix: dict[str, dict[str, dict[str, int]]] = {c: {} for c in EXPECTED_COMPETENCIES}
     for g in GRADES:
         for fam in _families(session, g):
-            matrix[_competency(session, fam)][g] = {
-                "families": 1,
-                "variants": len(_variants(session, fam)),
-            }
+            cell = matrix[_competency(session, fam)].setdefault(g, {"families": 0, "variants": 0})
+            cell["families"] += 1
+            cell["variants"] += len(_variants(session, fam))
     covered = {g: sum(1 for c in EXPECTED_COMPETENCIES if g in matrix[c]) for g in GRADES}
     return {
         "matrix": matrix,
@@ -209,10 +215,17 @@ def _guessing(session: Session, trials: int = 500) -> dict[str, Any]:
         passes = 0
         for t in range(trials):
             rng = random.Random(f"{grade}-{t}")
-            correct = sum(
-                rng.choice(sorted(v.input_data["options"])) == v.scoring_contract["correct"]
-                for v in (_variants(session, f)[0] for f in fams)
-            )
+            correct = 0.0
+            for v in (_variants(session, f)[0] for f in fams):
+                sc = v.scoring_contract
+                if sc["type"] == "numeric":
+                    guess = rng.randint(0, 20)
+                elif sc["type"] == "set":
+                    keys = sorted(v.input_data["options"])
+                    guess = rng.sample(keys, rng.randint(1, len(keys)))
+                else:
+                    guess = rng.choice(sorted(v.input_data["options"]))
+                correct += score_answer(sc, guess)
             passes += correct / len(fams) >= PASS_THRESHOLD[Grade(grade)]
         out[grade] = {
             "items": len(fams),

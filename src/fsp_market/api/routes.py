@@ -20,7 +20,14 @@ from fsp_market.assessments.service import (
     AssessmentError,
     CooldownError,
     score_attempt,
-    select_variants,
+    attempt_variants,
+    DeadlinePassed,
+    ensure_deadline,
+    finalize_expired,
+    is_expired,
+    remaining_seconds,
+    save_draft,
+    utcnow,
     start_attempt,
     submit_answers,
 )
@@ -32,6 +39,7 @@ from fsp_market.evidence.fsp_link import FSPVerificationError, attach_fsp_eviden
 from fsp_market.evidence.profile import build_evidence_profile
 from fsp_market.fsp.provider import FSPProvider
 from fsp_market.skills.models import Skill
+from fsp_market.taxonomy.grades import GRADE_SUBLEVELS, sublevel_label_ru
 from fsp_market.taxonomy.models import Competency, Specialization
 
 router = APIRouter(prefix="/api", tags=["candidate"])
@@ -49,7 +57,7 @@ class StartIn(BaseModel):
 
 
 class SubmitIn(BaseModel):
-    answers: dict[int, str]  # variant_id -> chosen option key
+    answers: dict[int, Any]  # variant_id -> option key | list of keys | number
 
 
 class FSPLinkIn(BaseModel):
@@ -58,7 +66,7 @@ class FSPLinkIn(BaseModel):
 
 def _tasks(session: Session, attempt: AssessmentAttempt) -> list[dict[str, Any]]:
     out = []
-    for variant in select_variants(session, attempt.target_grade, attempt.id):
+    for variant in attempt_variants(session, attempt):
         competency = session.scalar(
             select(Competency.code)
             .join(TaskFamily, TaskFamily.competency_id == Competency.id)
@@ -70,10 +78,57 @@ def _tasks(session: Session, attempt: AssessmentAttempt) -> list[dict[str, Any]]
                 "variant_id": variant.id,
                 "competency": competency,
                 "prompt": variant.prompt,
-                "options": variant.input_data["options"],
+                "answer_type": variant.input_data.get("answer_type", "single"),
+                "options": variant.input_data.get("options"),
             }
         )
     return out
+
+
+def _attempt_payload(session: Session, attempt: AssessmentAttempt) -> dict[str, Any]:
+    now = utcnow()
+    return {
+        "attempt_id": attempt.id,
+        "target_grade": attempt.target_grade,
+        "status": attempt.status,
+        "tasks": _tasks(session, attempt),
+        "started_at": attempt.started_at.isoformat() if attempt.started_at else None,
+        "deadline_at": attempt.deadline_at.isoformat() if attempt.deadline_at else None,
+        "time_limit_seconds": attempt.time_limit_seconds,
+        "server_time": now.isoformat(),
+        "remaining_seconds": remaining_seconds(attempt, now),
+        "saved_answers": {k: v["answer"] for k, v in (attempt.draft_answers or {}).items()},
+    }
+
+
+def _result_payload(session: Session, candidate_id: int, attempt, result, expired=False):
+    return {
+        "attempt_id": attempt.id,
+        "target_grade": result.target_grade,
+        "verification_status": result.verification_status,
+        "passed": result.passed,
+        "score": result.total_score,
+        "competency_scores": result.subscores,
+        "achieved_sublevel": result.achieved_sublevel,
+        "claimed_grade": session.get(Candidate, candidate_id).claimed_grade,
+        "expired": expired or attempt.expired,
+    }
+
+
+def _check_answer(variant, value) -> None:
+    kind = variant.input_data.get("answer_type", "single")
+    opts = variant.input_data.get("options") or {}
+    if kind == "single" and value not in opts:
+        raise HTTPException(status_code=422, detail=f"invalid option for task {variant.id}")
+    if kind == "multi" and not (
+        isinstance(value, list) and value and all(v in opts for v in value)
+    ):
+        raise HTTPException(status_code=422, detail=f"invalid options for task {variant.id}")
+    if kind == "number":
+        try:
+            float(str(value).replace(",", "."))
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=f"number expected for task {variant.id}") from exc
 
 
 def _own_attempt(session: Session, attempt_id: int, candidate_id: int) -> AssessmentAttempt:
@@ -104,6 +159,16 @@ def register(body: RegisterIn, session: Session = SessionDep) -> dict[str, Any]:
     return {"candidate_id": candidate.id, "access_token": token}
 
 
+def _expire_if_needed(session: Session, attempt: AssessmentAttempt) -> bool:
+    now = utcnow()
+    ensure_deadline(attempt, now)
+    if is_expired(attempt, now):
+        finalize_expired(session, attempt, now)
+        session.commit()
+        return True
+    return False
+
+
 @router.post("/assessments", status_code=201)
 def start_assessment(
     body: StartIn, candidate_id: int = CandidateDep, session: Session = SessionDep
@@ -115,6 +180,8 @@ def start_assessment(
             AssessmentAttempt.status == AttemptStatus.IN_PROGRESS,
         )
     )
+    if attempt is not None and _expire_if_needed(session, attempt):
+        attempt = None
     try:
         if attempt is None:
             attempt = start_attempt(session, candidate_id, body.target_grade)
@@ -123,11 +190,7 @@ def start_assessment(
     except AssessmentError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     session.commit()
-    return {
-        "attempt_id": attempt.id,
-        "target_grade": attempt.target_grade,
-        "tasks": _tasks(session, attempt),
-    }
+    return _attempt_payload(session, attempt)
 
 
 @router.get("/assessments/{attempt_id}")
@@ -135,12 +198,29 @@ def get_assessment(
     attempt_id: int, candidate_id: int = CandidateDep, session: Session = SessionDep
 ) -> dict[str, Any]:
     attempt = _own_attempt(session, attempt_id, candidate_id)
-    return {
-        "attempt_id": attempt.id,
-        "target_grade": attempt.target_grade,
-        "status": attempt.status,
-        "tasks": _tasks(session, attempt),
-    }
+    _expire_if_needed(session, attempt)
+    session.commit()
+    return _attempt_payload(session, attempt)
+
+
+@router.put("/assessments/{attempt_id}/answers")
+def autosave(
+    attempt_id: int, body: SubmitIn, candidate_id: int = CandidateDep, session: Session = SessionDep
+) -> dict[str, Any]:
+    attempt = _own_attempt(session, attempt_id, candidate_id)
+    variants = {v.id: v for v in attempt_variants(session, attempt)}
+    for vid, value in body.answers.items():
+        if vid in variants:
+            _check_answer(variants[vid], value)
+    try:
+        save_draft(session, attempt, dict(body.answers))
+    except DeadlinePassed as exc:
+        session.commit()
+        raise HTTPException(status_code=409, detail="deadline_passed") from exc
+    except AssessmentError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    session.commit()
+    return {"saved": len(body.answers), "remaining_seconds": remaining_seconds(attempt)}
 
 
 @router.post("/assessments/{attempt_id}/submit")
@@ -150,25 +230,20 @@ def submit(
     attempt = _own_attempt(session, attempt_id, candidate_id)
     if attempt.status != AttemptStatus.IN_PROGRESS:
         raise HTTPException(status_code=409, detail="assessment already submitted")
-    variants = {v.id: v for v in select_variants(session, attempt.target_grade, attempt.id)}
+    now = utcnow()
+    if is_expired(attempt, now):  # late answers are ignored; saved ones are scored
+        result = finalize_expired(session, attempt, now)
+        session.commit()
+        return _result_payload(session, candidate_id, attempt, result, expired=True)
+    variants = {v.id: v for v in attempt_variants(session, attempt)}
     if set(body.answers) != set(variants):
         raise HTTPException(status_code=422, detail="answers must cover exactly the assigned tasks")
-    for variant_id, choice in body.answers.items():
-        if choice not in variants[variant_id].input_data["options"]:
-            raise HTTPException(status_code=422, detail=f"invalid option for task {variant_id}")
+    for vid, value in body.answers.items():
+        _check_answer(variants[vid], value)
     submit_answers(session, attempt.id, dict(body.answers))
     result = score_attempt(session, attempt.id)
     session.commit()
-    return {
-        "attempt_id": attempt.id,
-        "target_grade": result.target_grade,
-        "verification_status": result.verification_status,
-        "passed": result.passed,
-        "score": result.total_score,
-        "competency_scores": result.subscores,
-        "achieved_sublevel": result.achieved_sublevel,
-        "claimed_grade": session.get(Candidate, candidate_id).claimed_grade,
-    }
+    return _result_payload(session, candidate_id, attempt, result)
 
 
 @router.get("/candidates/me/profile")
@@ -257,7 +332,10 @@ def catalog(session: Session = SessionDep) -> dict[str, Any]:
             {"code": s.code, "name": s.name}
             for s in session.scalars(select(Specialization).order_by(Specialization.id))
         ],
-        "grades": {"JUNIOR": ["J1", "J2"], "MIDDLE": ["M1", "M2"], "SENIOR": ["S1", "S2"]},
+        "grades": {g.value: [s.value for s in subs] for g, subs in GRADE_SUBLEVELS.items()},
+        "sublevel_labels": {
+            s.value: sublevel_label_ru(s) for subs in GRADE_SUBLEVELS.values() for s in subs
+        },
         "skills": [
             {"code": s.code, "name": s.name, "verifiable": s.competency_id is not None}
             for s in session.scalars(select(Skill).order_by(Skill.code))

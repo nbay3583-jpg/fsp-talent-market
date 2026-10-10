@@ -58,15 +58,12 @@ def login(client, account):
 
 def take_assessment(client, h, correct=True):
     start = client.post("/api/assessments", json={"target_grade": "MIDDLE"}, headers=h).json()
+    profile = "strong" if correct else "weak"
     ref = client.get(
-        f"/api/demo/assessments/{start['attempt_id']}/reference-answers", headers=h
+        f"/api/demo/assessments/{start['attempt_id']}/reference-answers?profile={profile}",
+        headers=h,
     ).json()["answers"]
-    answers = {
-        t["variant_id"]: ref[str(t["variant_id"])]
-        if correct
-        else next(k for k in "ABCD" if k != ref[str(t["variant_id"])])
-        for t in start["tasks"]
-    }
+    answers = {t["variant_id"]: ref[str(t["variant_id"])] for t in start["tasks"]}
     return client.post(
         f"/api/assessments/{start['attempt_id']}/submit", json={"answers": answers}, headers=h
     ).json()
@@ -324,7 +321,7 @@ def test_profile_catalog_and_validation_summary(env):
     cat = client.get("/api/catalog").json()
     assert "backend_python" in {s["code"] for s in cat["specializations"]} and cat["grades"][
         "MIDDLE"
-    ] == ["M1", "M2"]
+    ] == ["M1", "M2", "M3"]
     skills = {s["code"]: s["verifiable"] for s in cat["skills"]}
     assert skills["api_fastapi"] is True and skills["postgresql"] is False
     summary = client.get("/api/validation/summary")

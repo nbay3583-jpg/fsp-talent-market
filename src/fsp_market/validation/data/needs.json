@@ -3,10 +3,10 @@
  "needs": [
   {
    "id": "V-N01",
-   "title": "Remote FastAPI/PostgreSQL Middle (M2)",
+   "title": "Remote FastAPI/PostgreSQL Middle (M3)",
    "specialization": "backend_python",
    "target_grade": "MIDDLE",
-   "target_sublevel": "M2",
+   "target_sublevel": "M3",
    "required_skills": [
     "api_fastapi",
     "postgresql"
@@ -51,10 +51,10 @@
   },
   {
    "id": "V-N03",
-   "title": "Hybrid Moscow API + testing Middle (M1), NET budget",
+   "title": "Hybrid Moscow API + testing Middle (M2), NET budget",
    "specialization": "backend_python",
    "target_grade": "MIDDLE",
-   "target_sublevel": "M1",
+   "target_sublevel": "M2",
    "required_skills": [
     "api_fastapi",
     "testing"
@@ -74,10 +74,10 @@
   },
   {
    "id": "V-N04",
-   "title": "Junior Python/SQL (J2)",
+   "title": "Junior Python/SQL (J3)",
    "specialization": "backend_python",
    "target_grade": "JUNIOR",
-   "target_sublevel": "J2",
+   "target_sublevel": "J3",
    "required_skills": [
     "python",
     "sql"
@@ -101,7 +101,7 @@
    "title": "Remote Middle: system thinking + FastAPI",
    "specialization": "backend_python",
    "target_grade": "MIDDLE",
-   "target_sublevel": "M2",
+   "target_sublevel": "M3",
    "required_skills": [
     "system_thinking",
     "api_fastapi"
@@ -147,7 +147,7 @@
    "title": "Remote SQL/PostgreSQL Middle, start within 14 days",
    "specialization": "backend_python",
    "target_grade": "MIDDLE",
-   "target_sublevel": "M2",
+   "target_sublevel": "M3",
    "required_skills": [
     "sql",
     "postgresql"
@@ -167,10 +167,10 @@
   },
   {
    "id": "V-N08",
-   "title": "Remote Senior (S1): FastAPI + system thinking",
+   "title": "Remote Senior (S2): FastAPI + system thinking",
    "specialization": "backend_python",
    "target_grade": "SENIOR",
-   "target_sublevel": "S1",
+   "target_sublevel": "S2",
    "required_skills": [
     "api_fastapi",
     "system_thinking"
@@ -193,7 +193,7 @@
    "title": "Remote Middle with Kafka (not assessable) + Python",
    "specialization": "backend_python",
    "target_grade": "MIDDLE",
-   "target_sublevel": "M2",
+   "target_sublevel": "M3",
    "required_skills": [
     "kafka",
     "python"
@@ -216,7 +216,7 @@
    "title": "Junior Python, office/hybrid Moscow, NET",
    "specialization": "backend_python",
    "target_grade": "JUNIOR",
-   "target_sublevel": "J1",
+   "target_sublevel": "J2",
    "required_skills": [
     "python"
    ],

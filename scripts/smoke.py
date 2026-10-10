@@ -43,8 +43,8 @@ def login(account):
 
 def take_assessment(token, correct=True):
     start = call("POST", "/api/assessments", token, {"target_grade": "MIDDLE"}, 201)
-    ref = call("GET", f"/api/demo/assessments/{start['attempt_id']}/reference-answers", token)["answers"]
-    answers = {t["variant_id"]: ref[str(t["variant_id"])] if correct else next(k for k in "ABCD" if k != ref[str(t["variant_id"])]) for t in start["tasks"]}
+    ref = call("GET", f"/api/demo/assessments/{start['attempt_id']}/reference-answers" + ("" if correct else "?profile=weak"), token)["answers"]
+    answers = {t["variant_id"]: ref[str(t["variant_id"])] for t in start["tasks"]}
     return call("POST", f"/api/assessments/{start['attempt_id']}/submit", token, {"answers": answers})
 
 

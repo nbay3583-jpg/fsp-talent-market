@@ -15,7 +15,8 @@ from fsp_market.assessments.models import TaskFamily, TaskTemplate
 from fsp_market.assessments.seed import seed_backend_python
 from fsp_market.assessments.service import (
     score_attempt,
-    select_variants,
+    attempt_variants,
+    wrong_answer,
     start_attempt,
     submit_answers,
 )
@@ -169,7 +170,7 @@ C = [
         "hana",
         "Hana Almost",
         "MIDDLE",
-        ("MIDDLE", {"testing", "docker_basics"}),
+        ("MIDDLE", {"testing", "docker_basics", "system_thinking"}),  # 5/8: not verified
         (205000, "GROSS"),
         [R],
         "Sochi",
@@ -184,7 +185,7 @@ C = [
         "julia",
         "Julia Mone",
         "MIDDLE",
-        ("MIDDLE", {"testing"}),
+        ("MIDDLE", {"testing"}),  # 7/8 -> M2, a neighbour of the M3 target
         (200000, "GROSS"),
         [R],
         "Tula",
@@ -396,18 +397,17 @@ C = [
 def run_core_assessment(
     session: Session, cand: Candidate, grade: str, wrong, now: datetime
 ) -> None:
-    attempt = start_attempt(session, cand.id, Grade(grade), now=now)
+    attempt = start_attempt(session, cand.id, Grade(grade), now=now, seed=cand.id)
     answers = {}
-    for v in select_variants(session, Grade(grade), attempt.id):
+    for v in attempt_variants(session, attempt):
         comp = session.scalar(
             select(Competency.code)
             .join(TaskFamily, TaskFamily.competency_id == Competency.id)
             .join(TaskTemplate, TaskTemplate.family_id == TaskFamily.id)
             .where(TaskTemplate.id == v.template_id)
         )
-        right = v.scoring_contract["correct"]
         bad = wrong == ALL or comp in wrong
-        answers[v.id] = next(k for k in "ABCD" if k != right) if bad else right
+        answers[v.id] = wrong_answer(v) if bad else v.scoring_contract["correct"]
     submit_answers(session, attempt.id, answers, now=now)
     score_attempt(session, attempt.id, now=now)
 
@@ -477,7 +477,7 @@ def seed_matching_demo(
                 title="Python Backend (FastAPI)",
                 specialization=spec.code,
                 target_grade=Grade.MIDDLE,
-                target_sublevel=Sublevel.M2,
+                target_sublevel=Sublevel.M3,
                 required_skills=["api_fastapi", "postgresql"],
                 optional_skills=["kafka", "docker_basics"],
                 salary_from=200000,

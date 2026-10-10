@@ -10,12 +10,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from fsp_market.common.enums import Grade, SalaryType, Sublevel, VerificationStatus
+from fsp_market.common.enums import (
+    SUBLEVEL_GRADE,
+    SUBLEVEL_ORDER,
+    Grade,
+    SalaryType,
+    Sublevel,
+    VerificationStatus,
+)
 from fsp_market.matching.facts import CandidateFacts, NeedSkillSpec, NeedSpec
 from fsp_market.matching.policy import DEFAULT_POLICY, MatchingPolicy
 from fsp_market.taxonomy.grades import GRADE_SUBLEVELS
 
-SUBLEVEL_ORDER = [Sublevel.J1, Sublevel.J2, Sublevel.M1, Sublevel.M2, Sublevel.S1, Sublevel.S2]
 GRADE_RANK = {Grade.JUNIOR: 0, Grade.MIDDLE: 1, Grade.SENIOR: 2}
 
 # exclusion codes
@@ -31,21 +37,30 @@ AVAILABILITY_MISMATCH = "AVAILABILITY_MISMATCH"
 
 
 def candidate_sublevels(c: CandidateFacts) -> set[Sublevel]:
-    """Verified candidates have one exact sublevel; others only a claimed grade (its whole range)."""
+    """Verified candidates have one exact sublevel; others (and verified candidates whose
+    sublevel still needs clarification) only a grade, hence its whole range of three."""
     if c.verification_status == VerificationStatus.VERIFIED and c.verified_sublevel:
         return {c.verified_sublevel}
-    if c.claimed_grade:
-        return set(GRADE_SUBLEVELS[c.claimed_grade])
-    return set()
+    grade = (
+        c.verified_grade
+        if c.verification_status == VerificationStatus.VERIFIED and c.verified_grade
+        else c.claimed_grade
+    )
+    return set(GRADE_SUBLEVELS[grade]) if grade else set()
 
 
 def allowed_sublevels(need: NeedSpec, policy: MatchingPolicy = DEFAULT_POLICY) -> set[Sublevel]:
-    """Target M2 with tolerance 1 -> {M1, M2, S1}. Without a target sublevel: the grade's own two."""
+    """Target M1 with tolerance 1 -> {J3, M1, M2} (+-1 on the ordered J1..S3 scale; crossing a
+    public-grade border only when policy.cross_grade_tolerance). Without a target sublevel: the
+    grade's own three."""
     if need.target_sublevel is None:
         return set(GRADE_SUBLEVELS[need.target_grade])
     i = SUBLEVEL_ORDER.index(need.target_sublevel)
     lo, hi = max(0, i - policy.sublevel_tolerance), i + policy.sublevel_tolerance
-    return set(SUBLEVEL_ORDER[lo : hi + 1])
+    out = set(SUBLEVEL_ORDER[lo : hi + 1])
+    if not policy.cross_grade_tolerance:
+        out = {s for s in out if SUBLEVEL_GRADE[s] == SUBLEVEL_GRADE[need.target_sublevel]}
+    return out
 
 
 def _to_type(amount: int, src: SalaryType | None, dst: SalaryType, policy: MatchingPolicy) -> float:

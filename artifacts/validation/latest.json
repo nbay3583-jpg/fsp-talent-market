@@ -1,91 +1,106 @@
 {
  "assessment": {
-  "anchors": [
-   {
-    "family": "backend.api.middle.api_validation",
-    "solved_by": [
-     "P-MIDDLE",
-     "P-SENIOR"
-    ],
-    "variant": "backend.api.middle.api_validation.t1.v1"
-   }
-  ],
+  "anchors": [],
   "cases": 42,
   "coverage": {
    "competencies_covered": {
-    "JUNIOR": 2,
+    "JUNIOR": 6,
     "MIDDLE": 6,
-    "SENIOR": 4
+    "SENIOR": 6
    },
    "coverage_ratio": {
-    "JUNIOR": 0.3333,
+    "JUNIOR": 1.0,
     "MIDDLE": 1.0,
-    "SENIOR": 0.6667
+    "SENIOR": 1.0
    },
    "items_per_attempt": {
-    "JUNIOR": 2,
-    "MIDDLE": 6,
-    "SENIOR": 4
+    "JUNIOR": 8,
+    "MIDDLE": 8,
+    "SENIOR": 8
    },
    "matrix": {
     "api_fastapi": {
+     "JUNIOR": {
+      "families": 1,
+      "variants": 7
+     },
      "MIDDLE": {
       "families": 1,
-      "variants": 2
+      "variants": 8
      },
      "SENIOR": {
       "families": 1,
-      "variants": 2
+      "variants": 8
      }
     },
     "docker_basics": {
+     "JUNIOR": {
+      "families": 1,
+      "variants": 7
+     },
      "MIDDLE": {
       "families": 1,
-      "variants": 2
+      "variants": 6
+     },
+     "SENIOR": {
+      "families": 1,
+      "variants": 6
      }
     },
     "python": {
      "JUNIOR": {
-      "families": 1,
-      "variants": 2
+      "families": 2,
+      "variants": 14
      },
      "MIDDLE": {
-      "families": 1,
-      "variants": 2
+      "families": 2,
+      "variants": 14
      },
      "SENIOR": {
-      "families": 1,
-      "variants": 2
+      "families": 2,
+      "variants": 14
      }
     },
     "sql": {
      "JUNIOR": {
-      "families": 1,
-      "variants": 2
+      "families": 2,
+      "variants": 14
      },
      "MIDDLE": {
-      "families": 1,
-      "variants": 2
+      "families": 2,
+      "variants": 12
      },
      "SENIOR": {
-      "families": 1,
-      "variants": 2
+      "families": 2,
+      "variants": 12
      }
     },
     "system_thinking": {
+     "JUNIOR": {
+      "families": 1,
+      "variants": 7
+     },
      "MIDDLE": {
       "families": 1,
-      "variants": 2
+      "variants": 6
      },
      "SENIOR": {
       "families": 1,
-      "variants": 2
+      "variants": 6
      }
     },
     "testing": {
+     "JUNIOR": {
+      "families": 1,
+      "variants": 8
+     },
      "MIDDLE": {
       "families": 1,
-      "variants": 2
+      "variants": 8
+     },
+     "SENIOR": {
+      "families": 1,
+      "variants": 6
      }
     }
    }
@@ -128,18 +143,18 @@
   "grade_accuracy": 1.0,
   "guessing_baseline": {
    "JUNIOR": {
-    "false_verification_rate": 0.086,
-    "items": 2,
+    "false_verification_rate": 0.016,
+    "items": 8,
     "trials": 500
    },
    "MIDDLE": {
-    "false_verification_rate": 0.004,
-    "items": 6,
+    "false_verification_rate": 0.002,
+    "items": 8,
     "trials": 500
    },
    "SENIOR": {
-    "false_verification_rate": 0.054,
-    "items": 4,
+    "false_verification_rate": 0.0,
+    "items": 8,
     "trials": 500
    }
   },
@@ -148,33 +163,33 @@
   "outcomes": [
    {
     "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
+    "expected_sublevel": "J3",
     "grade": "JUNIOR",
-    "items": 2,
+    "items": 8,
     "match": true,
     "persona": "P-JUNIOR",
     "rotation": 0,
     "score": 1.0,
     "status": "VERIFIED",
-    "sublevel": "J2"
+    "sublevel": "J3"
    },
    {
     "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
+    "expected_sublevel": "J3",
     "grade": "JUNIOR",
-    "items": 2,
+    "items": 8,
     "match": true,
     "persona": "P-JUNIOR",
     "rotation": 1,
     "score": 1.0,
     "status": "VERIFIED",
-    "sublevel": "J2"
+    "sublevel": "J3"
    },
    {
     "expected_status": "NOT_VERIFIED",
     "expected_sublevel": null,
     "grade": "MIDDLE",
-    "items": 6,
+    "items": 8,
     "match": true,
     "persona": "P-JUNIOR",
     "rotation": 0,
@@ -186,22 +201,10 @@
     "expected_status": "NOT_VERIFIED",
     "expected_sublevel": null,
     "grade": "MIDDLE",
-    "items": 6,
+    "items": 8,
     "match": true,
     "persona": "P-JUNIOR",
     "rotation": 1,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "SENIOR",
-    "items": 4,
-    "match": true,
-    "persona": "P-JUNIOR",
-    "rotation": 0,
     "score": 0.0,
     "status": "NOT_VERIFIED",
     "sublevel": null
@@ -210,69 +213,9 @@
     "expected_status": "NOT_VERIFIED",
     "expected_sublevel": null,
     "grade": "SENIOR",
-    "items": 4,
+    "items": 8,
     "match": true,
     "persona": "P-JUNIOR",
-    "rotation": 1,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
-    "grade": "JUNIOR",
-    "items": 2,
-    "match": true,
-    "persona": "P-MIDDLE",
-    "rotation": 0,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "J2"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
-    "grade": "JUNIOR",
-    "items": 2,
-    "match": true,
-    "persona": "P-MIDDLE",
-    "rotation": 1,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "J2"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "M2",
-    "grade": "MIDDLE",
-    "items": 6,
-    "match": true,
-    "persona": "P-MIDDLE",
-    "rotation": 0,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "M2"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "M2",
-    "grade": "MIDDLE",
-    "items": 6,
-    "match": true,
-    "persona": "P-MIDDLE",
-    "rotation": 1,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "M2"
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "SENIOR",
-    "items": 4,
-    "match": true,
-    "persona": "P-MIDDLE",
     "rotation": 0,
     "score": 0.0,
     "status": "NOT_VERIFIED",
@@ -282,7 +225,79 @@
     "expected_status": "NOT_VERIFIED",
     "expected_sublevel": null,
     "grade": "SENIOR",
-    "items": 4,
+    "items": 8,
+    "match": true,
+    "persona": "P-JUNIOR",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J3",
+    "grade": "JUNIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J3",
+    "grade": "JUNIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M3",
+    "grade": "MIDDLE",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M3",
+    "grade": "MIDDLE",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M3"
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 8,
     "match": true,
     "persona": "P-MIDDLE",
     "rotation": 1,
@@ -292,37 +307,181 @@
    },
    {
     "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
+    "expected_sublevel": "J3",
     "grade": "JUNIOR",
-    "items": 2,
+    "items": 8,
     "match": true,
     "persona": "P-SENIOR",
     "rotation": 0,
     "score": 1.0,
     "status": "VERIFIED",
-    "sublevel": "J2"
+    "sublevel": "J3"
    },
    {
     "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
+    "expected_sublevel": "J3",
     "grade": "JUNIOR",
-    "items": 2,
+    "items": 8,
     "match": true,
     "persona": "P-SENIOR",
     "rotation": 1,
     "score": 1.0,
     "status": "VERIFIED",
-    "sublevel": "J2"
+    "sublevel": "J3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M3",
+    "grade": "MIDDLE",
+    "items": 8,
+    "match": true,
+    "persona": "P-SENIOR",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M3",
+    "grade": "MIDDLE",
+    "items": 8,
+    "match": true,
+    "persona": "P-SENIOR",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "S3",
+    "grade": "SENIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-SENIOR",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "S3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "S3",
+    "grade": "SENIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-SENIOR",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "S3"
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "JUNIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "JUNIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "MIDDLE",
+    "items": 8,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "MIDDLE",
+    "items": 8,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-WEAK",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J3",
+    "grade": "JUNIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE-HIGH",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J3",
+    "grade": "JUNIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE-HIGH",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J3"
    },
    {
     "expected_status": "VERIFIED",
     "expected_sublevel": "M2",
     "grade": "MIDDLE",
-    "items": 6,
+    "items": 8,
     "match": true,
-    "persona": "P-SENIOR",
+    "persona": "P-MIDDLE-HIGH",
     "rotation": 0,
-    "score": 1.0,
+    "score": 0.875,
     "status": "VERIFIED",
     "sublevel": "M2"
    },
@@ -330,23 +489,167 @@
     "expected_status": "VERIFIED",
     "expected_sublevel": "M2",
     "grade": "MIDDLE",
-    "items": 6,
+    "items": 8,
     "match": true,
-    "persona": "P-SENIOR",
+    "persona": "P-MIDDLE-HIGH",
+    "rotation": 1,
+    "score": 0.875,
+    "status": "VERIFIED",
+    "sublevel": "M2"
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE-HIGH",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE-HIGH",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J3",
+    "grade": "JUNIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J3",
+    "grade": "JUNIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
     "rotation": 1,
     "score": 1.0,
     "status": "VERIFIED",
-    "sublevel": "M2"
+    "sublevel": "J3"
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "MIDDLE",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
+    "rotation": 0,
+    "score": 0.625,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "MIDDLE",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
+    "rotation": 1,
+    "score": 0.625,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
+    "rotation": 0,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "NOT_VERIFIED",
+    "expected_sublevel": null,
+    "grade": "SENIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-MIDDLE-LOW",
+    "rotation": 1,
+    "score": 0.0,
+    "status": "NOT_VERIFIED",
+    "sublevel": null
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J3",
+    "grade": "JUNIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-SENIOR-EDGE",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "J3",
+    "grade": "JUNIOR",
+    "items": 8,
+    "match": true,
+    "persona": "P-SENIOR-EDGE",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "J3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M3",
+    "grade": "MIDDLE",
+    "items": 8,
+    "match": true,
+    "persona": "P-SENIOR-EDGE",
+    "rotation": 0,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M3"
+   },
+   {
+    "expected_status": "VERIFIED",
+    "expected_sublevel": "M3",
+    "grade": "MIDDLE",
+    "items": 8,
+    "match": true,
+    "persona": "P-SENIOR-EDGE",
+    "rotation": 1,
+    "score": 1.0,
+    "status": "VERIFIED",
+    "sublevel": "M3"
    },
    {
     "expected_status": "VERIFIED",
     "expected_sublevel": "S2",
     "grade": "SENIOR",
-    "items": 4,
+    "items": 8,
     "match": true,
-    "persona": "P-SENIOR",
+    "persona": "P-SENIOR-EDGE",
     "rotation": 0,
-    "score": 1.0,
+    "score": 0.875,
     "status": "VERIFIED",
     "sublevel": "S2"
    },
@@ -354,301 +657,13 @@
     "expected_status": "VERIFIED",
     "expected_sublevel": "S2",
     "grade": "SENIOR",
-    "items": 4,
+    "items": 8,
     "match": true,
-    "persona": "P-SENIOR",
+    "persona": "P-SENIOR-EDGE",
     "rotation": 1,
-    "score": 1.0,
+    "score": 0.875,
     "status": "VERIFIED",
     "sublevel": "S2"
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "JUNIOR",
-    "items": 2,
-    "match": true,
-    "persona": "P-WEAK",
-    "rotation": 0,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "JUNIOR",
-    "items": 2,
-    "match": true,
-    "persona": "P-WEAK",
-    "rotation": 1,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "MIDDLE",
-    "items": 6,
-    "match": true,
-    "persona": "P-WEAK",
-    "rotation": 0,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "MIDDLE",
-    "items": 6,
-    "match": true,
-    "persona": "P-WEAK",
-    "rotation": 1,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "SENIOR",
-    "items": 4,
-    "match": true,
-    "persona": "P-WEAK",
-    "rotation": 0,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "SENIOR",
-    "items": 4,
-    "match": true,
-    "persona": "P-WEAK",
-    "rotation": 1,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
-    "grade": "JUNIOR",
-    "items": 2,
-    "match": true,
-    "persona": "P-MIDDLE-HIGH",
-    "rotation": 0,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "J2"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
-    "grade": "JUNIOR",
-    "items": 2,
-    "match": true,
-    "persona": "P-MIDDLE-HIGH",
-    "rotation": 1,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "J2"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "M1",
-    "grade": "MIDDLE",
-    "items": 6,
-    "match": true,
-    "persona": "P-MIDDLE-HIGH",
-    "rotation": 0,
-    "score": 0.8333,
-    "status": "VERIFIED",
-    "sublevel": "M1"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "M1",
-    "grade": "MIDDLE",
-    "items": 6,
-    "match": true,
-    "persona": "P-MIDDLE-HIGH",
-    "rotation": 1,
-    "score": 0.8333,
-    "status": "VERIFIED",
-    "sublevel": "M1"
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "SENIOR",
-    "items": 4,
-    "match": true,
-    "persona": "P-MIDDLE-HIGH",
-    "rotation": 0,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "SENIOR",
-    "items": 4,
-    "match": true,
-    "persona": "P-MIDDLE-HIGH",
-    "rotation": 1,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
-    "grade": "JUNIOR",
-    "items": 2,
-    "match": true,
-    "persona": "P-MIDDLE-LOW",
-    "rotation": 0,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "J2"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
-    "grade": "JUNIOR",
-    "items": 2,
-    "match": true,
-    "persona": "P-MIDDLE-LOW",
-    "rotation": 1,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "J2"
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "MIDDLE",
-    "items": 6,
-    "match": true,
-    "persona": "P-MIDDLE-LOW",
-    "rotation": 0,
-    "score": 0.6667,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "MIDDLE",
-    "items": 6,
-    "match": true,
-    "persona": "P-MIDDLE-LOW",
-    "rotation": 1,
-    "score": 0.6667,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "SENIOR",
-    "items": 4,
-    "match": true,
-    "persona": "P-MIDDLE-LOW",
-    "rotation": 0,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "NOT_VERIFIED",
-    "expected_sublevel": null,
-    "grade": "SENIOR",
-    "items": 4,
-    "match": true,
-    "persona": "P-MIDDLE-LOW",
-    "rotation": 1,
-    "score": 0.0,
-    "status": "NOT_VERIFIED",
-    "sublevel": null
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
-    "grade": "JUNIOR",
-    "items": 2,
-    "match": true,
-    "persona": "P-SENIOR-EDGE",
-    "rotation": 0,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "J2"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "J2",
-    "grade": "JUNIOR",
-    "items": 2,
-    "match": true,
-    "persona": "P-SENIOR-EDGE",
-    "rotation": 1,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "J2"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "M2",
-    "grade": "MIDDLE",
-    "items": 6,
-    "match": true,
-    "persona": "P-SENIOR-EDGE",
-    "rotation": 0,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "M2"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "M2",
-    "grade": "MIDDLE",
-    "items": 6,
-    "match": true,
-    "persona": "P-SENIOR-EDGE",
-    "rotation": 1,
-    "score": 1.0,
-    "status": "VERIFIED",
-    "sublevel": "M2"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "S1",
-    "grade": "SENIOR",
-    "items": 4,
-    "match": true,
-    "persona": "P-SENIOR-EDGE",
-    "rotation": 0,
-    "score": 0.75,
-    "status": "VERIFIED",
-    "sublevel": "S1"
-   },
-   {
-    "expected_status": "VERIFIED",
-    "expected_sublevel": "S1",
-    "grade": "SENIOR",
-    "items": 4,
-    "match": true,
-    "persona": "P-SENIOR-EDGE",
-    "rotation": 1,
-    "score": 0.75,
-    "status": "VERIFIED",
-    "sublevel": "S1"
    }
   ],
   "pass_thresholds": {
@@ -674,15 +689,15 @@
     "id": "P-WEAK"
    },
    {
-    "description": "Middle, slips on testing (5/6 = 0.833 -> M1)",
+    "description": "Middle, slips on testing (7/8 = 0.875 -> M2)",
     "id": "P-MIDDLE-HIGH"
    },
    {
-    "description": "Middle, slips on testing + docker (4/6 = 0.667 < 0.7)",
+    "description": "Middle, slips on testing + docker + system (5/8 = 0.625 < 0.7)",
     "id": "P-MIDDLE-LOW"
    },
    {
-    "description": "Senior, slips on system thinking (3/4 = 0.75 -> S1)",
+    "description": "Senior, slips on system thinking (7/8 = 0.875 -> S2)",
     "id": "P-SENIOR-EDGE"
    }
   ],
@@ -703,7 +718,7 @@
   "needs": 10,
   "nonzero_labels": 98,
   "relevant_threshold": 2,
-  "sha256": "2f491079cc219481758bbc0b210ae2f872acd961f550872275594b6e70f9ee39",
+  "sha256": "3dce3f9c8f7b4deb4b7a1b3a26507a82e3e29c9bdbe468bfedeaab28c9a84122",
   "version": "1"
  },
  "failures": [
@@ -951,31 +966,13 @@
    "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
   },
   {
-   "actual": "returned at rank 4",
-   "candidate": "V-C13",
-   "expected": "relevance 0 (<2)",
-   "id": "hard_filters_only:V-N03:V-C13:top5-false-positive",
-   "method": "hard_filters_only",
-   "need": "V-N03",
-   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
-  },
-  {
    "actual": "returned at rank 5",
-   "candidate": "V-C27",
-   "expected": "relevance 0 (<2)",
-   "id": "hard_filters_only:V-N03:V-C27:top5-false-positive",
-   "method": "hard_filters_only",
-   "need": "V-N03",
-   "probable_reason": "passes constraints but labelled irrelevant (no relevant evidence for this need)"
-  },
-  {
-   "actual": "returned at rank 5",
-   "candidate": "V-C27",
-   "expected": "relevance 0 (<2)",
-   "id": "evidence_matching:V-N03:V-C27:top5-false-positive",
+   "candidate": "V-C04",
+   "expected": "relevance 1 (<2)",
+   "id": "evidence_matching:V-N03:V-C04:top5-false-positive",
    "method": "evidence_matching",
    "need": "V-N03",
-   "probable_reason": "passes constraints but labelled irrelevant (no relevant evidence for this need)"
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
   },
   {
    "actual": "returned at rank 1",
@@ -1002,7 +999,7 @@
    "id": "keyword_baseline:V-N04:V-C19:top5-false-positive",
    "method": "keyword_baseline",
    "need": "V-N04",
-   "probable_reason": "violates hard constraint(s): salary (method does not apply constraints)"
+   "probable_reason": "violates hard constraint(s): grade, salary (method does not apply constraints)"
   },
   {
    "actual": "returned at rank 4",
@@ -1020,7 +1017,7 @@
    "id": "keyword_baseline:V-N04:V-C29:top5-false-positive",
    "method": "keyword_baseline",
    "need": "V-N04",
-   "probable_reason": "violates hard constraint(s): salary (method does not apply constraints)"
+   "probable_reason": "violates hard constraint(s): grade, salary (method does not apply constraints)"
   },
   {
    "actual": "not in top-10",
@@ -1389,7 +1386,7 @@
    "id": "keyword_baseline:V-N08:V-C04:top5-false-positive",
    "method": "keyword_baseline",
    "need": "V-N08",
-   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
+   "probable_reason": "violates hard constraint(s): grade (method does not apply constraints)"
   },
   {
    "actual": "returned at rank 3",
@@ -1407,7 +1404,7 @@
    "id": "keyword_baseline:V-N08:V-C11:top5-false-positive",
    "method": "keyword_baseline",
    "need": "V-N08",
-   "probable_reason": "violates hard constraint(s): work_format (method does not apply constraints)"
+   "probable_reason": "violates hard constraint(s): grade, work_format (method does not apply constraints)"
   },
   {
    "actual": "returned at rank 5",
@@ -1416,97 +1413,25 @@
    "id": "keyword_baseline:V-N08:V-C20:top5-false-positive",
    "method": "keyword_baseline",
    "need": "V-N08",
-   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
-  },
-  {
-   "actual": "returned at rank 1",
-   "candidate": "V-C01",
-   "expected": "relevance 1 (<2)",
-   "id": "hard_filters_only:V-N08:V-C01:top5-false-positive",
-   "method": "hard_filters_only",
-   "need": "V-N08",
-   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
-  },
-  {
-   "actual": "returned at rank 2",
-   "candidate": "V-C02",
-   "expected": "relevance 1 (<2)",
-   "id": "hard_filters_only:V-N08:V-C02:top5-false-positive",
-   "method": "hard_filters_only",
-   "need": "V-N08",
-   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
+   "probable_reason": "violates hard constraint(s): grade (method does not apply constraints)"
   },
   {
    "actual": "returned at rank 3",
-   "candidate": "V-C03",
+   "candidate": "V-C24",
    "expected": "relevance 1 (<2)",
-   "id": "hard_filters_only:V-N08:V-C03:top5-false-positive",
-   "method": "hard_filters_only",
-   "need": "V-N08",
-   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
-  },
-  {
-   "actual": "returned at rank 4",
-   "candidate": "V-C04",
-   "expected": "relevance 0 (<2)",
-   "id": "hard_filters_only:V-N08:V-C04:top5-false-positive",
+   "id": "hard_filters_only:V-N08:V-C24:top5-false-positive",
    "method": "hard_filters_only",
    "need": "V-N08",
    "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
   },
   {
-   "actual": "returned at rank 5",
-   "candidate": "V-C05",
-   "expected": "relevance 1 (<2)",
-   "id": "hard_filters_only:V-N08:V-C05:top5-false-positive",
-   "method": "hard_filters_only",
-   "need": "V-N08",
-   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
-  },
-  {
-   "actual": "not in top-10",
-   "candidate": "V-C22",
-   "expected": "relevance 3 in top-10",
-   "id": "hard_filters_only:V-N08:V-C22:missed-relevant",
-   "method": "hard_filters_only",
-   "need": "V-N08",
-   "probable_reason": "relevant candidate ranked 13, outside the top-10"
-  },
-  {
-   "actual": "not in top-10",
-   "candidate": "V-C23",
-   "expected": "relevance 2 in top-10",
-   "id": "hard_filters_only:V-N08:V-C23:missed-relevant",
-   "method": "hard_filters_only",
-   "need": "V-N08",
-   "probable_reason": "relevant candidate ranked 14, outside the top-10"
-  },
-  {
    "actual": "returned at rank 3",
-   "candidate": "V-C20",
+   "candidate": "V-C24",
    "expected": "relevance 1 (<2)",
-   "id": "evidence_matching:V-N08:V-C20:top5-false-positive",
+   "id": "evidence_matching:V-N08:V-C24:top5-false-positive",
    "method": "evidence_matching",
    "need": "V-N08",
-   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
-  },
-  {
-   "actual": "returned at rank 4",
-   "candidate": "V-C02",
-   "expected": "relevance 1 (<2)",
-   "id": "evidence_matching:V-N08:V-C02:top5-false-positive",
-   "method": "evidence_matching",
-   "need": "V-N08",
-   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
-  },
-  {
-   "actual": "returned at rank 5",
-   "candidate": "V-C01",
-   "expected": "relevance 1 (<2)",
-   "id": "evidence_matching:V-N08:V-C01:top5-false-positive",
-   "method": "evidence_matching",
-   "need": "V-N08",
-   "probable_reason": "labelled partially relevant (e.g. verified skills below the need's grade or a missing required skill)"
+   "probable_reason": "candidate is NOT_VERIFIED; method ranks unverified context in the top-5"
   },
   {
    "actual": "returned at rank 1",
@@ -1542,7 +1467,7 @@
    "id": "keyword_baseline:V-N09:V-C23:top5-false-positive",
    "method": "keyword_baseline",
    "need": "V-N09",
-   "probable_reason": "violates hard constraint(s): salary (method does not apply constraints)"
+   "probable_reason": "violates hard constraint(s): grade, salary (method does not apply constraints)"
   },
   {
    "actual": "not in top-10",
@@ -1763,7 +1688,7 @@
      "r@10": 1.0
     },
     "V-N03": {
-     "ndcg@10": 0.9971,
+     "ndcg@10": 1.0,
      "p@3": 1.0,
      "p@5": 0.8,
      "r@10": 1.0
@@ -1793,7 +1718,7 @@
      "r@10": 1.0
     },
     "V-N08": {
-     "ndcg@10": 1.0,
+     "ndcg@10": 0.7956,
      "p@3": 0.6667,
      "p@5": 0.4,
      "r@10": 1.0
@@ -1825,9 +1750,9 @@
      "r@10": 0.8
     },
     "V-N03": {
-     "ndcg@10": 0.8711,
+     "ndcg@10": 0.9201,
      "p@3": 0.6667,
-     "p@5": 0.4,
+     "p@5": 0.8,
      "r@10": 1.0
     },
     "V-N04": {
@@ -1855,10 +1780,10 @@
      "r@10": 0.8
     },
     "V-N08": {
-     "ndcg@10": 0.3202,
-     "p@3": 0.0,
-     "p@5": 0.0,
-     "r@10": 0.0
+     "ndcg@10": 0.7956,
+     "p@3": 0.6667,
+     "p@5": 0.4,
+     "r@10": 1.0
     },
     "V-N09": {
      "ndcg@10": 0.6839,
@@ -1974,10 +1899,7 @@
      "V-C05",
      "V-C28",
      "V-C29",
-     "V-C27",
-     "V-C31",
-     "V-C04",
-     "V-C13"
+     "V-C04"
     ],
     "V-N04": [
      "V-C12",
@@ -2026,20 +1948,7 @@
     "V-N08": [
      "V-C22",
      "V-C23",
-     "V-C20",
-     "V-C02",
-     "V-C01",
-     "V-C03",
-     "V-C05",
-     "V-C06",
-     "V-C10",
-     "V-C16",
-     "V-C17",
-     "V-C18",
-     "V-C04",
-     "V-C08",
-     "V-C24",
-     "V-C30"
+     "V-C24"
     ],
     "V-N09": [
      "V-C20",
@@ -2099,11 +2008,8 @@
      "V-C01",
      "V-C04",
      "V-C05",
-     "V-C13",
-     "V-C27",
      "V-C28",
-     "V-C29",
-     "V-C31"
+     "V-C29"
     ],
     "V-N04": [
      "V-C12",
@@ -2150,22 +2056,9 @@
      "V-C30"
     ],
     "V-N08": [
-     "V-C01",
-     "V-C02",
-     "V-C03",
-     "V-C04",
-     "V-C05",
-     "V-C06",
-     "V-C08",
-     "V-C10",
-     "V-C16",
-     "V-C17",
-     "V-C18",
-     "V-C20",
      "V-C22",
      "V-C23",
-     "V-C24",
-     "V-C30"
+     "V-C24"
     ],
     "V-N09": [
      "V-C01",
@@ -2491,7 +2384,7 @@
   },
   "sensitivity": {
    "assessment_heavy": {
-    "ndcg@10": 0.9993,
+    "ndcg@10": 0.9792,
     "p@3": 0.9333,
     "p@5": 0.78,
     "r@10": 0.9818,
@@ -2506,7 +2399,7 @@
     }
    },
    "default": {
-    "ndcg@10": 0.9997,
+    "ndcg@10": 0.9796,
     "p@3": 0.9333,
     "p@5": 0.78,
     "r@10": 0.9818,
@@ -2521,7 +2414,7 @@
     }
    },
    "fsp_heavy": {
-    "ndcg@10": 0.9891,
+    "ndcg@10": 0.9712,
     "p@3": 0.9333,
     "p@5": 0.78,
     "r@10": 0.9818,
@@ -2540,24 +2433,24 @@
    "evidence_matching": {
     "constraint_violation_rate@10": 0.0,
     "constraint_violations@10": 0,
-    "ndcg@10": 0.9997,
+    "ndcg@10": 0.9796,
     "p@3": 0.9333,
     "p@5": 0.78,
     "r@10": 0.9818,
-    "returned@10": 80
+    "returned@10": 70
    },
    "hard_filters_only": {
     "constraint_violation_rate@10": 0.0,
     "constraint_violations@10": 0,
-    "ndcg@10": 0.7633,
-    "p@3": 0.7333,
-    "p@5": 0.58,
-    "r@10": 0.7855,
-    "returned@10": 80
+    "ndcg@10": 0.8157,
+    "p@3": 0.8,
+    "p@5": 0.66,
+    "r@10": 0.8855,
+    "returned@10": 70
    },
    "keyword_baseline": {
-    "constraint_violation_rate@10": 0.5,
-    "constraint_violations@10": 50,
+    "constraint_violation_rate@10": 0.56,
+    "constraint_violations@10": 56,
     "ndcg@10": 0.3945,
     "p@3": 0.2,
     "p@5": 0.26,
@@ -2574,6 +2467,7 @@
    "fsp",
    "freshness"
   ],
+  "cross_grade_tolerance": true,
   "freshness_full_days": 180,
   "freshness_zero_days": 720,
   "match_pool_size": 20,

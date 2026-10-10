@@ -53,6 +53,10 @@ class TaskFamily(Base):
     rubric: Mapped[Any] = mapped_column(JSON, nullable=False)
     edge_case_classes: Mapped[Any] = mapped_column(JSON, nullable=False)
     allowed_formats: Mapped[Any] = mapped_column(JSON, nullable=False)
+    # Families dropped from the current content are deactivated, never deleted (old attempts
+    # keep their variants and results).
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    rubric_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
 class TaskTemplate(Base):
@@ -118,6 +122,15 @@ class AssessmentAttempt(Base):
     )
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     scored_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Server-side timing: deadline_at (UTC) is the single source of truth for the countdown.
+    deadline_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    time_limit_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    expired: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    rubric_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    variant_ids: Mapped[Any | None] = mapped_column(JSON, nullable=True)  # frozen at start
+    # {variant_id: {"answer": ..., "saved_at": iso}} autosaved answers (survive reload / expiry)
+    draft_answers: Mapped[Any | None] = mapped_column(JSON, nullable=True)
 
 
 class AssessmentAnswer(Base):
@@ -163,6 +176,8 @@ class AssessmentResult(Base):
         nullable=True,
     )
     rubric_result: Mapped[Any] = mapped_column(JSON, nullable=False)
+    # Per-task audit trail: template/variant/seed/difficulty band/rubric version/answer/time.
+    trace: Mapped[Any | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )

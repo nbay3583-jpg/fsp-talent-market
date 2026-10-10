@@ -59,16 +59,36 @@ def cand(**kw) -> CandidateFacts:
 
 
 def test_sublevel_tolerance_is_internal_not_public_grade():
-    assert eng.allowed_sublevels(need()) == {Sublevel.M1, Sublevel.M2, Sublevel.S1}
-    assert eng.allowed_sublevels(need(target_sublevel=None)) == {Sublevel.M1, Sublevel.M2}
+    assert eng.allowed_sublevels(need()) == {Sublevel.M1, Sublevel.M2, Sublevel.M3}
+    assert eng.allowed_sublevels(need(target_sublevel=None)) == {
+        Sublevel.M1,
+        Sublevel.M2,
+        Sublevel.M3,
+    }
     for sub, ok in [
         (Sublevel.M1, True),
-        (Sublevel.S1, True),
-        (Sublevel.J2, False),
-        (Sublevel.S2, False),
+        (Sublevel.M3, True),
+        (Sublevel.J3, False),
+        (Sublevel.S1, False),
     ]:
         got = eng.hard_filter(need(), cand(verified_sublevel=sub))
         assert (got == []) is ok, sub
+
+
+def test_sublevel_tolerance_crosses_grade_border_only_by_policy():
+    from dataclasses import replace
+
+    from fsp_market.matching.policy import DEFAULT_POLICY
+
+    edge = need(target_sublevel=Sublevel.M1)
+    assert eng.allowed_sublevels(edge) == {Sublevel.J3, Sublevel.M1, Sublevel.M2}
+    strict = replace(DEFAULT_POLICY, cross_grade_tolerance=False)
+    assert eng.allowed_sublevels(edge, strict) == {Sublevel.M1, Sublevel.M2}
+    top = need(target_sublevel=Sublevel.M3)
+    assert eng.allowed_sublevels(top) == {Sublevel.M2, Sublevel.M3, Sublevel.S1}
+    # J1..S3 scale ends: no wrap-around
+    low = need(target_grade=Grade.JUNIOR, target_sublevel=Sublevel.J1)
+    assert eng.allowed_sublevels(low) == {Sublevel.J1, Sublevel.J2}
 
 
 def test_hard_filters_each_exclude():
@@ -212,7 +232,7 @@ def employer(client, email="hr@x.io"):
 NEED = {
     "title": "Python Backend",
     "target_grade": "MIDDLE",
-    "target_sublevel": "M2",
+    "target_sublevel": "M3",
     "required_skills": ["api_fastapi", "postgresql"],
     "optional_skills": ["kafka"],
     "salary_from": 200000,
@@ -268,7 +288,7 @@ def test_ranking_semantics(env):
     assert fit["Nina N."] == fit["Anna V."]  # no FSP history: not penalised
     assert fit["Anna V."] > fit["Elena Q."]  # extra PostgreSQL evidence
     assert fit["Elena Q."] > fit["Denis R."]  # verified assessment beats strong-CV claims
-    assert fit["Julia M."] < fit["Anna V."]  # M1 neighbour sublevel
+    assert fit["Julia M."] < fit["Anna V."]  # M2: neighbour of the M3 target
     assert fit["Hana A."] < min(
         v for k, v in fit.items() if n[k]["candidate"]["verification_status"] == "VERIFIED"
     )
@@ -344,7 +364,7 @@ def test_full_pool_filters_and_privacy(env):
     assert "Anna V." in q("has_fsp=false")
     assert q("work_format=OFFICE") == {"Galina O."}
     assert "Fedor E." not in q("salary_max=250000") and "Anna V." in q("salary_max=250000")
-    assert q("sublevel=M2") >= {"Anna V."} and "Julia M." not in q("sublevel=M2")
+    assert q("sublevel=M3") >= {"Anna V."} and "Julia M." not in q("sublevel=M3")
     assert q("location=moscow") >= {"Anna V."} and "Boris P." not in q("location=moscow")
     blob = env.get("/api/employer/pool?limit=100", headers=h).text
     for secret in ["@demo.example", "email", "phone", "full_name", "FSP-1001", "fsp_id"]:

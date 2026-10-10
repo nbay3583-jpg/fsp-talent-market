@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from fsp_market.api.deps import CandidateDep, SessionDep
 from fsp_market.assessments.models import AssessmentAttempt
-from fsp_market.assessments.service import select_variants
+from fsp_market.assessments.service import attempt_variants
 from fsp_market.auth.tokens import create_token
 from fsp_market.candidates.models import Candidate
 from fsp_market.config import get_settings
@@ -77,11 +77,26 @@ def demo_login(body: DemoLoginIn, session: Session = SessionDep) -> dict[str, An
 
 @router.get("/assessments/{attempt_id}/reference-answers")
 def reference_answers(
-    attempt_id: int, candidate_id: int = CandidateDep, session: Session = SessionDep
+    attempt_id: int,
+    profile: str = "strong",
+    candidate_id: int = CandidateDep,
+    session: Session = SessionDep,
 ) -> dict[str, Any]:
     _require_demo()
     attempt = session.get(AssessmentAttempt, attempt_id)
     if attempt is None or attempt.candidate_id != candidate_id:
         raise HTTPException(status_code=404, detail="assessment not found")
-    variants = select_variants(session, attempt.target_grade, attempt.id)
-    return {"answers": {str(v.id): v.scoring_contract["correct"] for v in variants}}
+    variants = attempt_variants(session, attempt)
+    return {"answers": {str(v.id): _reference(v, profile == "weak") for v in variants}}
+
+
+def _reference(variant, weak: bool):
+    contract = variant.scoring_contract
+    correct = contract["correct"]
+    if not weak:
+        return correct
+    if contract["type"] == "numeric":
+        return correct + 1
+    if contract["type"] == "set":
+        return [k for k in variant.input_data["options"] if k not in correct][:1] or ["A"]
+    return next(k for k in sorted(variant.input_data["options"]) if k != correct)

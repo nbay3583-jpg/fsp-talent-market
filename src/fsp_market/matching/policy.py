@@ -32,6 +32,8 @@ class MatchingPolicy:
     required_skill_weight: float = 1.0
     optional_skill_weight: float = 0.4
     sublevel_tolerance: int = 1  # +-1 INTERNAL sublevel, never +-1 public grade
+    # Whether the +-1 neighbourhood may cross a public-grade border (M1 -> J3 / M3 -> S1).
+    cross_grade_tolerance: bool = True
     not_verified_factor: float = 0.6  # ranking penalty for candidates without verification
     skill_credit_verified: float = 1.0
     skill_credit_below_target: float = 0.5  # verified, but at a lower grade than the need

@@ -6,8 +6,8 @@ if the production filter and this checker disagree, the violation rate is non-ze
 
 from __future__ import annotations
 
-ORDER = ["J1", "J2", "M1", "M2", "S1", "S2"]
-RANGE = {"JUNIOR": ["J1", "J2"], "MIDDLE": ["M1", "M2"], "SENIOR": ["S1", "S2"]}
+ORDER = ["J1", "J2", "J3", "M1", "M2", "M3", "S1", "S2", "S3"]
+RANGE = {"JUNIOR": ["J1", "J2", "J3"], "MIDDLE": ["M1", "M2", "M3"], "SENIOR": ["S1", "S2", "S3"]}
 NDFL = 0.13
 
 

@@ -8,21 +8,32 @@ class Grade(StrEnum):
 
 
 class Sublevel(StrEnum):
+    """Three internal sublevels per public grade: 1 = beginning, 2 = confident, 3 = advanced."""
+
     J1 = "J1"
     J2 = "J2"
+    J3 = "J3"
     M1 = "M1"
     M2 = "M2"
+    M3 = "M3"
     S1 = "S1"
     S2 = "S2"
+    S3 = "S3"
 
+
+# The ordered scale J1 -> ... -> S3 (the single source of truth for "neighbouring" sublevels).
+SUBLEVEL_ORDER: tuple[Sublevel, ...] = tuple(Sublevel)
 
 SUBLEVEL_GRADE: dict[Sublevel, Grade] = {
     Sublevel.J1: Grade.JUNIOR,
     Sublevel.J2: Grade.JUNIOR,
+    Sublevel.J3: Grade.JUNIOR,
     Sublevel.M1: Grade.MIDDLE,
     Sublevel.M2: Grade.MIDDLE,
+    Sublevel.M3: Grade.MIDDLE,
     Sublevel.S1: Grade.SENIOR,
     Sublevel.S2: Grade.SENIOR,
+    Sublevel.S3: Grade.SENIOR,
 }
 
 
@@ -52,6 +63,10 @@ class TaskFormat(StrEnum):
     SQL_REASONING = "SQL_REASONING"
     API_REASONING = "API_REASONING"
     RUBRIC_CHECK = "RUBRIC_CHECK"
+    BUG_HUNT = "BUG_HUNT"
+    MULTI_SELECT = "MULTI_SELECT"
+    NUMERIC_ANSWER = "NUMERIC_ANSWER"
+    ARCHITECTURE_CASE = "ARCHITECTURE_CASE"
 
 
 class AttemptStatus(StrEnum):

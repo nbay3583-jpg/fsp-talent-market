@@ -20,6 +20,8 @@ class EmployerNeed(Base):
     specialization_id: Mapped[int] = mapped_column(Integer, ForeignKey("specializations.id"))
     target_grade: Mapped[Grade] = mapped_column(String(32))
     target_sublevel: Mapped[Sublevel | None] = mapped_column(String(8), nullable=True)
+    # Pre-0005 two-sublevel target, kept for review after the move to three sublevels.
+    legacy_target_sublevel: Mapped[str | None] = mapped_column(String(8), nullable=True)
     salary_from: Mapped[int] = mapped_column(Integer)
     salary_to: Mapped[int] = mapped_column(Integer)
     salary_type: Mapped[SalaryType] = mapped_column(String(8))

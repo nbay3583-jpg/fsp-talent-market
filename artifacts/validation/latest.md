@@ -2,15 +2,15 @@
 
 MVP validation on a self-made, reproducible dataset. The organisers provided no official dataset or ground truth. This is **not** a psychometric calibration and the numbers do not describe real candidates.
 
-Dataset: version 1, sha256 `2f491079cc219481…`, 32 candidates, 10 needs, 320 label cells (98 non-zero), relevant = grade >= 2.
+Dataset: version 1, sha256 `3dce3f9c8f7b4deb…`, 32 candidates, 10 needs, 320 label cells (98 non-zero), relevant = grade >= 2.
 
 ## Matching
 
 | method | P@3 | P@5 | R@10 | nDCG@10 | hard-constraint violations in top-10 |
 |---|---|---|---|---|---|
-| keyword baseline | 0.200 | 0.260 | 0.498 | 0.395 | 50/100 (50.0%) |
-| hard filters only | 0.733 | 0.580 | 0.785 | 0.763 | 0/80 (0.0%) |
-| evidence matching | 0.933 | 0.780 | 0.982 | 1.000 | 0/80 (0.0%) |
+| keyword baseline | 0.200 | 0.260 | 0.498 | 0.395 | 56/100 (56.0%) |
+| hard filters only | 0.800 | 0.660 | 0.885 | 0.816 | 0/70 (0.0%) |
+| evidence matching | 0.933 | 0.780 | 0.982 | 0.980 | 0/70 (0.0%) |
 
 Deterministic ordering (two runs identical): **True**
 
@@ -18,9 +18,9 @@ Deterministic ordering (two runs identical): **True**
 
 | config | P@5 | nDCG@10 | top-5 Jaccard vs default | top-1 same as default |
 |---|---|---|---|---|
-| default | 0.780 | 1.000 | 1.000 | 1.000 |
-| assessment_heavy | 0.780 | 0.999 | 1.000 | 0.900 |
-| fsp_heavy | 0.780 | 0.989 | 1.000 | 0.600 |
+| default | 0.780 | 0.980 | 1.000 | 1.000 |
+| assessment_heavy | 0.780 | 0.979 | 1.000 | 0.900 |
+| fsp_heavy | 0.780 | 0.971 | 1.000 | 0.600 |
 
 Configurations were fixed in advance and not tuned on the labels.
 
@@ -35,21 +35,21 @@ Configurations were fixed in advance and not tuned on the labels.
 
 | grade test | AUC (knowers vs others) | score margin | competencies covered | items per attempt |
 |---|---|---|---|---|
-| JUNIOR | 1.000 | 1.000 | 2/6 | 2 |
-| MIDDLE | 1.000 | 1.000 | 6/6 | 6 |
-| SENIOR | 1.000 | 1.000 | 4/6 | 4 |
+| JUNIOR | 1.000 | 1.000 | 6/6 | 8 |
+| MIDDLE | 1.000 | 1.000 | 6/6 | 8 |
+| SENIOR | 1.000 | 1.000 | 6/6 | 8 |
 
 Random-guess false verification rate (500 seeded guessers):
 
-- JUNIOR: 8.6% (2 items)
-- MIDDLE: 0.4% (6 items)
-- SENIOR: 5.4% (4 items)
+- JUNIOR: 1.6% (8 items)
+- MIDDLE: 0.2% (8 items)
+- SENIOR: 0.0% (8 items)
 
-Anchors: backend.api.middle.api_validation.t1.v1 solved by P-MIDDLE, P-SENIOR
+Anchors:
 
 ## Failure cases
 
-Total recorded: 114 (full list in `latest.json`). First entries per source:
+Total recorded: 104 (full list in `latest.json`). First entries per source:
 
 - `keyword_baseline:V-N01:V-C04:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 1; reason: candidate is NOT_VERIFIED; method ranks unverified context in the top-5
 - `keyword_baseline:V-N01:V-C24:top5-false-positive` expected: relevance 0 (<2); actual: returned at rank 2; reason: violates hard constraint(s): salary (method does not apply constraints)
@@ -59,12 +59,12 @@ Total recorded: 114 (full list in `latest.json`). First entries per source:
 - `hard_filters_only:V-N01:V-C18:missed-relevant` expected: relevance 3 in top-10; actual: not in top-10; reason: relevant candidate ranked 11, outside the top-10
 - `hard_filters_only:V-N01:V-C20:missed-relevant` expected: relevance 3 in top-10; actual: not in top-10; reason: relevant candidate ranked 13, outside the top-10
 - `hard_filters_only:V-N02:V-C04:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 3; reason: candidate is NOT_VERIFIED; method ranks unverified context in the top-5
-- `evidence_matching:V-N03:V-C27:top5-false-positive` expected: relevance 0 (<2); actual: returned at rank 5; reason: passes constraints but labelled irrelevant (no relevant evidence for this need)
+- `evidence_matching:V-N03:V-C04:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 5; reason: candidate is NOT_VERIFIED; method ranks unverified context in the top-5
 - `evidence_matching:V-N04:V-C13:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 4; reason: candidate is NOT_VERIFIED; method ranks unverified context in the top-5
 - `evidence_matching:V-N05:V-C19:missed-relevant` expected: relevance 2 in top-10; actual: not in top-10; reason: relevant candidate ranked 11, outside the top-10
 - `evidence_matching:V-N06:V-C08:top5-false-positive` expected: relevance 1 (<2); actual: returned at rank 4; reason: candidate is NOT_VERIFIED; method ranks unverified context in the top-5
 
-Counts by source: evidence_matching=10, hard_filters_only=32, keyword_baseline=72
+Counts by source: evidence_matching=8, hard_filters_only=24, keyword_baseline=72
 
 ## Known limitations
 

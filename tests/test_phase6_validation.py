@@ -82,8 +82,8 @@ def test_independent_checker_detects_each_violation():
         "specialization"
     ]
     assert constraints.violations(NEED, CAND, "J2") == ["grade"]
-    assert constraints.violations(NEED, CAND, "S1") == []  # +-1 SUBLEVEL, M2 -> M1/M2/S1
-    assert constraints.violations(NEED, CAND, "S2") == ["grade"]
+    assert constraints.violations(NEED, CAND, "M3") == []  # +-1 SUBLEVEL, M2 -> M1/M2/M3
+    assert constraints.violations(NEED, CAND, "S1") == ["grade"]
     assert constraints.violations(NEED, {**CAND, "profile_visible": False}, "M2") == ["not_visible"]
 
 
@@ -132,7 +132,7 @@ def test_dataset_contains_the_required_conflict_cases():
     assert not by["V-C01"]["fsp_disciplines"]  # no FSP history
     assert by["V-C06"]["salary"]["min"] > 300000 and by["V-C07"]["work_formats"] == ["OFFICE"]
     assert (
-        by["V-C08"]["claimed_grade"] == "MIDDLE" and len(by["V-C08"]["assessment"]["wrong"]) == 2
+        by["V-C08"]["claimed_grade"] == "MIDDLE" and len(by["V-C08"]["assessment"]["wrong"]) == 3
     )  # NOT_VERIFIED Middle
     assert "api_fastapi" in by["V-C19"]["assessment"]["wrong"]  # missing required skill
     assert "kafka" in by["V-C11"]["experience_days_ago"] and by["V-C11"]["work_formats"] == [
@@ -203,10 +203,10 @@ def test_reference_personas_are_classified_as_expected(result):
         by[("P-JUNIOR", "MIDDLE", 1)]["status"] == "NOT_VERIFIED"
     )  # failed Middle is not downgraded to Junior
     assert (
-        by[("P-MIDDLE-HIGH", "MIDDLE", 0)]["sublevel"] == "M1"
+        by[("P-MIDDLE-HIGH", "MIDDLE", 0)]["sublevel"] == "M2"
         and by[("P-MIDDLE-LOW", "MIDDLE", 0)]["status"] == "NOT_VERIFIED"
     )
-    assert by[("P-SENIOR-EDGE", "SENIOR", 1)]["sublevel"] == "S1"
+    assert by[("P-SENIOR-EDGE", "SENIOR", 1)]["sublevel"] == "S2"
     assert a["disagreement_over_one_sublevel_rate"] == 0.0
 
 
@@ -223,14 +223,10 @@ def test_grade_separation(result):
 
 def test_anchor_handling_and_competency_coverage(result):
     a = result["assessment"]
-    assert len(a["anchors"]) == 1
-    solved = a["anchors"][0]["solved_by"]
-    assert "P-MIDDLE" in solved and "P-JUNIOR" not in solved and "P-WEAK" not in solved
+    assert a["anchors"] == []  # anchor calibration is NOT IMPLEMENTED: none may be claimed
     cov = a["coverage"]
-    assert cov["competencies_covered"] == {"JUNIOR": 2, "MIDDLE": 6, "SENIOR": 4}
-    assert cov["coverage_ratio"]["MIDDLE"] == 1.0 and cov["coverage_ratio"][
-        "JUNIOR"
-    ] == pytest.approx(2 / 6, abs=1e-4)
+    assert cov["competencies_covered"] == {"JUNIOR": 6, "MIDDLE": 6, "SENIOR": 6}
+    assert cov["items_per_attempt"] == {"JUNIOR": 8, "MIDDLE": 8, "SENIOR": 8}
     assert (
         a["guessing_baseline"]["MIDDLE"]["false_verification_rate"]
         < a["guessing_baseline"]["JUNIOR"]["false_verification_rate"]

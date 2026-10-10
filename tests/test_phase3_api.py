@@ -7,6 +7,7 @@ from sqlalchemy.pool import StaticPool
 import fsp_market.models  # noqa: F401
 from fsp_market.assessments.models import TaskVariant
 from fsp_market.assessments.seed import seed_backend_python
+from fsp_market.assessments.service import wrong_answer
 from fsp_market.assessments.variants import render_variant_fields
 from fsp_market.db import Base, get_session
 from fsp_market.main import app
@@ -46,13 +47,13 @@ def solve(client, headers, grade, correct, engine):
     assert start.status_code == 201, start.text
     body = start.json()
     with Session(engine) as s:
-        contracts = {v.id: v.scoring_contract["correct"] for v in s.scalars(select(TaskVariant))}
-    answers = {
-        t["variant_id"]: contracts[t["variant_id"]]
-        if correct
-        else next(k for k in "ABCD" if k != contracts[t["variant_id"]])
-        for t in body["tasks"]
-    }
+        by_id = {v.id: v for v in s.scalars(select(TaskVariant))}
+        answers = {
+            t["variant_id"]: by_id[t["variant_id"]].scoring_contract["correct"]
+            if correct
+            else wrong_answer(by_id[t["variant_id"]])
+            for t in body["tasks"]
+        }
     return body, client.post(
         f"/api/assessments/{body['attempt_id']}/submit", json={"answers": answers}, headers=headers
     )
@@ -70,6 +71,8 @@ def test_assigned_tasks_are_reproducible_and_hide_answers(env):
     h = register(client)
     first = client.post("/api/assessments", json={"target_grade": "MIDDLE"}, headers=h).json()
     again = client.post("/api/assessments", json={"target_grade": "MIDDLE"}, headers=h).json()
+    for k in ("server_time", "remaining_seconds"):
+        first.pop(k), again.pop(k)
     assert first == again  # same in-progress attempt, same tasks
     assert (
         client.get(f"/api/assessments/{first['attempt_id']}", headers=h).json()["tasks"]
@@ -194,12 +197,16 @@ def test_submission_validation(env):
         client.post(f"/api/assessments/{aid}/submit", json={"answers": {}}, headers=h).status_code
         == 422
     )
-    bad = {x["variant_id"]: "Z" for x in t["tasks"]}
+    bad = {x["variant_id"]: "Z" for x in t["tasks"] if x["answer_type"] != "multi"}
+    bad.update({x["variant_id"]: ["Z"] for x in t["tasks"] if x["answer_type"] == "multi"})
     assert (
         client.post(f"/api/assessments/{aid}/submit", json={"answers": bad}, headers=h).status_code
         == 422
     )
-    ok = {x["variant_id"]: "A" for x in t["tasks"]}
+    ok = {
+        x["variant_id"]: {"single": "A", "multi": ["A"], "number": "1"}[x["answer_type"]]
+        for x in t["tasks"]
+    }
     assert (
         client.post(f"/api/assessments/{aid}/submit", json={"answers": ok}, headers=h).status_code
         == 200
@@ -210,10 +217,76 @@ def test_submission_validation(env):
     )
 
 
-def test_anchor_flag_is_seeded(env):
-    _, engine = env
+def test_no_anchor_calibration_is_claimed(env):
+    _, engine = env  # anchors / IRT are NOT IMPLEMENTED: nothing may be flagged as an anchor
     with Session(engine) as s:
-        assert s.scalar(select(func.count(TaskVariant.id)).where(TaskVariant.is_anchor)) == 1
+        assert s.scalar(select(func.count(TaskVariant.id)).where(TaskVariant.is_anchor)) == 0
+
+
+def test_timer_autosave_reload_and_expiry(env, monkeypatch):
+    from datetime import UTC, datetime, timedelta
+
+    from fsp_market.assessments import service
+
+    client, _ = env
+    h = register(client)
+    t0 = datetime(2026, 10, 11, 9, 0, tzinfo=UTC)
+    monkeypatch.setattr(service, "utcnow", lambda: t0)
+    monkeypatch.setattr("fsp_market.api.routes.utcnow", lambda: t0)
+    a = client.post("/api/assessments", json={"target_grade": "MIDDLE"}, headers=h).json()
+    assert a["time_limit_seconds"] == 15 * 60 and a["remaining_seconds"] == 15 * 60
+    first = a["tasks"][0]
+    value = {"single": "A", "multi": ["A"], "number": "3"}[first["answer_type"]]
+    # 5 minutes later: reload shows the server countdown and the autosaved answer
+    t1 = t0 + timedelta(minutes=5)
+    monkeypatch.setattr("fsp_market.api.routes.utcnow", lambda: t1)
+    monkeypatch.setattr(service, "utcnow", lambda: t1)
+    put = client.put(
+        f"/api/assessments/{a['attempt_id']}/answers",
+        json={"answers": {first["variant_id"]: value}}, headers=h,
+    )
+    assert put.status_code == 200 and put.json()["remaining_seconds"] == 10 * 60
+    again = client.get(f"/api/assessments/{a['attempt_id']}", headers=h).json()
+    assert again["remaining_seconds"] == 10 * 60
+    assert again["saved_answers"] == {str(first["variant_id"]): value}
+    # after the deadline: late answers are ignored, saved ones are scored, result is `expired`
+    t2 = t0 + timedelta(minutes=16)
+    monkeypatch.setattr("fsp_market.api.routes.utcnow", lambda: t2)
+    monkeypatch.setattr(service, "utcnow", lambda: t2)
+    ok = {
+        x["variant_id"]: {"single": "A", "multi": ["A"], "number": "1"}[x["answer_type"]]
+        for x in a["tasks"]
+    }
+    late = client.post(
+        f"/api/assessments/{a['attempt_id']}/submit", json={"answers": ok}, headers=h
+    )
+    assert late.status_code == 200 and late.json()["expired"] is True
+    assert late.json()["verification_status"] == "NOT_VERIFIED"
+    assert (
+        client.put(
+            f"/api/assessments/{a['attempt_id']}/answers",
+            json={"answers": {first["variant_id"]: value}}, headers=h,
+        ).status_code
+        == 409
+    )
+
+
+def test_assessment_texts_are_russian_and_seeds_differ(env):
+    import re
+
+    client, _ = env
+    banned = re.compile(r"\b(Consider|What|Which|following|returns|statement)\b")
+    prompts = set()
+    for n in range(3):
+        h = register(client, email=f"ru{n}@x.io")
+        for grade in ("JUNIOR", "MIDDLE", "SENIOR"):
+            body = client.post("/api/assessments", json={"target_grade": grade}, headers=h).json()
+            assert len(body["tasks"]) == 8
+            for task in body["tasks"]:
+                assert not banned.search(task["prompt"]), task["prompt"]
+                assert re.search("[А-Яа-я]", task["prompt"])
+            prompts.add(tuple(t["prompt"] for t in body["tasks"]))
+    assert len(prompts) >= 6  # different seeds -> different sequences
 
 
 def test_token_roundtrip_tamper_expiry():

@@ -34,7 +34,7 @@
     "docker"
    ],
    "fsp_disciplines": [],
-   "note": "verified M2, PostgreSQL experience, no FSP history"
+   "note": "verified M3, PostgreSQL experience, no FSP history"
   },
   {
    "id": "V-C02",
@@ -240,10 +240,7 @@
    "claimed_grade": "MIDDLE",
    "assessment": {
     "grade": "MIDDLE",
-    "wrong": [
-     "testing",
-     "docker_basics"
-    ]
+    "wrong": ["testing", "docker_basics", "system_thinking"]
    },
    "salary": {
     "min": 205000,
@@ -267,7 +264,7 @@
     "sql"
    ],
    "fsp_disciplines": [],
-   "note": "4/6 correct -> NOT_VERIFIED Middle"
+   "note": "5/8 correct -> NOT_VERIFIED Middle"
   },
   {
    "id": "V-C09",
@@ -302,7 +299,7 @@
     "docker"
    ],
    "fsp_disciplines": [],
-   "note": "verified M1"
+   "note": "verified M2"
   },
   {
    "id": "V-C10",
@@ -331,7 +328,7 @@
     "sql"
    ],
    "fsp_disciplines": [],
-   "note": "verified M2, no PostgreSQL evidence at all"
+   "note": "verified M3, no PostgreSQL evidence at all"
   },
   {
    "id": "V-C11",
@@ -395,7 +392,7 @@
     "sql"
    ],
    "fsp_disciplines": [],
-   "note": "verified J2"
+   "note": "verified J3"
   },
   {
    "id": "V-C13",
@@ -404,9 +401,7 @@
    "claimed_grade": "JUNIOR",
    "assessment": {
     "grade": "JUNIOR",
-    "wrong": [
-     "sql"
-    ]
+    "wrong": ["sql", "python"]
    },
    "salary": {
     "min": 90000,
@@ -424,7 +419,7 @@
     "python"
    ],
    "fsp_disciplines": [],
-   "note": "1/2 -> NOT_VERIFIED Junior"
+   "note": "4/8 -> NOT_VERIFIED Junior"
   },
   {
    "id": "V-C14",
@@ -614,7 +609,7 @@
     "testing"
    ],
    "fsp_disciplines": [],
-   "note": "verified M1 but FastAPI not verified"
+   "note": "verified M2 but FastAPI not verified"
   },
   {
    "id": "V-C20",
@@ -707,7 +702,7 @@
     "system design"
    ],
    "fsp_disciplines": [],
-   "note": "verified S2"
+   "note": "verified S3"
   },
   {
    "id": "V-C23",
@@ -741,7 +736,7 @@
     "sql"
    ],
    "fsp_disciplines": [],
-   "note": "3/4 -> verified S1, system thinking not verified"
+   "note": "7/8 -> verified S3, system thinking not verified"
   },
   {
    "id": "V-C24",
@@ -806,7 +801,7 @@
     "sql"
    ],
    "fsp_disciplines": [],
-   "note": "office Kazan, verified M2"
+   "note": "office Kazan, verified M3"
   },
   {
    "id": "V-C26",
@@ -837,7 +832,7 @@
     "sql"
    ],
    "fsp_disciplines": [],
-   "note": "verified M1, office Kazan"
+   "note": "verified M2, office Kazan"
   },
   {
    "id": "V-C27",
@@ -866,7 +861,7 @@
     "sql"
    ],
    "fsp_disciplines": [],
-   "note": "verified J2, NET salary"
+   "note": "verified J3, NET salary"
   },
   {
    "id": "V-C28",
@@ -899,7 +894,7 @@
     "testing"
    ],
    "fsp_disciplines": [],
-   "note": "hybrid Moscow, verified M2"
+   "note": "hybrid Moscow, verified M3"
   },
   {
    "id": "V-C29",
@@ -931,7 +926,7 @@
     "sql"
    ],
    "fsp_disciplines": [],
-   "note": "hybrid Moscow, verified M1, NET salary"
+   "note": "hybrid Moscow, verified M2, NET salary"
   },
   {
    "id": "V-C30",
@@ -990,7 +985,7 @@
     "sql"
    ],
    "fsp_disciplines": [],
-   "note": "verified J2, hybrid Moscow"
+   "note": "verified J3, hybrid Moscow"
   },
   {
    "id": "V-C32",
@@ -1019,7 +1014,7 @@
     "sql"
    ],
    "fsp_disciplines": [],
-   "note": "verified M2, office Kazan"
+   "note": "verified M3, office Kazan"
   }
  ]
 }
