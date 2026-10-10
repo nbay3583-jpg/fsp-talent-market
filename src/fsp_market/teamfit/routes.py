@@ -137,6 +137,8 @@ def candidate_recommendations(
     cand = session.get(Candidate, candidate_id)
     facts = load_candidate_facts(session, [cand])[cand.id]
     now = datetime.now(UTC)
+    # UNVERIFIED = no assessment finished yet; NOT_VERIFIED is a real (possibly low) result
+    assessed = cand.verification_status != VerificationStatus.UNVERIFIED
     out = []
     for need in session.scalars(select(EmployerNeed).order_by(EmployerNeed.id)):
         spec = load_need_spec(session, need)
@@ -145,6 +147,10 @@ def candidate_recommendations(
         fit = requirement_fit(spec, facts, now, DEFAULT_POLICY)
         rev = reverse_for(session, cand, need, spec)
         both = fit.fit if rev["score"] is None else round((fit.fit + rev["score"]) / 2, 4)
+        if not assessed:  # no completed assessment: a number would be meaningless, not "0%"
+            fit_value = both = None
+        else:
+            fit_value = fit.fit
         employer = session.get(Employer, need.employer_id)
         out.append(
             {
@@ -156,15 +162,26 @@ def candidate_recommendations(
                 "salary_to": need.salary_to,
                 "salary_type": need.salary_type,
                 "work_formats": need.work_formats,
-                "requirement_fit": fit.fit,
+                "fit_state": "ready" if assessed else "insufficient_data",
+                "requirement_fit": fit_value,
                 "reverse_fit": rev["score"],
                 "mutual_fit": both,
                 "why": [r.as_dict() for r in fit.why] + rev["why"],
                 "gaps": [r.as_dict() for r in fit.gaps] + rev["gaps"],
             }
         )
-    out.sort(key=lambda r: (-r["mutual_fit"], r["need_id"]))
-    return {"items": out[: max(1, min(limit, 20))], "total": len(out)}
+    out.sort(key=lambda r: (r["mutual_fit"] is None, -(r["mutual_fit"] or 0), r["need_id"]))
+    next_action = None
+    if not assessed:
+        next_action = "take_assessment"
+    elif not cand.work_style and not cand.interests:
+        next_action = "fill_preferences"
+    return {
+        "items": out[: max(1, min(limit, 20))],
+        "total": len(out),
+        "assessed": assessed,
+        "next_action": next_action,
+    }
 
 
 # ------------------------------------------------------------------ employer side

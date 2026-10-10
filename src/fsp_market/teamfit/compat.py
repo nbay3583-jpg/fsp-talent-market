@@ -24,9 +24,14 @@ _LEAD_WORDS = ("лид", "lead", "ментор", "менто", "руковод",
 _GRADE_RANK = {"JUNIOR": 0, "MIDDLE": 1, "SENIOR": 2}
 
 
+MIN_COMPARED_AXES = 3  # fewer shared answered axes -> "not enough data", never a percentage
+
+
 def validate_answers(answers: dict[str, Any]) -> dict[str, int]:
-    if set(answers) != set(AXES):
-        raise ValueError("answers must cover exactly: " + ", ".join(AXES))
+    """Partial answers are allowed: an unanswered axis is simply absent, never a neutral 3."""
+    unknown = set(answers) - set(AXES)
+    if unknown or not answers:
+        raise ValueError("answer at least one known axis: " + ", ".join(AXES))
     out = {}
     for k, v in answers.items():
         if isinstance(v, bool) or not isinstance(v, int) or not 1 <= v <= 5:
@@ -36,7 +41,7 @@ def validate_answers(answers: dict[str, Any]) -> dict[str, int]:
 
 
 def aggregate(responses: list[dict[str, int]]) -> dict[str, Any]:
-    """Only the per-axis mean, and only when at least MIN_TEAM_RESPONSES people answered."""
+    """Per-axis mean, only when at least MIN_TEAM_RESPONSES people answered THAT axis."""
     n = len(responses)
     if n < MIN_TEAM_RESPONSES:
         return {
@@ -45,32 +50,51 @@ def aggregate(responses: list[dict[str, int]]) -> dict[str, Any]:
             "note": f"Агрегат скрыт: нужно минимум {MIN_TEAM_RESPONSES} анонимных ответа "
             "(защита личных данных сотрудников).",
         }
-    mean = {k: round(sum(r[k] for r in responses) / n, 1) for k in AXES}
+    mean = {}
+    for k in AXES:
+        vals = [r[k] for r in responses if k in r]
+        if len(vals) >= MIN_TEAM_RESPONSES:
+            mean[k] = round(sum(vals) / len(vals), 1)
+    if not mean:
+        return {"responses": n, "aggregate": None, "note": "Недостаточно ответов по отдельным вопросам."}
     return {"responses": n, "aggregate": mean, "note": None}
 
 
 def combine(manager: dict[str, int] | None, employees: dict[str, Any]) -> dict[str, Any]:
     """Team profile BOTH: manager's view, enriched with the anonymous aggregate when allowed."""
-    agg = employees.get("aggregate")
+    agg = employees.get("aggregate") or {}
+    manager = manager or {}
+    profile: dict[str, float] = {}
+    for k in AXES:
+        if k in manager and k in agg:
+            profile[k] = round((manager[k] + agg[k]) / 2, 1)
+        elif k in agg:
+            profile[k] = float(agg[k])
+        elif k in manager:
+            profile[k] = float(manager[k])
     if manager and agg:
-        profile = {k: round((manager[k] + agg[k]) / 2, 1) for k in AXES}
         source = "BOTH"
     elif agg:
-        profile, source = dict(agg), "EMPLOYEES"
+        source = "EMPLOYEES"
     elif manager:
-        profile, source = {k: float(v) for k, v in manager.items()}, "MANAGER"
+        source = "MANAGER"
     else:
-        profile, source = None, "NONE"
-    return {"profile": profile, "source": source}
+        source = "NONE"
+    return {"profile": profile or None, "source": source}
 
 
 def work_style_compat(candidate: dict[str, int] | None, team: dict[str, float] | None):
+    """Compares only axes answered on BOTH sides; too few shared axes -> None (insufficient data)."""
     if not candidate or not team:
         return None
     axes = []
     for k, (label, _lo, _hi) in AXES.items():
+        if k not in candidate or k not in team:
+            continue
         diff = abs(candidate[k] - team[k])
         axes.append({"axis": k, "label": label, "match": "close" if diff <= 1 else "different"})
+    if len(axes) < MIN_COMPARED_AXES:
+        return None
     close = sum(1 for a in axes if a["match"] == "close")
     return {"axes": axes, "close": close, "total": len(axes)}
 
@@ -125,4 +149,5 @@ def reverse_fit(
         "why": why,
         "gaps": gaps,
         "work_style": ws,
+        "work_style_status": "available" if ws else "insufficient_data",
     }

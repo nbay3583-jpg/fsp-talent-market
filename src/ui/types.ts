@@ -68,7 +68,8 @@ export interface CatalogSkill {
   verifiable: boolean;
 }
 export interface Catalog {
-  specializations: { code: string; name: string }[];
+  specializations: { code: string; name: string; assessment_available: boolean }[];
+  sublevel_labels: Record<string, string>;
   grades: Record<string, string[]>;
   skills: CatalogSkill[];
 }

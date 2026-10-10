@@ -195,3 +195,14 @@ button.primary:active:not(:disabled) { background: linear-gradient(180deg, #4a40
 .scenario { padding: 18px 22px; background: linear-gradient(135deg, rgba(255, 255, 255, .85), rgba(236, 235, 254, .85)); color: #27246f; border: 1px solid var(--glass-border); }
 .scenario h4 { margin: 0 0 6px; font-size: 15px; color: var(--brand); }
 .scenario p { margin: 0; line-height: 1.6; }
+
+.scale { border: 0; padding: 0; margin: 0 0 12px; }
+.scale-opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.scale-opt { display: flex; align-items: center; justify-content: center; text-align: center; gap: 4px; padding: 6px 4px;
+  border: 1px solid var(--border, #cbd5e1); border-radius: 8px; font-size: 12px; cursor: pointer; }
+.scale-opt.on { border-color: var(--brand, #4f46e5); background: rgba(79, 70, 229, .1); font-weight: 600; }
+.scale-opt input { margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+.rec details summary { cursor: pointer; }
+button.link { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; }
+@media (max-width: 560px) { .scale-opts { grid-template-columns: 1fr; } }

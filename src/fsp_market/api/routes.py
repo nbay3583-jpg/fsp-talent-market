@@ -156,10 +156,13 @@ def register(body: RegisterIn, session: Session = SessionDep) -> dict[str, Any]:
     except IntegrityError as exc:
         session.rollback()
         raise HTTPException(status_code=409, detail="email already registered") from exc
-    issue_verification(session, candidate)
+    sent, link = issue_verification(session, candidate)
     session.commit()
     token = create_token(candidate.id, get_settings().jwt_secret)
-    return {"candidate_id": candidate.id, "access_token": token, "email_verification_sent": True}
+    out: dict[str, Any] = {"candidate_id": candidate.id, "access_token": token, "email_verification_sent": sent}
+    if not sent and get_settings().demo_mode:  # demo only: no SMTP, so the link is shown in the UI
+        out["demo_verification_link"] = link
+    return out
 
 
 class VerifyEmailIn(BaseModel):
@@ -186,9 +189,12 @@ def resend_verification(
     wait = cooldown_left(cand)
     if wait:
         raise HTTPException(status_code=429, detail=f"retry in {wait}s")
-    issue_verification(session, cand)
+    sent, link = issue_verification(session, cand)
     session.commit()
-    return {"email_verified": False, "sent": True}
+    out: dict[str, Any] = {"email_verified": False, "sent": sent}
+    if not sent and get_settings().demo_mode:
+        out["demo_verification_link"] = link
+    return out
 
 
 def _expire_if_needed(session: Session, attempt: AssessmentAttempt) -> bool:
@@ -205,6 +211,11 @@ def _expire_if_needed(session: Session, attempt: AssessmentAttempt) -> bool:
 def start_assessment(
     body: StartIn, candidate_id: int = CandidateDep, session: Session = SessionDep
 ) -> dict[str, Any]:
+    cand = session.get(Candidate, candidate_id)
+    if cand.specialization_id is not None and session.scalar(
+        select(Competency.id).where(Competency.specialization_id == cand.specialization_id).limit(1)
+    ) is None:
+        raise HTTPException(status_code=409, detail="assessment for this specialization is not available yet")
     attempt = session.scalar(
         select(AssessmentAttempt).where(
             AssessmentAttempt.candidate_id == candidate_id,
@@ -295,7 +306,9 @@ def link_fsp(
     except FSPVerificationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     session.commit()
-    return {"evidence_added": created, "has_history": created > 0}
+    # idempotent relink adds nothing new, but the history is still there
+    has_history = created > 0 or bool(provider.get_achievements(body.fsp_id))
+    return {"evidence_added": created, "has_history": has_history}
 
 
 class ProfileIn(BaseModel):
@@ -360,9 +373,11 @@ def update_profile(
 @router.get("/catalog")
 def catalog(session: Session = SessionDep) -> dict[str, Any]:
     """Public reference data for forms: specialisations, grades with sublevels, skills."""
+    # a specialisation can be assessed only when it has competencies (and therefore task templates)
+    assessable = set(session.scalars(select(Competency.specialization_id).distinct()))
     return {
         "specializations": [
-            {"code": s.code, "name": s.name}
+            {"code": s.code, "name": s.name, "assessment_available": s.id in assessable}
             for s in session.scalars(select(Specialization).order_by(Specialization.id))
         ],
         "grades": {g.value: [s.value for s in subs] for g, subs in GRADE_SUBLEVELS.items()},

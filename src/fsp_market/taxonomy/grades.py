@@ -21,7 +21,7 @@ SUBLEVEL_BANDS: dict[Grade, tuple[float, float]] = {
     Grade.SENIOR: (0.84, 0.92),
 }
 
-SUBLEVEL_LABEL_RU = {1: "начальный", 2: "уверенный", 3: "продвинутый"}
+SUBLEVEL_LABEL_RU = {1: "базовый", 2: "уверенный", 3: "сильный"}
 
 
 def sublevel_label_ru(sublevel: Sublevel | str) -> str:

@@ -4,8 +4,7 @@ import { EmployerFit } from "./TeamFit";
 import type { Catalog, Fit, Invitation, MatchRow, Need, PublicCandidate } from "./types";
 import {
   Badge, Card, ContactBox, Empty, ErrorBox, FitBlock, FORMAT_RU, GRADE_RU, Loading, SalaryBanner, salaryRange, SALARY_TYPE_RU, skillName,
-  STATUS_RU, VerificationBadge,
-} from "./ui";
+  STATUS_RU, VerificationBadge, subLabel } from "./ui";
 
 interface Detail extends PublicCandidate { compat?: { reverse_fit: number | null; why: { text: string }[]; gaps: { text: string }[] }; fit: Fit | null; contact_status: "LOCKED" | "UNLOCKED"; contacts?: { full_name: string; email: string; phone: string | null } }
 interface MatchResponse {
@@ -79,7 +78,7 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
           <label>Грейд<select value={f.grade} onChange={(e) => setF({ ...f, grade: e.target.value, sub: catalog.grades[e.target.value][1] })}>
             {Object.entries(GRADE_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
           <label>Подуровень<select value={f.sub} onChange={(e) => setF({ ...f, sub: e.target.value })}>
-            <option value="">любой</option>{catalog.grades[f.grade].map((s) => <option key={s}>{s}</option>)}</select></label>
+            <option value="">любой</option>{catalog.grades[f.grade].map((s) => <option key={s} value={s}>{subLabel(s)}</option>)}</select></label>
         </div>
         <fieldset><legend>Обязательные навыки</legend>
           {catalog.skills.map((s) => <label key={s.code} className="check"><input type="checkbox" checked={f.req.includes(s.code)} disabled={f.opt.includes(s.code)} onChange={() => toggle("req", s.code)} />{skillName(s.code, s.name)}{!s.verifiable && <span className="muted"> (опыт)</span>}</label>)}
@@ -119,8 +118,8 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
             {res.results.length === 0 && <Empty>Подходящих кандидатов нет. Попробуйте расширить вилку или формат работы.</Empty>}
             {rows.map((r) => (
               <Card key={r.candidate.candidate_id} title={`#${r.rank} ${r.candidate.display_name}`} aside={<VerificationBadge status={r.candidate.verification_status} />}>
-                <p className="muted">{r.candidate.claimed_grade ? GRADE_RU[r.candidate.claimed_grade] : "—"} (заявлено){r.candidate.verified_grade && ` · подтверждено ${GRADE_RU[r.candidate.verified_grade]} ${r.candidate.verified_sublevel}`}
-                  {r.candidate.has_fsp && <> · <Badge tone="info">есть достижения ФСП</Badge></>}</p>
+                <p className="muted">{r.candidate.claimed_grade ? GRADE_RU[r.candidate.claimed_grade] : "—"} (заявлено){r.candidate.verified_grade && ` · подтверждено ${GRADE_RU[r.candidate.verified_grade]} ${subLabel(r.candidate.verified_sublevel)}`}
+                  {r.candidate.has_fsp && <> · <Badge tone="info">достижения ФСП (демо-данные)</Badge></>}</p>
                 <FitBlock label={r.requirement_fit_label} fit={r.requirement_fit} why={r.why} gaps={r.gaps} />
                 <button className="primary" onClick={() => open(r.candidate.candidate_id, need)}>Открыть кандидата</button>
               </Card>))}
@@ -145,7 +144,7 @@ function CandidatePanel({ session, id, need, close }: { session: Session; id: nu
   const fit = d.fit && d.fit.eligible ? d.fit : null;
   return (
     <Card title={d.display_name} aside={<><VerificationBadge status={d.verification_status} /><button onClick={close}>Закрыть</button></>}>
-      <p className="muted">{d.claimed_grade ? GRADE_RU[d.claimed_grade] : "—"} (заявлено){d.verified_grade && ` · подтверждено ${GRADE_RU[d.verified_grade]} ${d.verified_sublevel}`} · {d.work_formats.map((x) => FORMAT_RU[x] ?? x).join(", ")}{d.location && ` · ${d.location}`}
+      <p className="muted">{d.claimed_grade ? GRADE_RU[d.claimed_grade] : "—"} (заявлено){d.verified_grade && ` · подтверждено ${GRADE_RU[d.verified_grade]} ${subLabel(d.verified_sublevel)}`} · {d.work_formats.map((x) => FORMAT_RU[x] ?? x).join(", ")}{d.location && ` · ${d.location}`}
         {d.salary_expectation && ` · ожидания от ${d.salary_expectation.min.toLocaleString("ru-RU")} ₽ ${d.salary_expectation.type}`}</p>
       {d.verification_status !== "VERIFIED" && <p className="warn">Грейд кандидата не подтверждён основной оценкой — в подборе он учитывается с понижением.</p>}
       {d.fit && !d.fit.eligible && <p className="warn">Не проходит обязательные ограничения этой потребности: {d.fit.exclusions?.map((x) => EXCLUSION_RU[x] ?? x).join(", ")}.</p>}
@@ -163,7 +162,7 @@ function CandidatePanel({ session, id, need, close }: { session: Session; id: nu
             <tr key={s.skill}><td>{skillName(s.skill)}</td><td>
               {s.verified_level ? <Badge tone="ok">подтверждено оценкой: {GRADE_RU[s.verified_level]}</Badge> : s.claimed_only ? <Badge tone="muted">только заявлено</Badge> : null}
               {s.has_professional_experience && <Badge tone="muted">опыт (не подтверждён)</Badge>}
-              {s.fsp_achievements.map((a) => <Badge key={a} tone="info">ФСП: {a}</Badge>)}</td></tr>))}
+              {s.fsp_achievements.map((a) => <Badge key={a} tone="info">ФСП (демо): {a}</Badge>)}</td></tr>))}
         </tbody></table>)}
       {d.work_experience && d.work_experience.length > 0 && (
         <>
@@ -241,12 +240,12 @@ function PoolTab({ session, open }: { session: Session; open: (id: number) => vo
   }, [q, session.token]);
   useEffect(search, [search]);
   const sel = (k: keyof typeof q, opts: [string, string][], label: string) => (
-    <label>{label}<select value={q[k]} onChange={(e) => setQ({ ...q, [k]: e.target.value })}><option value="">любой</option>{opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>);
+    <label>{label}<select value={q[k]} onChange={(e) => setQ({ ...q, [k]: e.target.value, ...(k === "grade" ? { sublevel: "" } : {}) })}><option value="">любой</option>{opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>);
   return (
     <div className="grid">
       <Card title="Фильтры">
         {sel("grade", Object.entries(GRADE_RU), "Подтверждённый грейд платформы")}
-        {sel("sublevel", ["J1", "J2", "J3", "M1", "M2", "M3", "S1", "S2", "S3"].map((s) => [s, s]), "Подуровень")}
+        {sel("sublevel", (q.grade && catalog ? catalog.grades[q.grade] : ["J1", "J2", "J3", "M1", "M2", "M3", "S1", "S2", "S3"]).map((s) => [s, subLabel(s)]), "Подуровень (подтверждён тестом)")}
         {sel("verification", [["VERIFIED", "Подтверждено"], ["NOT_VERIFIED", "Не подтверждено"], ["UNVERIFIED", "Оценка не пройдена"]], "Статус подтверждения")}
         {catalog && sel("skill", catalog.skills.map((s) => [s.code, skillName(s.code, s.name)]), "Подтверждённый навык")}
         {sel("has_fsp", [["true", "есть"], ["false", "нет"]], "Достижения ФСП")}
@@ -261,8 +260,8 @@ function PoolTab({ session, open }: { session: Session; open: (id: number) => vo
           {res.candidates.length === 0 && <Empty>По этим фильтрам никого нет.</Empty>}
           {res.candidates.map((c) => (
             <Card key={c.candidate_id} title={c.display_name} aside={<VerificationBadge status={c.verification_status} />}>
-              <p className="muted">{c.claimed_grade ? GRADE_RU[c.claimed_grade] : "—"} (заявлено){c.verified_grade && ` · подтверждено ${GRADE_RU[c.verified_grade]} ${c.verified_sublevel}`}
-                {c.has_fsp ? " · есть ФСП" : ""}{c.salary_expectation ? ` · от ${c.salary_expectation.min.toLocaleString("ru-RU")} ₽ ${c.salary_expectation.type}` : ""}</p>
+              <p className="muted">{c.claimed_grade ? GRADE_RU[c.claimed_grade] : "—"} (заявлено){c.verified_grade && ` · подтверждено ${GRADE_RU[c.verified_grade]} ${subLabel(c.verified_sublevel)}`}
+                {c.has_fsp ? " · ФСП (демо)" : ""}{c.salary_expectation ? ` · от ${c.salary_expectation.min.toLocaleString("ru-RU")} ₽ ${c.salary_expectation.type}` : ""}</p>
               <button onClick={() => open(c.candidate_id)}>Открыть</button>
             </Card>))}
         </>)}

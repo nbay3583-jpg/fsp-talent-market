@@ -29,8 +29,10 @@ def _aware(d: datetime) -> datetime:
     return d if d.tzinfo else d.replace(tzinfo=UTC)
 
 
-def issue_verification(session: Session, cand: Candidate) -> bool:
-    """Creates a fresh token (invalidating the previous one) and emails the link."""
+def issue_verification(session: Session, cand: Candidate) -> tuple[bool, str]:
+    """Creates a fresh token (invalidating the previous one) and emails the link.
+
+    Returns (handed_to_smtp, link). The caller may expose `link` only in demo mode."""
     settings = get_settings()
     token = secrets.token_urlsafe(32)
     now = _now()
@@ -39,13 +41,14 @@ def issue_verification(session: Session, cand: Candidate) -> bool:
     cand.email_token_sent_at = now
     session.flush()
     link = f"{settings.public_base_url.rstrip('/')}/?verify_email={token}"
-    return send_email(
+    sent = send_email(
         cand.email,
         "FSP Talent Market: подтвердите email",
         f"Здравствуйте, {cand.full_name}!\n\nПодтвердите адрес, перейдя по ссылке "
         f"(действует {settings.email_token_ttl_hours} ч):\n{link}\n\n"
         "Если вы не регистрировались, просто проигнорируйте письмо.",
     )
+    return sent, link
 
 
 def cooldown_left(cand: Candidate) -> int:

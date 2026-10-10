@@ -11,6 +11,9 @@ export const skillName = (code: string, fallback?: string): string => COMPETENCY
 /** В текстах причин код навыка стоит в начале строки («api_fastapi: …»): подменяем его на русское название. */
 export const localizeReason = (r: { text: string; skill?: string | null }): string =>
   r.skill && r.text.startsWith(`${r.skill}:`) ? `${skillName(r.skill)}:${r.text.slice(r.skill.length + 1)}` : r.text;
+const SUB_RU: Record<string, string> = { "1": "базовый", "2": "уверенный", "3": "сильный" };
+/** «M2 · уверенный»: подуровень внутри грейда определяет только тест. */
+export const subLabel = (s: string | null | undefined): string => (s ? `${s} · ${SUB_RU[s.slice(1)] ?? ""}` : "—");
 export const SALARY_TYPE_RU: Record<string, string> = { GROSS: "До налогов (GROSS)", NET: "На руки (NET)" };
 export const FORMAT_RU: Record<string, string> = { REMOTE: "Удалённо", OFFICE: "Офис", HYBRID: "Гибрид" };
 export const STATUS_RU: Record<string, string> = {

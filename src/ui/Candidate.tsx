@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, type Session } from "./api";
 import type { Catalog, Invitation } from "./types";
 import {
-  Badge, Card, Empty, ErrorBox, FORMAT_RU, GRADE_RU, Loading, SALARY_TYPE_RU, SalaryBanner, skillName, STATUS_RU, VerificationBadge,
+  Badge, Card, Empty, ErrorBox, FORMAT_RU, GRADE_RU, Loading, SALARY_TYPE_RU, SalaryBanner, skillName, STATUS_RU, subLabel, VerificationBadge,
 } from "./ui";
 import { ContactBox } from "./ui";
 import { CandidateFit } from "./TeamFit";
@@ -37,14 +37,14 @@ interface Profile {
 
 const EVIDENCE_RU: Record<string, string> = {
   CORE_ASSESSMENT: "Основная оценка компетенций", TECHNOLOGY_ASSESSMENT: "Оценка по технологии",
-  PROFESSIONAL_EXPERIENCE: "Опыт из резюме", FSP_ACHIEVEMENT: "Достижение ФСП", RECENT_CHALLENGE: "Свежее задание",
+  PROFESSIONAL_EXPERIENCE: "Самоописанный опыт (не проверен)", FSP_ACHIEVEMENT: "Достижение ФСП (демо-данные, не реальная проверка)", RECENT_CHALLENGE: "Свежее задание",
 };
 interface Job {
   id: number; company: string; position: string; start_date: string; end_date: string | null;
   stack: string[]; tasks: string; projects: string; achievements: string;
 }
 const SOURCE_RU: Record<string, string> = {
-  self_reported: "заявлено кандидатом", core_assessment: "создано тестом", fsp: "из данных ФСП", experience: "опыт",
+  self_reported: "заявлено кандидатом", core_assessment: "создано тестом", fsp: "демо-данные ФСП", experience: "самоописанный опыт",
 };
 
 export default function CandidateApp({ session, demoMode }: { session: Session; demoMode: boolean }) {
@@ -71,10 +71,13 @@ export default function CandidateApp({ session, demoMode }: { session: Session; 
 
 function EmailBanner({ session }: { session: Session }) {
   const [msg, setMsg] = useState("");
+  const [link, setLink] = useState("");
   const resend = async () => {
     try {
-      await api("/api/candidates/me/email/resend", { method: "POST", token: session.token });
-      setMsg("Письмо отправлено. Перейдите по ссылке из письма.");
+      const r = await api<{ sent: boolean; demo_verification_link?: string }>("/api/candidates/me/email/resend", { method: "POST", token: session.token });
+      if (r.sent) setMsg("Письмо отправлено. Перейдите по ссылке из письма.");
+      else if (r.demo_verification_link) { setMsg("Демо-режим: почтовый сервер не настроен, письмо не отправлено."); setLink(r.demo_verification_link); }
+      else setMsg("Почтовый сервер не настроен, письмо не отправлено. Обратитесь к администратору.");
     } catch (e) { setMsg((e as Error).message); }
   };
   return (
@@ -82,6 +85,7 @@ function EmailBanner({ session }: { session: Session }) {
       <p>Email не подтверждён: до подтверждения профиль нельзя опубликовать для подбора.</p>
       <button onClick={resend}>Отправить письмо ещё раз</button>
       {msg && <p role="status">{msg}</p>}
+      {link && <p><a href={link}>Подтвердить email (только демо-режим)</a></p>}
     </div>
   );
 }
@@ -198,7 +202,7 @@ function ProfileTab({ session }: { session: Session }) {
         <div className="row">
           <label>Специализация
             <select value={form.specialization} onChange={(e) => set("specialization", e.target.value)}>
-              {catalog.specializations.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
+              {catalog.specializations.map((s) => <option key={s.code} value={s.code}>{s.name}{s.assessment_available ? "" : " — оценка пока недоступна"}</option>)}
             </select>
           </label>
           <label>Желаемый грейд
@@ -207,7 +211,9 @@ function ProfileTab({ session }: { session: Session }) {
             </select>
           </label>
         </div>
-        <p className="muted">Полная оценка реализована для Backend / Python.</p>
+        {catalog.specializations.find((x) => x.code === form.specialization)?.assessment_available === false
+          ? <p className="warn">Для этой специализации тестирование ещё не реализовано: профиль сохранится, но подтвердить грейд можно только по Backend / Python.</p>
+          : <p className="muted">Полная оценка реализована для Backend / Python.</p>}
       </Card>
       <ExperienceCard session={session} skills={catalog.skills} />
       <Card title="Предпочтения для подбора">
@@ -249,7 +255,9 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
       setAttempt(a); setLeft(a.remaining_seconds);
       setAnswers(Object.fromEntries(Object.entries(a.saved_answers ?? {}).map(([k, v]) => [Number(k), v])));
     } catch (e) {
-      setErr(e instanceof ApiError && e.status === 409 ? `Повторная попытка пока недоступна: ${e.message}` : (e as Error).message);
+      setErr(e instanceof ApiError && e.status === 409
+        ? (e.message.includes("not available yet") ? "Тестирование для выбранной специализации ещё не реализовано. Доступна оценка Backend / Python." : `Повторная попытка пока недоступна: ${e.message}`)
+        : (e as Error).message);
     } finally { setBusy(false); }
   };
   const fillReference = async () => {
@@ -364,7 +372,7 @@ function EvidenceTab({ session }: { session: Session }) {
     <div>
       <Card title="Профиль подтверждённых компетенций" aside={<VerificationBadge status={p.verification_status} />}>
         <p className="big">Backend / {p.claimed_grade ? GRADE_RU[p.claimed_grade] : "—"} (заявлено)
-          {p.verified_grade && <> · <Badge tone="ok">подтверждено: {GRADE_RU[p.verified_grade]} {p.verified_sublevel}</Badge></>}</p>
+          {p.verified_grade && <> · <Badge tone="ok">подтверждено: {GRADE_RU[p.verified_grade]} {subLabel(p.verified_sublevel)}</Badge></>}</p>
         {p.verification_status === "NOT_VERIFIED" && <p>Заявленный грейд не подтверждён. Он сохранён — платформа не заменяет его более низким.</p>}
         {p.verification_status === "UNVERIFIED" && <p className="muted">Пройдите основную оценку компетенций, чтобы подтвердить грейд.</p>}
         <p className="muted">Здесь нет единого «рейтинга кандидата»: только заявки и то, чем они подтверждены.</p>
@@ -377,9 +385,9 @@ function EvidenceTab({ session }: { session: Session }) {
                 <td><b>{skillName(s.skill, s.name)}</b></td>
                 <td>{s.claimed_level ? GRADE_RU[s.claimed_level] : "—"}<br /><span className="muted">{SOURCE_RU[s.claim_source] ?? s.claim_source}</span></td>
                 <td>{s.evidence.length === 0 ? <span className="muted">нет подтверждений</span> : s.evidence.map((e, i) => (
-                  <div key={i}><Badge tone={e.confirmed ? (e.type === "FSP_ACHIEVEMENT" ? "info" : "ok") : "muted"}>{e.confirmed ? "Подтверждено" : "Не подтверждено"}</Badge> {EVIDENCE_RU[e.type] ?? e.type}{e.title ? ` · ${e.title}` : ""}</div>
+                  <div key={i}><Badge tone={e.type === "FSP_ACHIEVEMENT" ? "info" : e.confirmed ? "ok" : "muted"}>{e.type === "FSP_ACHIEVEMENT" ? "Демо-данные ФСП" : e.type === "CORE_ASSESSMENT" || e.type === "TECHNOLOGY_ASSESSMENT" ? (e.confirmed ? "Подтверждено тестом" : "Не подтверждено тестом") : e.confirmed ? "Подтверждено" : "Не подтверждено"}</Badge> {EVIDENCE_RU[e.type] ?? e.type}{e.title ? ` · ${e.title}` : ""}</div>
                 ))}</td>
-                <td>{s.verified_level ? <Badge tone="ok">{GRADE_RU[s.verified_level]} {s.verified_sublevel}</Badge> : <Badge tone="muted">не подтверждён</Badge>}</td>
+                <td>{s.verified_level ? <Badge tone="ok">{GRADE_RU[s.verified_level]} {subLabel(s.verified_sublevel)}</Badge> : <Badge tone="muted">не подтверждён</Badge>}</td>
               </tr>))}</tbody></table>
         </Card>
       )}
@@ -388,7 +396,7 @@ function EvidenceTab({ session }: { session: Session }) {
           <p>{GRADE_RU[p.assessment.target_grade]}: <VerificationBadge status={p.assessment.verification_status} /> · {Math.round(p.assessment.score * 100)}% правильных ответов</p>
         </Card>
       )}
-      <Card title="Достижения ФСП (внешнее подтверждение)">
+      <Card title="Достижения ФСП (демо-данные)">
         {p.fsp.has_history ? <p className="ok">Найдено подтверждений: {p.fsp.evidence_items}. Они привязаны к релевантным навыкам и не меняют ваш уровень.</p>
           : <Empty>Истории ФСП нет — это нормально. Отсутствие достижений не ухудшает ваш уровень и профиль.</Empty>}
         <div className="row"><input placeholder="ФСП ID, например FSP-1001" value={fsp} onChange={(e) => setFsp(e.target.value)} /><button onClick={link} disabled={!fsp}>Подключить ФСП ID (демо)</button></div>
