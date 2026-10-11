@@ -213,7 +213,7 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
           <div><div className="form-sec">Ваши потребности</div>
             <div className="need-list">{needs.map((n) => (
               <span key={n.id} className="row" style={{ alignItems: "center", gap: 6, opacity: n.status === "CLOSED" ? 0.6 : 1 }}>
-                <button className="small" disabled={n.status === "CLOSED"} onClick={() => run(n)} title={salaryRange(n.salary_from, n.salary_to, n.salary_type)}><Icon name="target" size={14} />{n.title} · {money(n.salary_from)}–{money(n.salary_to)}{n.status === "CLOSED" ? " · закрыта" : ""}</button>
+                <button className="small" disabled={n.status === "CLOSED"} onClick={() => run(n)} title={salaryRange(n.salary_from, n.salary_to, n.salary_type)}><Icon name="target" size={14} />{n.title} №{n.id} · {money(n.salary_from)}–{money(n.salary_to)}{n.status === "CLOSED" ? " · закрыта" : ""}</button>
                 <button className="small" title="Закрытая потребность не участвует в подборе и новых приглашениях; история сохраняется" onClick={() => void setNeedState(n, n.status === "CLOSED" ? "reopen" : "close")}>{n.status === "CLOSED" ? "Открыть" : "Закрыть"}</button>
                 {n.status !== "CLOSED" && <label className="muted" title="Кандидаты видят только опубликованные потребности"><input type="checkbox" checked={!!n.public_to_candidates} onChange={(e) => void setPublic(n, e.target.checked)} /> видна кандидатам</label>}
               </span>))}</div></div>
@@ -387,7 +387,7 @@ function InviteForm({ session, candidateId, need, declined, done }: { session: S
       </div>
       {mode === "need" && (
         <label>Потребность *<select value={needId ?? ""} onChange={(e) => { const n = needs.find((x) => x.id === Number(e.target.value)); if (n) applyNeed(n); else setNeedId(null); }}>
-          <option value="">выберите…</option>{needs.filter((n) => n.status !== "CLOSED").map((n) => <option key={n.id} value={n.id}>{n.title}</option>)}</select></label>)}
+          <option value="">выберите…</option>{needs.filter((n) => n.status !== "CLOSED").map((n) => <option key={n.id} value={n.id}>{n.title} · №{n.id} · {money(n.salary_from)}–{money(n.salary_to)}</option>)}</select></label>)}
       <div className="row">
         <label>Должность *<input value={f.role} readOnly={locked} onChange={(e) => set("role", e.target.value)} /></label>
         <label>Формат<select value={f.format} onChange={(e) => set("format", e.target.value)}>{Object.entries(FORMAT_RU).filter(([k]) => !locked || chosen!.work_formats.includes(k)).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>

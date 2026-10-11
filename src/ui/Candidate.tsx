@@ -191,23 +191,32 @@ function OverviewTab({ session, invs, go }: { session: Session; invs: Invitation
   );
 }
 
+/** The server builds links from PUBLIC_BASE_URL (may not match the origin the app is served from); keep only the token. */
+const localLink = (raw: string) => {
+  const m = /verify_email=([^&\s]+)/.exec(raw);
+  return m ? `${window.location.origin}/?verify_email=${m[1]}` : raw;
+};
+
 function EmailBanner({ session }: { session: Session }) {
   const [msg, setMsg] = useState("");
-  const [link, setLink] = useState("");
+  const [link, setLink] = useState(() => { try { return sessionStorage.getItem("fsp.demo_verify") ?? ""; } catch { return ""; } });
   const resend = async () => {
     try {
       const r = await api<{ sent: boolean; demo_verification_link?: string }>("/api/candidates/me/email/resend", { method: "POST", token: session.token });
       if (r.sent) setMsg("Письмо отправлено. Перейдите по ссылке из письма.");
       else if (r.demo_verification_link) { setMsg("Демо-режим: почтовый сервер не настроен, письмо не отправлено."); setLink(r.demo_verification_link); }
       else setMsg("Почтовый сервер не настроен, письмо не отправлено. Обратитесь к администратору.");
-    } catch (e) { setMsg((e as Error).message); }
+    } catch (e) {
+      const m = /retry in (\d+)s/.exec((e as Error).message);
+      setMsg(m ? `Повторная отправка возможна через ${m[1]} с.` : (e as Error).message);
+    }
   };
   return (
     <div className="warn">
       <p>Email не подтверждён: до подтверждения профиль нельзя опубликовать для подбора.</p>
       <button onClick={resend}>Отправить письмо ещё раз</button>
       {msg && <p role="status">{msg}</p>}
-      {link && <p><a href={link}>Подтвердить email (только демо-режим)</a></p>}
+      {link && <p><span className="muted">Демо-режим, почта не отправляется. </span><a href={localLink(link)}>Подтвердить email</a></p>}
     </div>
   );
 }
@@ -734,10 +743,10 @@ function InvitationsTab({ session, onChange, go }: { session: Session; onChange:
             </div>
           ) : open.status === "DECLINED" ? <p className="muted">Вы отклонили приглашение. Ваши контакты остались скрыты.</p>
             : <p className="ok">Вы приняли приглашение — работодатель теперь видит ваши контакты.</p>}
-          <p className="muted" style={{ fontSize: 13 }}>Открытие контактов происходит только если вы нажмёте «Принять и открыть контакты».</p>
+          {(open.status === "SENT" || open.status === "VIEWED") && <p className="muted" style={{ fontSize: 13 }}>Открытие контактов происходит только если вы нажмёте «Принять и открыть контакты».</p>}
         </Card>
       ) : (
-        <Empty icon="eye" title="Выберите приглашение">Откройте приглашение слева: увидите зарплатную вилку, условия и сообщение работодателя. Контакты остаются скрытыми, пока вы не согласитесь.</Empty>
+        <Empty icon="eye" title="Выберите приглашение">Откройте приглашение из списка: увидите зарплатную вилку, условия и сообщение работодателя. Контакты остаются скрытыми, пока вы не согласитесь.</Empty>
       )}
     </div>
   );

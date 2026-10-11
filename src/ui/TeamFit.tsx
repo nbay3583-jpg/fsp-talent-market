@@ -10,7 +10,7 @@ interface Rec {
   salary_type: string; work_formats?: string[]; fit_state?: "ready" | "insufficient_data";
   mutual_fit: number | null; requirement_fit: number | null; reverse_fit: number | null; why: Reason[]; gaps: Reason[];
 }
-interface RecResponse { items: Rec[]; assessed: boolean; next_action: "take_assessment" | "fill_preferences" | null }
+interface RecResponse { items: Rec[]; general_feedback?: { unpublished_matching_needs: number; common_skill_gaps: { skill: string; count: number }[] }; assessed: boolean; next_action: "take_assessment" | "fill_preferences" | null }
 const NEXT_RU = {
   take_assessment: "Пройдите оценку компетенций (вкладка «Основная оценка») — без неё соответствие требованиям не рассчитывается.",
   fill_preferences: "Укажите интересы, карьерную цель или заполните анкету предпочтений — тогда появится оценка ваших ожиданий.",
@@ -121,7 +121,10 @@ export function CandidateFit({ session, go }: { session: Session; go?: (tab: str
         {recs.items.length === 0 ? (
           <Empty icon="search" title="Подходящих вакансий пока нет"
             action={go ? <><button className="primary" onClick={() => go("test")}>Подтвердить грейд</button><button onClick={() => go("profile")}>Уточнить предпочтения</button></> : undefined}>
-            Вакансии появляются, когда работодатель описывает потребность, подходящую по специализации, зарплате и формату. Подтверждённый грейд и заполненные предпочтения повышают точность.
+            Вакансии появляются, когда работодатель опубликовал потребность, подходящую по специализации, зарплате и формату. Подтверждённый грейд и заполненные предпочтения повышают точность.
+            {recs.general_feedback && recs.general_feedback.unpublished_matching_needs > 0 && (
+              <> Есть {recs.general_feedback.unpublished_matching_needs} неопубликованных запросов, подходящих по формальным признакам; их детали работодатели не раскрывают.
+                {recs.general_feedback.common_skill_gaps.length > 0 && <> Чаще всего в них не хватало подтверждения: {recs.general_feedback.common_skill_gaps.map((g) => skillName(g.skill)).join(", ")}.</>}</>)}
           </Empty>
         ) : recs.items.map((r) => (
           <article key={r.need_id} className="rec-card">
@@ -200,7 +203,7 @@ export function EmployerFit({ session, open, view = "favorites" }: { session: Se
       </Card>}
       {view === "team" && needs.length === 0 && <Empty icon="users" title="Потребностей пока нет">Создайте потребность на вкладке «Подбор» — здесь появятся рекомендации и профиль команды.</Empty>}
       {view === "team" && recs!.map((r) => (
-        <Card key={r.need_id} title={`Рекомендации: ${r.title}`}>
+        <Card key={r.need_id} title={`Рекомендации: ${r.title} №${r.need_id}`}>
           {r.candidates.length === 0 ? <Empty>Подходящих кандидатов пока нет.</Empty> : r.candidates.map((c) => (
             <div key={c.candidate.candidate_id} className="job">
               <b>{c.candidate.display_name}</b> <span className="muted">{gradeLine(c.candidate)}</span> <InviteBadge status={c.candidate.invitation_status} /> · требования: {pct(c.requirement_fit)} · ожидания кандидата: {c.reverse_fit === null ? "Недостаточно данных" : pct(c.reverse_fit)}

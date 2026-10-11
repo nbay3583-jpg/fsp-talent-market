@@ -39,7 +39,7 @@ export default function App() {
     const token = new URLSearchParams(window.location.search).get("verify_email");
     if (!token) return;
     api("/api/auth/verify-email", { body: { token } })
-      .then(() => setNotice("Email подтверждён. Теперь можно публиковать профиль для подбора."))
+      .then(() => setNotice("Email подтверждён. Профиль виден работодателям, пока включена видимость в настройках."))
       .catch(() => setNotice("Ссылка подтверждения недействительна или устарела. Запросите новую в профиле."))
       .finally(() => window.history.replaceState(null, "", window.location.pathname));
   }, []);
@@ -240,7 +240,8 @@ function AuthCard({ mode, setMode, role, setRole, demoMode, onSession }: {
   const verify = () => wrap(async () => done(await api<Out>("/api/auth/code/verify", { body: { role, email: f.email, code: f.code, ...(f.newPassword ? { new_password: f.newPassword } : {}) } })));
   const register = () => wrap(async () => {
     if (role === "candidate") {
-      const r = await api<{ candidate_id: number; access_token: string }>("/api/candidates", { body: { email: f.email, full_name: f.name, claimed_grade: f.grade, password: f.password } });
+      const r = await api<{ candidate_id: number; access_token: string; demo_verification_link?: string }>("/api/candidates", { body: { email: f.email, full_name: f.name, claimed_grade: f.grade, password: f.password } });
+      try { if (r.demo_verification_link) sessionStorage.setItem("fsp.demo_verify", r.demo_verification_link); } catch { /* storage unavailable */ }
       onSession({ role: "candidate", token: r.access_token, id: r.candidate_id });
     } else {
       const r = await api<{ employer_id: number; access_token: string }>("/api/employers", { body: { company_name: f.company, contact_email: f.email, password: f.password } });
@@ -248,8 +249,16 @@ function AuthCard({ mode, setMode, role, setRole, demoMode, onSession }: {
     }
   });
   const set = (k: keyof typeof f, v: string) => setF({ ...f, [k]: v });
+  const canRegister = !!f.email && f.password.length >= 8 && (role === "candidate" ? !!f.name : !!f.company);
+  const onEnter = (e: React.KeyboardEvent<HTMLDivElement>) => {  // Enter in a field submits the visible primary action
+    if (e.key !== "Enter" || (e.target as HTMLElement).tagName !== "INPUT") return;
+    e.preventDefault();
+    if (mode === "register") { if (canRegister) void register(); }
+    else if (step === "password") { if (f.email && f.password) void login(); }
+    else if (f.code.length === 6 && (!f.newPassword || f.newPassword.length >= 8)) void verify();
+  };
   return (
-    <div className="auth-card">
+    <div className="auth-card" onKeyDown={onEnter}>
       <h2>{mode === "login" ? "Вход в аккаунт" : "Создать аккаунт"}</h2>
       <div className="seg full" role="tablist" aria-label="Режим">
         <button role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} onClick={() => { setMode("login"); setErr(""); }}>Войти</button>
