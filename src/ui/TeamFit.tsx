@@ -240,7 +240,7 @@ function TeamProfile({ session, need }: { session: Session; need?: Need }) {
   const survey = async () => { const r = await api<{ url: string }>(`/api/employer/needs/${need.id}/team-survey`, { token: session.token, method: "POST" }); setLink(r.url); };
   return (
     <div>
-      <button onClick={() => setShown(!shown)}>{shown ? "Скрыть профиль команды" : "Профиль команды (BOTH)"}</button>
+      <button onClick={() => setShown(!shown)}>{shown ? "Скрыть профиль команды" : "Профиль команды"}</button>
       {shown && q && t && (
         <div>
           <p className="muted">Профиль команды строится из вашей анкеты и добровольных анонимных ответов сотрудников; агрегат показывается при {3}+ ответах. Это описание стиля работы, а не оценка людей.</p>

@@ -149,7 +149,7 @@ function Landing({ demo, onSession }: { demo: DemoConfig; onSession: (s: Session
           <button className="primary" onClick={() => go("candidate", "register")}>Проверить свои навыки →</button>
         </Card>
         <Card title="Работодателю">
-          <p id="for-employers" style={{ marginTop: 0 }}>Опишите потребность и получите короткий список с процентом Requirement Fit, причинами выбора и пробелами. Экспорт CSV/JSON — без контактов.</p>
+          <p id="for-employers" style={{ marginTop: 0 }}>Опишите потребность и получите короткий список с процентом соответствия требованиям, причинами выбора и пробелами. Экспорт CSV/JSON — без контактов.</p>
           <button onClick={() => go("employer", "register")}>Найти проверенных специалистов →</button>
         </Card>
       </div>
@@ -202,7 +202,7 @@ function Showcase({ facts }: { facts: Facts }) {
       </div>
       <div>
         <h3>Подбор по подтверждениям</h3>
-        <p className="muted" style={{ margin: "2px 0 8px" }}>Precision@5 на фиксированном наборе валидации.</p>
+        <p className="muted" style={{ margin: "2px 0 8px" }}>Точность в топ-5 (P@5) на фиксированном наборе валидации.</p>
         {facts.matching ? facts.matching.map((m) => (
           <div key={m.name} className={`mbar${m.ours ? " hl" : ""}`}>
             <span>{m.name}</span>
@@ -212,7 +212,7 @@ function Showcase({ facts }: { facts: Facts }) {
         )) : <p className="muted">Результаты валидации недоступны.</p>}
       </div>
       <div className="row" style={{ gap: 8 }}>
-        <Badge tone="ok">Why: причины выбора</Badge><Badge tone="warn">Gaps: пробелы</Badge><Badge tone="muted">Контакты скрыты</Badge>
+        <Badge tone="ok">Почему подходит</Badge><Badge tone="warn">Пробелы</Badge><Badge tone="muted">Контакты скрыты</Badge>
       </div>
     </aside>
   );
@@ -341,7 +341,7 @@ function DemoPanel({ demo, onSession }: { demo: DemoConfig; onSession: (s: Sessi
                 <button className="primary" disabled={!!busy} onClick={() => enter(featured)}>{busy === featured.key ? "Входим…" : "Открыть профиль"}</button>
               </div>
               <ol className="demo-steps">
-                <li>Evidence Profile: уровни и подтверждения</li>
+                <li>Профиль подтверждённых компетенций: уровни и подтверждения</li>
                 <li>Оценка и результат по компетенциям</li>
                 <li>Рекомендованные вакансии</li>
                 <li>Демо-компания: подбор → приглашение</li>

@@ -24,7 +24,7 @@ const TITLES: Record<Tab, [string, string]> = {
   match: ["Подбор по потребности", "Опишите вакансию — получите короткий объяснимый список с Requirement Fit, причинами выбора и пробелами"],
   pool: ["Поиск кандидатов", "Весь пул: фильтры по подтверждённому грейду, навыкам, формату и ожиданиям"],
   fit: ["Избранное", "Кандидаты, которых вы сохранили. Приглашение при этом не отправляется"],
-  team: ["Команда и совместимость", "Рекомендации по потребностям, профиль команды (BOTH) и добровольная анонимная анкета сотрудников"],
+  team: ["Команда и совместимость", "Рекомендации по потребностям, профиль команды и добровольная анонимная анкета сотрудников"],
   invitations: ["Приглашения", "Отправленные предложения и их статусы"],
 };
 
@@ -116,7 +116,7 @@ function CandidateRow({ c, fit, starred, onStar, onOpen, children }: {
         </div>
       </div>
       <div className="cand-actions">
-        {fit !== undefined && <div className="fit-pct"><b>{Math.round(fit * 100)}%</b><span>Requirement Fit</span><div className="progress thin" aria-hidden="true"><span style={{ width: `${Math.round(fit * 100)}%` }} /></div></div>}
+        {fit !== undefined && <div className="fit-pct"><b>{Math.round(fit * 100)}%</b><span>Соответствие требованиям</span><div className="progress thin" aria-hidden="true"><span style={{ width: `${Math.round(fit * 100)}%` }} /></div></div>}
         <button className="primary" onClick={onOpen}>Открыть</button>
         <button className={`star${starred ? " on" : ""}`} aria-pressed={starred} aria-label={starred ? "Убрать из избранного" : "В избранное"} title={starred ? "Убрать из избранного" : "В избранное"} onClick={onStar}><Icon name="star" size={16} /></button>
       </div>
@@ -225,7 +225,7 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
           <div><div className="form-sec">Ваши потребности</div>
             <div className="need-list">{needs.map((n) => (
               <span key={n.id} className="row" style={{ alignItems: "center", gap: 6, opacity: n.status === "CLOSED" ? 0.6 : 1 }}>
-                <button className="small" disabled={n.status === "CLOSED"} onClick={() => run(n)} title={salaryRange(n.salary_from, n.salary_to, n.salary_type)}><Icon name="target" size={14} />{n.title} №{n.id} · {money(n.salary_from)}–{money(n.salary_to)}{n.status === "CLOSED" ? " · закрыта" : ""}</button>
+                <button className="small" disabled={n.status === "CLOSED"} onClick={() => run(n)} title={salaryRange(n.salary_from, n.salary_to, n.salary_type)}><Icon name="target" size={14} />{n.title} №{n.id} · {money(n.salary_from)}–{money(n.salary_to)} · {n.target_sublevel ? subLabel(n.target_sublevel) : "любой подуровень"} · обяз.: {n.required_skills.map((x) => skillName(x.skill, x.skill)).join(", ")}{n.status === "CLOSED" ? " · закрыта" : ""}</button>
                 <button className="small" title="Закрытая потребность не участвует в подборе и новых приглашениях; история сохраняется" onClick={() => void setNeedState(n, n.status === "CLOSED" ? "reopen" : "close")}>{n.status === "CLOSED" ? "Открыть" : "Закрыть"}</button>
                 {n.status !== "CLOSED" && <label className="muted" title="Кандидаты видят только опубликованные потребности"><input type="checkbox" checked={!!n.public_to_candidates} onChange={(e) => void setPublic(n, e.target.checked)} /> видна кандидатам</label>}
               </span>))}</div></div>
@@ -234,7 +234,7 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
       </Card>
       <div className="stack">
         {busy && <Loading what="Подбираем" />}
-        {!res && !busy && <Empty icon="search" title="Здесь появится короткий список">Опишите потребность слева — получите небольшой объяснимый список кандидатов: Requirement Fit, почему подходит и какие пробелы. Контакты скрыты до согласия кандидата.</Empty>}
+        {!res && !busy && <Empty icon="search" title="Здесь появится короткий список">Опишите потребность слева — получите небольшой объяснимый список кандидатов: соответствие требованиям, почему подходит и какие пробелы. Контакты скрыты до согласия кандидата.</Empty>}
         {res && need && (
           <>
             <Card title={`Подбор: ${need.title}`}>

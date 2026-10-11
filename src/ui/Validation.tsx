@@ -17,7 +17,7 @@ interface Summary {
 }
 
 const NAMES: Record<string, string> = { keyword_baseline: "Поиск по ключевым словам", hard_filters_only: "Только обязательные ограничения", evidence_matching: "Подбор по подтверждённым компетенциям (наша система)" };
-const METRICS: [string, string][] = [["p@3", "Precision@3"], ["p@5", "Precision@5"], ["r@10", "Recall@10"], ["ndcg@10", "nDCG@10"]];
+const METRICS: [string, string][] = [["p@3", "Точность топ-3 (P@3)"], ["p@5", "Точность топ-5 (P@5)"], ["r@10", "Полнота топ-10 (R@10)"], ["ndcg@10", "Качество порядка (nDCG@10)"]];
 const f3 = (n: number) => n.toFixed(3);
 const signed = (n: number) => `${n >= 0 ? "+" : "−"}${Math.abs(n).toFixed(3)}`;
 
@@ -34,9 +34,9 @@ export default function Validation() {
   const label = METRICS.find(([k]) => k === metric)?.[1] ?? metric;
   const toneOf = (k: string) => (k === "evidence_matching" ? "hl" : k === "hard_filters_only" ? "mid" : "");
   const takeaways: string[] = [];
-  if (ours && kw) takeaways.push(`Наша система против поиска по ключевым словам: Precision@5 ${f3(ours["p@5"])} против ${f3(kw["p@5"])} (${signed(ours["p@5"] - kw["p@5"])}), nDCG@10 ${f3(ours["ndcg@10"])} против ${f3(kw["ndcg@10"])}.`);
-  if (ours && hf) takeaways.push(`Против «только обязательных ограничений»: Precision@5 ${signed(ours["p@5"] - hf["p@5"])}, Recall@10 ${signed(ours["r@10"] - hf["r@10"])}.`);
-  if (ours) takeaways.push(`Нарушений обязательных ограничений в top-10 у нашей системы: ${ours["constraint_violations@10"]} из ${ours["returned@10"]}; порядок выдачи детерминирован: ${s.deterministic_ordering ? "да" : "нет"}.`);
+  if (ours && kw) takeaways.push(`Наша система против поиска по ключевым словам: Точность топ-5 (P@5) ${f3(ours["p@5"])} против ${f3(kw["p@5"])} (${signed(ours["p@5"] - kw["p@5"])}), качество порядка (nDCG@10) ${f3(ours["ndcg@10"])} против ${f3(kw["ndcg@10"])}.`);
+  if (ours && hf) takeaways.push(`Против «только обязательных ограничений»: Точность топ-5 (P@5) ${signed(ours["p@5"] - hf["p@5"])}, полнота топ-10 (R@10) ${signed(ours["r@10"] - hf["r@10"])}.`);
+  if (ours) takeaways.push(`Нарушений обязательных ограничений в топ-10 у нашей системы: ${ours["constraint_violations@10"]} из ${ours["returned@10"]}; порядок выдачи детерминирован: ${s.deterministic_ordering ? "да" : "нет"}.`);
 
   return (
     <div>
@@ -112,9 +112,9 @@ export default function Validation() {
         </details>
         <details className="acc">
           <summary>Таблица метрик по методам</summary>
-          <table className="table"><thead><tr><th>Метод</th><th>P@3</th><th>P@5</th><th>R@10</th><th>nDCG@10</th><th>Нарушения ограничений в top-10</th></tr></thead><tbody>
+          <table className="table"><thead><tr><th>Метод</th><th>P@3</th><th>P@5</th><th>R@10</th><th>nDCG@10</th><th>Нарушения ограничений в топ-10</th></tr></thead><tbody>
             {methods.map((k) => { const r = s.matching[k]; return (
-              <tr key={k}><td data-label="Метод">{NAMES[k]}</td><td data-label="P@3">{f3(r["p@3"])}</td><td data-label="P@5">{f3(r["p@5"])}</td><td data-label="R@10">{f3(r["r@10"])}</td><td data-label="nDCG@10">{f3(r["ndcg@10"])}</td><td data-label="Нарушения в top-10">{r["constraint_violations@10"]}/{r["returned@10"]}</td></tr>); })}
+              <tr key={k}><td data-label="Метод">{NAMES[k]}</td><td data-label="P@3">{f3(r["p@3"])}</td><td data-label="P@5">{f3(r["p@5"])}</td><td data-label="R@10">{f3(r["r@10"])}</td><td data-label="nDCG@10">{f3(r["ndcg@10"])}</td><td data-label="Нарушения в топ-10">{r["constraint_violations@10"]}/{r["returned@10"]}</td></tr>); })}
           </tbody></table>
         </details>
         <details className="acc">

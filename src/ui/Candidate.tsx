@@ -51,8 +51,8 @@ const SOURCE_RU: Record<string, string> = {
 type Tab = "overview" | "evidence" | "test" | "fit" | "invitations" | "profile";
 const TITLES: Record<Tab, [string, string]> = {
   overview: ["Обзор", "Грейд, подтверждённые навыки и новые приглашения"],
-  evidence: ["Evidence Profile", "Заявка → подтверждение: что подтверждено оценкой, а что только заявлено"],
-  test: ["Оценка навыков", "Core Assessment: подтверждение грейда J1–S3"],
+  evidence: ["Профиль подтверждённых компетенций", "Заявка → подтверждение: что подтверждено оценкой, а что только заявлено"],
+  test: ["Оценка навыков", "Основная оценка: подтверждение грейда J1–S3"],
   fit: ["Рекомендации", "Подходящие вакансии, интересы и анкета предпочтений"],
   invitations: ["Приглашения", "Предложения работодателей с зарплатной вилкой"],
   profile: ["Настройки профиля", "Личные данные, предпочтения и опыт"],
@@ -77,7 +77,7 @@ export default function CandidateApp({ session, shell, demoMode }: { session: Se
   const fresh = (invs ?? []).filter((i) => i.status === "SENT").length;
   const items = [
     { key: "overview", label: "Обзор", icon: "home" },
-    { key: "evidence", label: "Evidence Profile", icon: "shield" },
+    { key: "evidence", label: "Мои компетенции", icon: "shield" },
     { key: "test", label: "Оценка навыков", icon: "check" },
     { key: "fit", label: "Рекомендации", icon: "star" },
     { key: "invitations", label: "Приглашения", icon: "mail", count: fresh },
@@ -148,7 +148,7 @@ function OverviewTab({ session, invs, go }: { session: Session; invs: Invitation
         <Kpi icon="mail" label="Приглашения" value={`${invs?.length ?? "…"}`} sub={fresh > 0 ? `новых: ${fresh}` : "новых нет"} />
       </div>
       <div className="grid-main">
-        <Card title="Навыки и технологии" aside={<button className="small" onClick={() => go("evidence")}>Evidence Profile <Icon name="arrow" size={14} /></button>}>
+        <Card title="Навыки и технологии" aside={<button className="small" onClick={() => go("evidence")}>Профиль подтверждённых компетенций <Icon name="arrow" size={14} /></button>}>
           {p.skills.length === 0 ? <Empty compact icon="shield" title="Навыков пока нет">Пройдите оценку, чтобы они появились в профиле.</Empty> : (
             <div>
               {p.skills.map((s) => (
@@ -427,8 +427,8 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
   if (!attempt) {
     return (
       <div className="assess-start">
-        <section className="assess-hero" aria-label="Core Assessment">
-          <span className="hero-eyebrow" style={{ alignSelf: "flex-start" }}><Icon name="shield" size={14} />Core Assessment · Backend / Python</span>
+        <section className="assess-hero" aria-label="Основная оценка">
+          <span className="hero-eyebrow" style={{ alignSelf: "flex-start" }}><Icon name="shield" size={14} />Основная оценка · Backend / Python</span>
           <h2>Подтвердите грейд за 15–23 минуты</h2>
           <p>11 заданий по шести компетенциям. Варианты заданий параметризованы: у каждого кандидата свои числа и сценарии с тем же уровнем сложности и теми же критериями. Оценка полностью детерминирована — без нейросетей.</p>
           <div className="facts">
