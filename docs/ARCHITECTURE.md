@@ -20,7 +20,7 @@ Categorisation: a candidate's **category** is `specialization × public grade` (
 
 - New Core attempts contain **17 tasks** (legacy variants/attempts are preserved); technology exams **FastAPI** and **PostgreSQL** use the same Assessment Engine, with independent attempt/result records and skill-specific evidence, never replacing the Core grade.
 - Browser-only **Python Practice** uses a Pyodide 0.27.7 Web Worker inside a separate sandboxed frame; user code is not run in the API process and does not create verified grade/evidence. The released practice is not a proctored independent certification.
-- The assessment extension is supported by additive Alembic migration `0011`. Earlier architecture prose in this document may refer to the base MVP; see README and the live OpenAPI for newer routes.
+- The assessment extension is supported by additive Alembic migration `0011` (the chain is `0001`–`0011`; base MVP prose above predates 0007–0011: email verification, Matching 2.0/favorites, login credentials, need status, `exam_code`). Earlier architecture prose in this document may refer to the base MVP; see README and the live OpenAPI for newer routes.
 
 ## Components (`src/fsp_market/`)
 

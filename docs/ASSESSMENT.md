@@ -23,7 +23,7 @@ Core has six competencies (Python, SQL, API/FastAPI, Testing, Docker basics, Sys
 1. `POST /api/assessments {target_grade}` — the candidate's **own claim**; creates (or returns the existing) in-progress attempt. One variant per family is assigned: `variants[attempt_id % n]` — reproducible from the attempt id.
 2. The client sees prompts and options only; the correct option never leaves the server (except the demo-only helper below).
 3. `POST /api/assessments/{id}/submit` — must answer exactly the assigned tasks with valid options (else 422).
-4. Scoring is exact-match and deterministic. Total score = earned/possible points. Pass thresholds: **Junior 0.60, Middle 0.70, Senior 0.75**; the upper sublevel (J2/M2/S2) needs ≥ 0.85.
+4. Scoring is exact-match and deterministic. Total score = earned/possible points. Pass thresholds: **Junior 0.60, Middle 0.70, Senior 0.75**; sublevel bands (`taxonomy/grades.py`): Junior J1 <0.75, J2 ≥0.75, J3 ≥0.90; Middle M1 <0.80, M2 ≥0.80, M3 ≥0.90; Senior S1 <0.84, S2 ≥0.84, S3 ≥0.92 (MVP configuration, not calibrated).
 5. Result `VERIFIED` (platform level + sublevel set) or `NOT_VERIFIED` (claimed grade kept, nothing lowered). A competency with score ≥ the grade's threshold creates `CORE_ASSESSMENT` evidence (strength HIGH) and a `VerifiedSkillLevel` for the matching skills (never lowering an existing higher level).
 6. A failed attempt blocks the same target grade for **7 days** (anti grade-hopping; MVP policy, not calibrated). Another grade can be attempted at any time.
 
@@ -31,7 +31,7 @@ Core has six competencies (Python, SQL, API/FastAPI, Testing, Docker basics, Sys
 
 - Different attempts get different variants of the same family; surface data, options and the position of the correct option differ, so a memorised "A, C, B…" sheet or a pasted answer to one variant does not carry over to its sibling.
 - Answer keys are server-side only; submissions are validated against the assigned set; failed targets have a cooldown, so brute force by retries is slow.
-- Honest limits: each family has 6–10 variants, so collusion resistance is moderate; the parameter-preset design is meant to scale to many more; there is no proctoring or plagiarism detection (roadmap). Attempts are 11 items; the guessing baseline is simulated in the validation results.
+- Honest limits: each family has 6–10 variants, so collusion resistance is moderate; the parameter-preset design is meant to scale to many more; there is no proctoring or plagiarism detection (roadmap). New attempts are 17 items; the published guessing baseline was simulated on the earlier 11-item composition.
 
 ## Comparability and "no calibration" statement
 

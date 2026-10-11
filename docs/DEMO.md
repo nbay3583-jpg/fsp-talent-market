@@ -4,7 +4,7 @@ Start: `docker compose up --build` → http://localhost:3000 (API docs: http://l
 
 Reset to the initial state: `docker compose exec backend python -m fsp_market.demo reset` (outside Docker: `python -m fsp_market.demo reset`). List accounts: `python -m fsp_market.demo accounts`.
 
-Accounts (fixtures, no passwords): Alexey Demo (candidate with FSP history, `FSP-1001`), Mila Newcomer (candidate without FSP history, `FSP-2002`), Anna Verified (already VERIFIED), Hana Almost (NOT_VERIFIED Middle), Fedor Expensive (salary mismatch), Demo Corp (employer).
+Accounts (fixtures; with `DEMO_MODE=true` they sign in without a password; real registrations use email + password or a one-time code, SMTP is not configured so codes/links are not delivered by email): Alexey Demo (candidate with FSP history, `FSP-1001`), Mila Newcomer (candidate without FSP history, `FSP-2002`), Anna Verified (already VERIFIED), Hana Almost (NOT_VERIFIED Middle), Fedor Expensive (salary mismatch), Demo Corp (employer).
 
 Canonical scenario and the decline path are in the root `README.md` (section "Демо-сценарий"). Automated proofs:
 

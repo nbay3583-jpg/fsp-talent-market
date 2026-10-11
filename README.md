@@ -108,7 +108,7 @@ src/ui/         React-приложение     tests/   pytest     artifacts/val
 
 ## Как работает оценка (кратко)
 
-Цепочка **Competency → Task Family → Task Format → Task Template → Parameter Preset → Task Variant → Fixed Scoring Contract**. Внутри семьи варианты меняют домен, схему, endpoint, числа, сценарий, но сохраняют компетенцию, сложность, рубрику и контракт оценки. Параметры — заранее проверенные пресеты, не произвольная генерация LLM. Оценка детерминирована (без LLM и без исполнения кода кандидата на backend; отдельная браузерная Python Practice — самопроверка). Порог: Junior 0.60, Middle 0.70, Senior 0.75; верхний подуровень (J2/M2/S2) от 0.85. Повторная попытка того же грейда после неуспеха — через 7 дней. Подробнее и о том, почему тест устойчив к простой передаче ответов: [docs/ASSESSMENT.md](docs/ASSESSMENT.md). IRT/2PL-калибровку мы **не** заявляем.
+Цепочка **Competency → Task Family → Task Format → Task Template → Parameter Preset → Task Variant → Fixed Scoring Contract**. Внутри семьи варианты меняют домен, схему, endpoint, числа, сценарий, но сохраняют компетенцию, сложность, рубрику и контракт оценки. Параметры — заранее проверенные пресеты, не произвольная генерация LLM. Оценка детерминирована (без LLM и без исполнения кода кандидата на backend; отдельная браузерная Python Practice — самопроверка). Порог: Junior 0.60, Middle 0.70, Senior 0.75; подуровни по полосам из `taxonomy/grades.py`: Junior J2 ≥0.75, J3 ≥0.90; Middle M2 ≥0.80, M3 ≥0.90; Senior S2 ≥0.84, S3 ≥0.92 (MVP-конфигурация, без психометрической калибровки). Повторная попытка того же грейда после неуспеха — через 7 дней. Подробнее и о том, почему тест устойчив к простой передаче ответов: [docs/ASSESSMENT.md](docs/ASSESSMENT.md). IRT/2PL-калибровку мы **не** заявляем.
 
 ## Как работает подбор (кратко)
 
@@ -139,7 +139,7 @@ Dataset: 32 candidates, 10 employer needs, 98 non-zero hand labels (of 320 pairs
 
 Assessment (reference-solution validation, 42 synthetic cases): grade accuracy 1.000; variant stability 1.000 identical outcomes over 21 persona-grade pairs (max score difference 0.000); grade separation AUC JUNIOR 1.000, MIDDLE 1.000, SENIOR 1.000; disagreement over one sublevel 0.000; deterministic scoring: True; rubric/content violations: 0.
 
-Random-guess false verification: JUNIOR 0.2% (11 items), MIDDLE 0.0% (11 items), SENIOR 0.0% (11 items).
+Random-guess false verification (историческая симуляция на прежней 11-заданной композиции): JUNIOR 0.2% (11 items), MIDDLE 0.0% (11 items), SENIOR 0.0% (11 items).
 
 Deterministic matching order: True. Failure cases recorded: 101 (see `artifacts/validation/latest.json`).
 <!-- VALIDATION:END -->
