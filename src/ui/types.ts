@@ -92,5 +92,6 @@ export interface Need {
   salary_type: "GROSS" | "NET";
   work_formats: string[];
   location: string | null;
+  max_start_days?: number | null;
   description?: string | null;
 }

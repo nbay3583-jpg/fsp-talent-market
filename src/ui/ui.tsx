@@ -229,13 +229,14 @@ export function Ring({ value, size = 84, label, caption }: { value: number; size
 /** Three-step level meter (Junior / Middle / Senior): verified fills the bar, claimed is marked. */
 export function LevelMeter({ claimed, verified, sublevel }: { claimed: string | null; verified: string | null; sublevel?: string | null }) {
   const order = ["JUNIOR", "MIDDLE", "SENIOR"];
+  const label: Record<string, string> = { JUNIOR: "Джуниор", MIDDLE: "Мидл", SENIOR: "Сеньор" };
   const vi = verified ? order.indexOf(verified) : -1, ci = claimed ? order.indexOf(claimed) : -1;
   return (
-    <div className="level-meter" role="img" aria-label={verified ? `Подтверждено: ${GRADE_RU[verified]}${sublevel ? ` ${sublevel}` : ""}` : "Не подтверждено"}>
+    <div className="level-meter" role="img" aria-label={verified ? `Подтверждено: ${label[verified]}${sublevel ? ` ${sublevel}` : ""}` : "Не подтверждено"}>
       <div className="level-steps">
         {order.map((g, i) => (
           <span key={g} className={`level-step${i <= vi ? " on" : ""}${i === ci ? " claimed" : ""}`}>
-            <i />{GRADE_RU[g]}
+            <i />{label[g]}
           </span>
         ))}
       </div>

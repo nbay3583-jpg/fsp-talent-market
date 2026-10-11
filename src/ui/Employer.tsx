@@ -163,13 +163,25 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
     try { setRes(await api<MatchResponse>(`/api/employer/needs/${n.id}/match?limit=20`, { token: session.token, method: "POST" })); }
     catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   }, [session.token]);
+  const payload = () => ({
+    title: f.title.trim(), target_grade: f.grade, target_sublevel: f.sub || null, required_skills: f.req, optional_skills: f.opt,
+    salary_from: Number(f.from), salary_to: Number(f.to), salary_type: f.type, work_formats: f.formats,
+    location: f.location || null, max_start_days: f.start ? Number(f.start) : null, description: f.description });
+  const sameSet = (a: string[], b: string[]) => a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
+  /** An open need that already has exactly the form's terms: matching is re-run on it instead of creating a duplicate. */
+  const existing = needs.find((n) => {
+    const p = payload();
+    return n.status !== "CLOSED" && n.title === p.title && n.target_grade === p.target_grade && (n.target_sublevel ?? null) === p.target_sublevel
+      && n.salary_from === p.salary_from && n.salary_to === p.salary_to && n.salary_type === p.salary_type
+      && (n.location ?? null) === p.location && (n.max_start_days ?? null) === p.max_start_days && (n.description ?? "") === p.description
+      && sameSet(n.required_skills.map((x) => x.skill), p.required_skills) && sameSet(n.optional_skills.map((x) => x.skill), p.optional_skills)
+      && sameSet(n.work_formats, p.work_formats);
+  });
   const create = async () => {
+    if (existing) { await run(existing); return; }
     setErr(""); setBusy(true);
     try {
-      const n = await api<Need>("/api/employer/needs", { token: session.token, body: {
-        title: f.title, target_grade: f.grade, target_sublevel: f.sub || null, required_skills: f.req, optional_skills: f.opt,
-        salary_from: Number(f.from), salary_to: Number(f.to), salary_type: f.type, work_formats: f.formats,
-        location: f.location || null, max_start_days: f.start ? Number(f.start) : null, description: f.description } });
+      const n = await api<Need>("/api/employer/needs", { token: session.token, body: payload() });
       setNeeds([...needs, n]); await run(n);
     } catch (e) { setErr((e as Error).message); setBusy(false); }
   };
@@ -208,7 +220,7 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
           <label>Город (для офиса/гибрида)<input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} /></label>
           <label>Выход не позже, дней<input inputMode="numeric" value={f.start} onChange={(e) => setF({ ...f, start: e.target.value.replace(/\D/g, "") })} /></label>
         </div>
-        <button className="primary large" style={{ width: "100%", marginTop: 8 }} disabled={busy || f.req.length === 0 || f.formats.length === 0} onClick={create}><Icon name="search" size={16} />Подобрать кандидатов</button>
+        <button className="primary large" style={{ width: "100%", marginTop: 8 }} disabled={busy || f.req.length === 0 || f.formats.length === 0} onClick={create}><Icon name="search" size={16} />{existing ? `Повторить подбор (потребность №${existing.id})` : "Создать потребность и подобрать"}</button>
         {needs.length > 0 && (
           <div><div className="form-sec">Ваши потребности</div>
             <div className="need-list">{needs.map((n) => (
