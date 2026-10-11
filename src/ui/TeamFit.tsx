@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type Session } from "./api";
 import type { Catalog, Need, PublicCandidate, Reason } from "./types";
-import { Badge, Card, COMPETENCY_RU, Empty, ErrorBox, FORMAT_RU, GRADE_RU, gradeLine, InviteBadge, Loading, money, skillName } from "./ui";
+import { Badge, Card, COMPETENCY_RU, CompanyMark, Empty, ErrorBox, FORMAT_RU, GRADE_RU, gradeLine, Icon, InviteBadge, Loading, money, skillName } from "./ui";
 
 interface Axis { key: string; label: string; low: string; high: string }
 interface Questions { axes: Axis[]; note: string; career_goals: Record<string, string> }
@@ -30,15 +30,24 @@ function Reasons({ why, gaps }: { why: Reason[]; gaps: Reason[] }) {
   return (
     <details>
       <summary>Почему так и пробелы ({why.length + gaps.length})</summary>
-      <div className="row">
-        {why.length > 0 && <div><b>Почему подходит</b><ul>{why.map((r, i) => <li key={i} className="ok">{ruText(r.text)}</li>)}</ul></div>}
-        {gaps.length > 0 && <div><b>Пробелы</b><ul>{gaps.map((r, i) => <li key={i} className="warn">{ruText(r.text)}</li>)}</ul></div>}
+      <div className="rec-columns">
+        <div className="why-col"><h5>Почему подходит</h5>{why.length ? <ul>{why.map((r, i) => <li key={i}>{ruText(r.text)}</li>)}</ul> : <span className="muted">Нет подтверждённых оснований</span>}</div>
+        <div className="gap-col"><h5>Пробелы</h5>{gaps.length ? <ul>{gaps.map((r, i) => <li key={i}>{ruText(r.text)}</li>)}</ul> : <span className="muted">Пробелов не обнаружено</span>}</div>
       </div>
     </details>
   );
 }
 
-const SCALE = ["левое", "скорее левое", "посередине", "скорее правое", "правое"];
+function Meter({ label, value, na }: { label: string; value: number | null; na?: string }) {
+  if (value === null) return <div className="rec-meter na"><b>{na ?? "Недостаточно данных"}</b><span>{label}</span></div>;
+  return (
+    <div className="rec-meter"><b>{Math.round(value * 100)}%</b><span>{label}</span>
+      <div className="progress thin" aria-hidden="true"><span style={{ width: `${Math.round(value * 100)}%` }} /></div></div>
+  );
+}
+
+/** Подписи шкалы 1–5 строятся из полюсов вопроса: 1 и 5 — крайние варианты, 3 — «по ситуации». */
+const scaleLabels = (low: string, high: string) => [low, `Скорее: ${low}`, "По ситуации / одинаково", `Скорее: ${high}`, high];
 
 /** Анкета предпочтений: пять подписанных вариантов на вопрос; неотвеченный вопрос не считается нейтральным. */
 export function WorkStyleForm({ q, value, onSave, label }: { q: Questions; value: Record<string, number> | null; onSave: (a: Record<string, number>) => Promise<void>; label: string }) {
@@ -57,15 +66,15 @@ export function WorkStyleForm({ q, value, onSave, label }: { q: Questions; value
       {q.axes.map((x) => (
         <fieldset key={x.key} className="scale">
           <legend>{x.label}</legend>
-          <p className="muted">Левое — {x.low}. Правое — {x.high}.</p>
+          <p className="muted">1 — {x.low}; 5 — {x.high}; 3 — по ситуации.</p>
           <div className="scale-opts" role="radiogroup" aria-label={x.label}>
-            {SCALE.map((t, i) => (
+            {scaleLabels(x.low, x.high).map((t, i) => (
               <label key={i} className={`scale-opt${a[x.key] === i + 1 ? " on" : ""}`}>
                 <input type="radio" name={`ws-${x.key}`} checked={a[x.key] === i + 1} onChange={() => setAxis(x.key, i + 1)} />
-                <span>{t}</span>
+                <span><b>{i + 1}</b> {t}</span>
               </label>))}
           </div>
-          <p className="muted">{a[x.key] === undefined ? "Не отвечено" : <>Выбрано: {SCALE[a[x.key] - 1]} · <button type="button" className="link" onClick={() => setAxis(x.key, null)}>сбросить</button></>}</p>
+          <p className="muted">{a[x.key] === undefined ? "Не отвечено" : <>Выбрано: {a[x.key]} — {scaleLabels(x.low, x.high)[a[x.key] - 1]} · <button type="button" className="link" onClick={() => setAxis(x.key, null)}>сбросить</button></>}</p>
         </fieldset>
       ))}
       <p className="muted">Отвечено: {answered} из {q.axes.length}. Пропущенные вопросы не учитываются; для расчёта совпадения нужно минимум 3 общих ответа.</p>
@@ -77,7 +86,7 @@ export function WorkStyleForm({ q, value, onSave, label }: { q: Questions; value
 }
 
 /** Candidate: goals, work-style questionnaire and personal recommendations. */
-export function CandidateFit({ session }: { session: Session }) {
+export function CandidateFit({ session, go }: { session: Session; go?: (tab: string) => void }) {
   const [q, setQ] = useState<Questions | null>(null);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [mine, setMine] = useState<{ work_style: Record<string, number> | null; interests: string[]; career_goal: string | null } | null>(null);
@@ -101,29 +110,49 @@ export function CandidateFit({ session }: { session: Session }) {
   const toggle = (c: string) => saveGoals(mine.interests.includes(c) ? mine.interests.filter((x) => x !== c) : [...mine.interests, c], mine.career_goal);
   return (
     <div>
-      <Card title="Рекомендованные вакансии">
-        {recs.next_action && <p className="warn" role="status">{NEXT_RU[recs.next_action]}</p>}
-        {recs.items.length === 0 ? <Empty>Подходящих вакансий пока нет.</Empty> : recs.items.map((r) => (
-          <div key={r.need_id} className="job rec">
-            <div><b>{r.title}</b> · {r.company}</div>
-            <div className="chips">
-              <Badge tone="muted">{GRADE_RU[r.target_grade]}</Badge>
-              <Badge tone="muted">{money(r.salary_from)}–{money(r.salary_to)} ₽ {r.salary_type}</Badge>
-              {r.work_formats?.map((f) => <Badge key={f} tone="muted">{FORMAT_RU[f] ?? f}</Badge>)}
-              {recs.assessed ? <Badge tone="ok">оценка пройдена</Badge> : <Badge tone="warn">оценка не пройдена</Badge>}
+      <div>
+        <div className="card-head"><h3>Рекомендованные вакансии</h3></div>
+        {recs.next_action && (
+          <div className="next-step" role="status">
+            <span className="kpi-icon"><Icon name="target" size={16} /></span>
+            <div><b>{recs.next_action === "take_assessment" ? "Расчёт соответствия ждёт оценку" : "Заполните ожидания"}</b><span className="muted">{NEXT_RU[recs.next_action]}</span></div>
+            {go && recs.next_action === "take_assessment" && <button className="primary" onClick={() => go("test")}>Пройти оценку</button>}
+          </div>)}
+        {recs.items.length === 0 ? (
+          <Empty icon="search" title="Подходящих вакансий пока нет"
+            action={go ? <><button className="primary" onClick={() => go("test")}>Подтвердить грейд</button><button onClick={() => go("profile")}>Уточнить предпочтения</button></> : undefined}>
+            Вакансии появляются, когда работодатель описывает потребность, подходящую по специализации, зарплате и формату. Подтверждённый грейд и заполненные предпочтения повышают точность.
+          </Empty>
+        ) : recs.items.map((r) => (
+          <article key={r.need_id} className="rec-card">
+            <CompanyMark name={r.company} />
+            <div>
+              <h4>{r.title}</h4>
+              <div className="rec-sub">{r.company}</div>
+              <div className="chips" style={{ marginTop: 6 }}>
+                <Badge tone="muted">{GRADE_RU[r.target_grade]}</Badge>
+                <Badge tone="muted">{money(r.salary_from)}–{money(r.salary_to)} ₽ {r.salary_type}</Badge>
+                {r.work_formats?.map((f) => <Badge key={f} tone="muted">{FORMAT_RU[f] ?? f}</Badge>)}
+                {recs.assessed ? <Badge tone="ok">оценка пройдена</Badge> : <Badge tone="warn">оценка не пройдена</Badge>}
+              </div>
             </div>
-            {r.fit_state === "insufficient_data"
-              ? <p>Соответствие: <b>Недостаточно данных</b> — {recs.assessed ? "профиль не заполнен" : "нужна оценка компетенций"}.</p>
-              : <p>Соответствие требованиям: <b>{pct(r.requirement_fit)}</b> · ваши ожидания: <b>{r.reverse_fit === null ? "Недостаточно данных (заполните предпочтения)" : pct(r.reverse_fit)}</b>
-                  {r.mutual_fit !== null && r.reverse_fit !== null && <> · взаимное: <b>{pct(r.mutual_fit)}</b></>}</p>}
-            <Reasons why={r.why} gaps={r.gaps} />
-          </div>))}
-        <p className="muted">Проценты — эвристика совпадения по данным профиля, а не вероятность найма. Рекомендации ничего не отправляют и не меняют ваш грейд.</p>
-      </Card>
+            {r.fit_state === "insufficient_data" ? (
+              <div className="rec-meter na"><b>Недостаточно данных</b><span>{recs.assessed ? "профиль не заполнен" : "нужна оценка компетенций"}</span></div>
+            ) : (
+              <div className="rec-fits">
+                <Meter label="требования" value={r.requirement_fit} />
+                <Meter label="ваши ожидания" value={r.reverse_fit} na="Заполните предпочтения" />
+                {r.mutual_fit !== null && r.reverse_fit !== null && <Meter label="взаимное" value={r.mutual_fit} />}
+              </div>)}
+            <div className="rec-body"><Reasons why={r.why} gaps={r.gaps} /></div>
+          </article>))}
+        <p className="muted" style={{ fontSize: 13 }}>Проценты — эвристика совпадения по данным профиля, а не вероятность найма. Рекомендации ничего не отправляют и не меняют ваш грейд.</p>
+      </div>
       <Card title="Интересы и карьерная цель">
-        <fieldset><legend>Технологии, с которыми хотите работать</legend>
-          {catalog.skills.map((s) => <label key={s.code} className="check"><input type="checkbox" checked={mine.interests.includes(s.code)} onChange={() => toggle(s.code)} />{skillName(s.code, s.name)}</label>)}
-        </fieldset>
+        <div className="form-sec">Технологии, с которыми хотите работать</div>
+        <div className="chip-pick">
+          {catalog.skills.map((s) => <label key={s.code} className={mine.interests.includes(s.code) ? "on" : ""}><input type="checkbox" checked={mine.interests.includes(s.code)} onChange={() => toggle(s.code)} /><span className="mark" />{skillName(s.code, s.name)}</label>)}
+        </div>
         <label>Карьерная цель
           <select value={mine.career_goal ?? ""} onChange={(e) => saveGoals(mine.interests, e.target.value || null)}>
             <option value="">не указана</option>
@@ -142,7 +171,7 @@ export function CandidateFit({ session }: { session: Session }) {
 }
 
 /** Employer: favorites, mutual recommendations and the BOTH team profile. */
-export function EmployerFit({ session, open }: { session: Session; open: (id: number, need: Need | null) => void }) {
+export function EmployerFit({ session, open, view = "favorites" }: { session: Session; open: (id: number, need: Need | null) => void; view?: "favorites" | "team" }) {
   const [favs, setFavs] = useState<{ note: string; need_id: number | null; candidate: PublicCandidate }[] | null>(null);
   const [recs, setRecs] = useState<{ need_id: number; title: string; candidates: (Rec & { candidate: PublicCandidate })[] }[] | null>(null);
   const [needs, setNeeds] = useState<Need[]>([]);
@@ -160,16 +189,17 @@ export function EmployerFit({ session, open }: { session: Session; open: (id: nu
   const unfav = async (id: number) => { await api(`/api/employer/favorites/${id}`, { method: "DELETE", token: session.token }); load(); };
   return (
     <div>
-      <Card title="Избранные кандидаты">
-        {favs!.length === 0 ? <Empty>Избранное пусто. Сохраняйте интерес в карточке кандидата — приглашение при этом не отправляется.</Empty> : favs!.map((f) => (
+      {view === "favorites" && <Card title="Избранные кандидаты">
+        {favs!.length === 0 ? <Empty icon="bookmark" title="Избранное пусто">Сохраняйте интерес в карточке кандидата — приглашение при этом не отправляется.</Empty> : favs!.map((f) => (
           <div key={f.candidate.candidate_id} className="job">
             <b>{f.candidate.display_name}</b> {f.candidate.verified_grade ? <Badge tone="ok">{GRADE_RU[f.candidate.verified_grade]} {f.candidate.verified_sublevel}</Badge> : <Badge tone="muted">не подтверждён</Badge>}
             <p className="muted">{gradeLine(f.candidate)}{f.candidate.work_formats.length > 0 && <> · {f.candidate.work_formats.map((x) => FORMAT_RU[x] ?? x).join(", ")}</>} · <InviteBadge status={f.candidate.invitation_status} /></p>
             {f.note && <p>Заметка: {f.note}</p>}
             <div className="row"><button onClick={() => open(f.candidate.candidate_id, needs.find((n) => n.id === f.need_id) ?? null)}>Открыть карточку</button><button onClick={() => unfav(f.candidate.candidate_id)}>Убрать</button></div>
           </div>))}
-      </Card>
-      {recs!.map((r) => (
+      </Card>}
+      {view === "team" && needs.length === 0 && <Empty icon="users" title="Потребностей пока нет">Создайте потребность на вкладке «Подбор» — здесь появятся рекомендации и профиль команды.</Empty>}
+      {view === "team" && recs!.map((r) => (
         <Card key={r.need_id} title={`Рекомендации: ${r.title}`}>
           {r.candidates.length === 0 ? <Empty>Подходящих кандидатов пока нет.</Empty> : r.candidates.map((c) => (
             <div key={c.candidate.candidate_id} className="job">

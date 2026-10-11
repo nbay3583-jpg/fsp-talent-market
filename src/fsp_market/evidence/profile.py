@@ -64,14 +64,18 @@ def build_evidence_profile(session: Session, candidate_id: int) -> dict[str, Any
         evidence = session.scalars(
             select(SkillEvidence)
             .where(SkillEvidence.claim_id == claim.id)
-            .order_by(SkillEvidence.id)
+            .order_by(SkillEvidence.id.desc())  # newest first: current result leads, history follows
         ).all()
         fsp_count += sum(1 for e in evidence if e.evidence_type == EvidenceType.FSP_ACHIEVEMENT)
         skills.append(
             {
                 "skill": skill.code,
                 "name": skill.name,
-                "claimed_level": _value(claim.claimed_level),
+                # a claim created by the assessment only echoes the attempt's target grade; it is not
+                # something the candidate declared, so it must not masquerade as "claimed"
+                "claimed_level": (
+                    None if claim.source == "core_assessment" else _value(claim.claimed_level)
+                ),
                 "claim_source": claim.source,
                 "verified_level": _value(verified.level) if verified else None,
                 "verified_sublevel": _value(verified.sublevel) if verified else None,

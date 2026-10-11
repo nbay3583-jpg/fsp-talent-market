@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
+from collections import Counter
 from datetime import UTC, datetime
 from typing import Any
 
@@ -141,9 +142,20 @@ def candidate_recommendations(
     # UNVERIFIED = no assessment finished yet; NOT_VERIFIED is a real (possibly low) result
     assessed = cand.verification_status != VerificationStatus.UNVERIFIED
     out = []
-    for need in session.scalars(select(EmployerNeed).order_by(EmployerNeed.id)):
+    hidden_matches = 0
+    hidden_gaps: Counter[str] = Counter()
+    for need in session.scalars(
+        select(EmployerNeed).where(EmployerNeed.status != "CLOSED").order_by(EmployerNeed.id)
+    ):
         spec = load_need_spec(session, need)
         if hard_filter(spec, facts, DEFAULT_POLICY, ignore_visibility=True):
+            continue
+        if not need.public_to_candidates:
+            # internal need: never listed; only anonymous aggregate skill feedback is derived
+            hidden_matches += 1
+            for g in requirement_fit(spec, facts, now, DEFAULT_POLICY).gaps:
+                if g.skill:
+                    hidden_gaps[g.skill] += 1
             continue
         fit = requirement_fit(spec, facts, now, DEFAULT_POLICY)
         rev = reverse_for(session, cand, need, spec)
@@ -179,6 +191,12 @@ def candidate_recommendations(
         next_action = "fill_preferences"
     return {
         "items": out[: max(1, min(limit, 20))],
+        "general_feedback": {  # anonymous: no employer, title or terms of unpublished needs
+            "unpublished_matching_needs": hidden_matches,
+            "common_skill_gaps": [
+                {"skill": s, "count": n} for s, n in sorted(hidden_gaps.items(), key=lambda t: (-t[1], t[0]))[:5]
+            ],
+        },
         "total": len(out),
         "assessed": assessed,
         "next_action": next_action,
@@ -247,7 +265,7 @@ def candidate_compat(
 ) -> dict[str, Any]:
     need = _own_need(session, need_id, employer_id)
     cand = session.get(Candidate, candidate_id)
-    if cand is None or not cand.profile_visible:
+    if cand is None or not (cand.profile_visible and cand.email_verified):
         raise HTTPException(status_code=404, detail="candidate not found")
     rev = reverse_for(session, cand, need)
     return {"reverse_fit": rev["score"], "why": rev["why"], "gaps": rev["gaps"], "work_style": rev["work_style"]}
@@ -258,11 +276,15 @@ def employer_recommendations(
     per_need: int = 3, employer_id: int = EmployerDep, session: Session = SessionDep
 ) -> dict[str, Any]:
     now = datetime.now(UTC)
-    cands = list(session.scalars(select(Candidate).where(Candidate.profile_visible.is_(True))))
+    cands = list(session.scalars(select(Candidate).where(
+        Candidate.profile_visible.is_(True), Candidate.email_verified.is_(True)
+    )))
     facts = load_candidate_facts(session, cands)
     items = []
     for need in session.scalars(
-        select(EmployerNeed).where(EmployerNeed.employer_id == employer_id).order_by(EmployerNeed.id)
+        select(EmployerNeed)
+        .where(EmployerNeed.employer_id == employer_id, EmployerNeed.status != "CLOSED")
+        .order_by(EmployerNeed.id)
     ):
         spec = load_need_spec(session, need)
         scored = []
@@ -292,9 +314,10 @@ def employer_recommendations(
                 ],
             }
         )
-    invitation_service.annotate(
-        session, employer_id, [c["candidate"] for it in items for c in it["candidates"]]
-    )
+    for it in items:  # invitation state is per need
+        invitation_service.annotate(
+            session, employer_id, [c["candidate"] for c in it["candidates"]], it["need_id"]
+        )
     return {"items": items}
 
 
@@ -304,7 +327,7 @@ def add_favorite(
     body: FavoriteIn, employer_id: int = EmployerDep, session: Session = SessionDep
 ) -> dict[str, Any]:
     cand = session.get(Candidate, body.candidate_id)
-    if cand is None or not cand.profile_visible:
+    if cand is None or not (cand.profile_visible and cand.email_verified):
         raise HTTPException(status_code=404, detail="candidate not found")
     if body.need_id is not None:
         _own_need(session, body.need_id, employer_id)
@@ -345,6 +368,7 @@ def list_favorites(employer_id: int = EmployerDep, session: Session = SessionDep
             select(Candidate).where(
                 Candidate.id.in_([f.candidate_id for f in favs] or [0]),
                 Candidate.profile_visible.is_(True),
+                Candidate.email_verified.is_(True),
             )
         )
     }

@@ -39,6 +39,20 @@ describe("App shell", () => {
     expect((await screen.findAllByRole("alert")).length).toBeGreaterThan(0);
   });
 
+  it("shows the prepared verified candidate as a separate demo path", async () => {
+    stubFetch({
+      "/health": { status: "ok" },
+      "/api/demo/config": { demo_mode: true, accounts: [
+        { key: "candidate_verified", role: "candidate", label: "Анна — профиль подтверждён (Middle)", fsp_id: null, note: "n" },
+        { key: "employer", role: "employer", label: "Демо-компания (работодатель)", fsp_id: null, note: "n" },
+      ] },
+    });
+    render(<App />);
+    expect(await screen.findByText(/Демонстрационный путь/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Открыть профиль" })).toBeTruthy();
+    expect(screen.getByText("Другие демо-сценарии")).toBeTruthy();
+  });
+
   it("says when demo mode is off", async () => {
     stubFetch({ "/health": { status: "ok" }, "/api/demo/config": { demo_mode: false, accounts: [] } });
     render(<App />);

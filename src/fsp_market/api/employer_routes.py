@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -62,6 +63,31 @@ class PreferencesIn(BaseModel):
     open_to_invitations: bool | None = None
     phone: str | None = Field(default=None, max_length=32)
 
+    @field_validator("phone")
+    @classmethod
+    def _phone(cls, v: str | None) -> str | None:
+        return normalize_phone(v)
+
+
+_PHONE_OK = re.compile(r"^\+?[\d\s().-]+$")
+
+
+def normalize_phone(raw: str | None) -> str | None:
+    """Empty -> None. Otherwise international E.164-like '+<10..15 digits>'; letters rejected."""
+    if raw is None or not raw.strip():
+        return None
+    text = raw.strip()
+    if not _PHONE_OK.match(text) or text.count("+") > (1 if text.startswith("+") else 0):
+        raise ValueError("phone may contain only digits, spaces, brackets, dashes and a leading +")
+    digits = re.sub(r"\D", "", text)
+    if not text.startswith("+") and len(digits) == 11 and digits[0] in "78":
+        digits = "7" + digits[1:]  # Russian national format 8 (900) ... -> +7900...
+    if not 10 <= len(digits) <= 15:
+        raise ValueError("phone must contain 10-15 digits")
+    if not text.startswith("+") and len(digits) == 10:
+        digits = "7" + digits  # bare 10-digit national number
+    return "+" + digits
+
 
 def _own_need(session: Session, need_id: int, employer_id: int) -> EmployerNeed:
     need = session.get(EmployerNeed, need_id)
@@ -100,8 +126,8 @@ def update_preferences(
     from fsp_market.candidates.models import Candidate
 
     cand = session.get(Candidate, candidate_id)
-    if body.profile_visible and not cand.email_verified:
-        raise HTTPException(status_code=403, detail="email_not_verified")
+    # profile_visible is the candidate's intent; employers see the profile only once the email
+    # is also verified (enforced at every read path), so this never bypasses verification.
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(
             cand, field, [str(v) for v in value] if field == "work_formats" and value else value
@@ -155,6 +181,47 @@ def get_need(need_id: int, employer_id: int = EmployerDep, session: Session = Se
     return service.need_to_dict(session, _own_need(session, need_id, employer_id))
 
 
+@router.post("/employer/needs/{need_id}/close")
+def close_need(
+    need_id: int, employer_id: int = EmployerDep, session: Session = SessionDep
+) -> dict[str, Any]:
+    """OPEN -> CLOSED: excluded from new matching/invitations; runs and invitations stay intact."""
+    from fsp_market.common.ids import utcnow
+
+    need = _own_need(session, need_id, employer_id)
+    if need.status != "CLOSED":
+        need.status = "CLOSED"
+        need.closed_at = utcnow()
+        session.commit()
+    return service.need_to_dict(session, need)
+
+
+class PublicationIn(BaseModel):
+    public: bool
+
+
+@router.put("/employer/needs/{need_id}/publication")
+def set_publication(
+    need_id: int, body: PublicationIn, employer_id: int = EmployerDep, session: Session = SessionDep
+) -> dict[str, Any]:
+    """Explicit opt-in: only published needs are shown (title/company/salary) to candidates."""
+    need = _own_need(session, need_id, employer_id)
+    need.public_to_candidates = body.public
+    session.commit()
+    return service.need_to_dict(session, need)
+
+
+@router.post("/employer/needs/{need_id}/reopen")
+def reopen_need(
+    need_id: int, employer_id: int = EmployerDep, session: Session = SessionDep
+) -> dict[str, Any]:
+    need = _own_need(session, need_id, employer_id)
+    need.status = "OPEN"
+    need.closed_at = None
+    session.commit()
+    return service.need_to_dict(session, need)
+
+
 @router.post("/employer/needs/{need_id}/match", status_code=201)
 def run_match(
     need_id: int,
@@ -163,10 +230,13 @@ def run_match(
     session: Session = SessionDep,
 ) -> dict[str, Any]:
     need = _own_need(session, need_id, employer_id)
-    run = service.run_match(session, need)
+    try:
+        run = service.run_match(session, need)
+    except service.NeedError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     session.commit()
     out = service.run_results(session, run, limit=limit)
-    _annotate(session, employer_id, [r["candidate"] for r in out["results"]])
+    _annotate(session, employer_id, [r["candidate"] for r in out["results"]], need.id)
     return out
 
 
@@ -194,7 +264,7 @@ def get_match_run(
         verified_only=verified_only,
         skill=skill,
     )
-    _annotate(session, employer_id, [r["candidate"] for r in out["results"]])
+    _annotate(session, employer_id, [r["candidate"] for r in out["results"]], run.need_id)
     return out
 
 
@@ -239,7 +309,7 @@ def _export_row(r: dict[str, Any]) -> dict[str, Any]:
 @router.get("/employer/match-runs/{run_id}/export")
 def export_match_run(
     run_id: int,
-    format: Literal["csv", "json"] = "csv",  # noqa: A002 - public query parameter name
+    format: Literal["csv", "json"] = "csv",
     employer_id: int = EmployerDep,
     session: Session = SessionDep,
 ) -> Response:
@@ -304,8 +374,10 @@ def pool(
     return out
 
 
-def _annotate(session: Session, employer_id: int, cards: list[dict[str, Any]]) -> None:
-    invitation_service.annotate(session, employer_id, cards)
+def _annotate(
+    session: Session, employer_id: int, cards: list[dict[str, Any]], need_id: int | None = None
+) -> None:
+    invitation_service.annotate(session, employer_id, cards, need_id)
 
 
 @router.get("/employer/candidates/{candidate_id}")
@@ -326,7 +398,7 @@ def candidate_detail(
         rev = reverse_for(session, session.get(Candidate, candidate_id), need)
         detail["compat"] = {"reverse_fit": rev["score"], "why": rev["why"],
                             "gaps": rev["gaps"], "work_style": rev["work_style"]}
-    _annotate(session, employer_id, [detail])
+    _annotate(session, employer_id, [detail], need.id if need is not None else None)
     contacts = invitation_service.unlocked_contacts(session, employer_id, candidate_id)
     detail["contact_status"] = "UNLOCKED" if contacts else "LOCKED"
     if contacts:  # only after the candidate accepted this employer's invitation

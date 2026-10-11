@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, type Role } from "./api";
 
 interface Answer { answer: string; topic: string | null; related: string[]; matched: boolean }
@@ -12,6 +12,12 @@ export default function Assistant({ role }: { role?: Role | null }) {
   const [busy, setBusy] = useState(false);
   const [hints, setHints] = useState<string[]>([]);
   const [msgs, setMsgs] = useState<Msg[]>([{ from: "bot", text: HELLO }]);
+  const logRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {  // scroll only the message area (not the page) to the newest message
+    const el = logRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [msgs, busy, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -40,7 +46,7 @@ export default function Assistant({ role }: { role?: Role | null }) {
   return (
     <aside className="assistant" aria-label="Помощник по сайту">
       <div className="assistant-head"><strong>Помощник</strong><button className="link" aria-label="Закрыть помощника" onClick={() => setOpen(false)}>✕</button></div>
-      <div className="assistant-log" role="log" aria-live="polite">
+      <div className="assistant-log" role="log" aria-live="polite" ref={logRef}>
         {msgs.map((m, i) => (
           <div key={i} className={`bubble ${m.from}`}>
             {m.topic && <div className="muted">{m.topic}</div>}

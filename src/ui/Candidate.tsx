@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, type Session } from "./api";
 import type { Catalog, Invitation } from "./types";
 import {
-  Badge, Card, Empty, ErrorBox, FORMAT_RU, GRADE_RU, Kpi, Loading, PageHead, SALARY_TYPE_RU, SalaryBanner, skillName, STATUS_RU, subLabel, VerificationBadge,
+  Badge, Card, CompanyMark, Empty, ErrorBox, FORMAT_RU, GRADE_RU, Icon, Kpi, LevelMeter, Loading, PageHead, Ring, SALARY_TYPE_RU, SalaryBanner, skillName, STATUS_RU, subLabel, VerificationBadge, money,
 } from "./ui";
 import { CandidateFit } from "./TeamFit";
 import Shell, { type ShellCtx } from "./Shell";
@@ -13,10 +13,11 @@ interface Me {
   preferences: {
     salary_min: number | null; salary_type: string | null; work_formats: string[]; location: string | null;
     available_in_days: number | null; profile_visible: boolean; open_to_invitations: boolean;
+    published?: boolean; publish_blockers?: string[];
   };
 }
 interface Task { variant_id: number; competency: string; prompt: string; answer_type: "single" | "multi" | "number"; options: Record<string, string> | null }
-type Answer = string | string[]
+type Answer = string | number | string[]
 interface Attempt { attempt_id: number; target_grade: string; tasks: Task[]; remaining_seconds: number; saved_answers?: Record<string, Answer> }
 interface Result {
   verification_status: string; claimed_grade: string; target_grade: string; achieved_sublevel: string | null;
@@ -62,6 +63,7 @@ export default function CandidateApp({ session, shell, demoMode }: { session: Se
   const [tab, setTab] = useState<Tab>("overview");
   const [name, setName] = useState("Кандидат");
   const [invs, setInvs] = useState<Invitation[] | null>(null);
+  const [prof, setProf] = useState<Profile | null>(null);
   const reloadInvs = useCallback(() => {
     api<Invitation[]>("/api/candidates/me/invitations", { token: session.token }).then(setInvs).catch(() => setInvs([]));
   }, [session.token]);
@@ -69,6 +71,9 @@ export default function CandidateApp({ session, shell, demoMode }: { session: Se
     api<Me>("/api/candidates/me", { token: session.token }).then((m) => setName(m.full_name)).catch(() => undefined);
     reloadInvs();
   }, [session.token, reloadInvs]);
+  useEffect(() => {  // sidebar grade card follows the real profile; refreshed when the tab changes (e.g. after a test)
+    api<Profile>("/api/candidates/me/profile", { token: session.token }).then(setProf).catch(() => undefined);
+  }, [session.token, tab]);
   const fresh = (invs ?? []).filter((i) => i.status === "SENT").length;
   const items = [
     { key: "overview", label: "Обзор", icon: "home" },
@@ -79,20 +84,37 @@ export default function CandidateApp({ session, shell, demoMode }: { session: Se
     { key: "profile", label: "Настройки", icon: "gear" },
   ];
   const [title, sub] = TITLES[tab];
+  const confirmed = prof ? prof.skills.filter((s) => s.verified_level).length : 0;
+  const foot = prof && (
+    <div className="side-card" aria-label="Мой грейд">
+      Мой грейд
+      <div className="grade-big">
+        <strong>{prof.verified_sublevel ?? "—"}</strong>
+        <span className="muted">{prof.verified_grade ? GRADE_RU[prof.verified_grade] : "не подтверждён"}</span>
+      </div>
+      <div className="progress thin" aria-hidden="true"><span style={{ width: `${prof.skills.length ? Math.round((confirmed / prof.skills.length) * 100) : 0}%` }} /></div>
+      {confirmed} из {prof.skills.length} навыков подтверждено
+    </div>
+  );
   return (
-    <Shell items={items} active={tab} onSelect={(k) => setTab(k as Tab)} who={{ label: name, role: "Кандидат" }}
+    <Shell items={items} active={tab} onSelect={(k) => setTab(k as Tab)} who={{ label: name, role: "Кандидат" }} foot={foot} demoSession={session.demo}
       health={shell.health} demoMode={shell.demoMode} onLogout={shell.onLogout} onValidation={shell.onValidation}>
       {shell.banners}
+      {session.demo && (
+        <p className="demo-banner" role="note"><Icon name="eye" size={16} />Демонстрационный аккаунт: данные подготовлены заранее и отделены от реальных аккаунтов. Новый зарегистрированный кандидат начинает с пустого профиля.</p>
+      )}
       <PageHead title={title} sub={sub} />
       {tab === "overview" && <OverviewTab session={session} invs={invs} go={setTab} />}
       {tab === "profile" && <ProfileTab session={session} />}
       {tab === "test" && <AssessmentTab session={session} demoMode={demoMode ?? shell.demoMode} goEvidence={() => setTab("evidence")} />}
       {tab === "evidence" && <EvidenceTab session={session} />}
-      {tab === "fit" && <CandidateFit session={session} />}
-      {tab === "invitations" && <InvitationsTab session={session} onChange={reloadInvs} />}
+      {tab === "fit" && <CandidateFit session={session} go={(t) => setTab(t as Tab)} />}
+      {tab === "invitations" && <InvitationsTab session={session} onChange={reloadInvs} go={setTab} />}
     </Shell>
   );
 }
+
+const INV_TONE = (st: string): "bad" | "info" | "ok" => (st === "DECLINED" ? "bad" : st === "SENT" || st === "VIEWED" ? "info" : "ok");
 
 function OverviewTab({ session, invs, go }: { session: Session; invs: Invitation[] | null; go: (t: Tab) => void }) {
   const [p, setP] = useState<Profile | null>(null);
@@ -106,40 +128,64 @@ function OverviewTab({ session, invs, go }: { session: Session; invs: Invitation
   const status = p.verification_status === "VERIFIED" ? "Подтверждён" : p.verification_status === "NOT_VERIFIED" ? "Не подтверждён" : "Оценка не пройдена";
   return (
     <div className="stack">
+      {!assessed ? (
+        <div className="next-step">
+          <span className="kpi-icon"><Icon name="target" size={16} /></span>
+          <div><b>Следующий шаг: подтвердите грейд</b><span className="muted">Без оценки работодатели видят грейд как заявленный, а навыки — как неподтверждённые.</span></div>
+          <button className="primary" onClick={() => go("test")}>Пройти оценку <Icon name="arrow" size={16} /></button>
+        </div>
+      ) : fresh > 0 ? (
+        <div className="next-step">
+          <span className="kpi-icon"><Icon name="mail" size={16} /></span>
+          <div><b>Новых приглашений: {fresh}</b><span className="muted">Откройте приглашение: зарплатная вилка указана, контакты откроются только по вашему согласию.</span></div>
+          <button className="primary" onClick={() => go("invitations")}>Посмотреть</button>
+        </div>
+      ) : null}
       <div className="kpis">
-        <Kpi tone="dark" label="Подтверждённый грейд" value={p.verified_sublevel ?? "—"} sub={p.verified_grade ? `${GRADE_RU[p.verified_grade]} · ${subLabel(p.verified_sublevel)}` : "пока не подтверждён"} />
-        <Kpi label="Заявленный грейд" value={p.claimed_grade ? GRADE_RU[p.claimed_grade] : "—"} sub={status} />
-        <Kpi tone="mint" label="Подтверждённые навыки" value={`${confirmed}`} sub={`из ${p.skills.length} в профиле`} />
-        <Kpi label="Приглашения" value={`${invs?.length ?? "…"}`} sub={fresh > 0 ? `новых: ${fresh}` : "новых нет"} />
+        <Kpi tone="mint" icon="shield" label="Подтверждённый грейд" value={p.verified_sublevel ?? "—"} sub={p.verified_grade ? `${GRADE_RU[p.verified_grade]} · ${subLabel(p.verified_sublevel)}` : "пока не подтверждён"} />
+        <Kpi icon="user" label="Заявленный грейд" value={p.claimed_grade ? GRADE_RU[p.claimed_grade] : "—"} sub={status} />
+        <Kpi icon="check" label="Подтверждённые навыки" value={`${confirmed}`} progress={p.skills.length ? confirmed / p.skills.length : 0} sub={`из ${p.skills.length} в профиле`} />
+        <Kpi icon="mail" label="Приглашения" value={`${invs?.length ?? "…"}`} sub={fresh > 0 ? `новых: ${fresh}` : "новых нет"} />
       </div>
-      <div className="grid-2">
-        <Card title="Навыки и технологии" aside={<button className="small" onClick={() => go("evidence")}>Evidence Profile</button>}>
-          {p.skills.length === 0 ? <Empty>Навыков пока нет. Пройдите оценку, чтобы они появились в профиле.</Empty> : (
-            <div className="skill-grid">
+      <div className="grid-main">
+        <Card title="Навыки и технологии" aside={<button className="small" onClick={() => go("evidence")}>Evidence Profile <Icon name="arrow" size={14} /></button>}>
+          {p.skills.length === 0 ? <Empty compact icon="shield" title="Навыков пока нет">Пройдите оценку, чтобы они появились в профиле.</Empty> : (
+            <div>
               {p.skills.map((s) => (
-                <div key={s.skill} className={`skill-tile${s.verified_level ? " on" : ""}`}>
-                  <b>{skillName(s.skill, s.name)}</b>
-                  <span className="muted">{s.verified_level ? `подтверждено: ${GRADE_RU[s.verified_level]} ${subLabel(s.verified_sublevel)}` : "не подтверждено"}</span>
-                </div>))}
+                <span key={s.skill} className={`chip-skill${s.verified_level ? " on" : ""}`} title={s.verified_level ? `подтверждено: ${GRADE_RU[s.verified_level]} ${subLabel(s.verified_sublevel)}` : "не подтверждено"}>
+                  <Icon name={s.verified_level ? "tick" : "plus"} size={13} />{skillName(s.skill, s.name)}
+                  {s.verified_level && <small>{s.verified_sublevel ?? GRADE_RU[s.verified_level]}</small>}
+                </span>))}
             </div>)}
+          {p.skills.length > 0 && <p className="muted" style={{ margin: "6px 0 0", fontSize: 13 }}>Мятные — подтверждены оценкой; серые — только заявлены.</p>}
         </Card>
-        <Card title="Core Assessment" aside={<VerificationBadge status={p.verification_status} />}>
+        <Card title="Прогресс оценки" aside={<VerificationBadge status={p.verification_status} />}>
           {assessed ? (
-            <>
-              <p className="muted" style={{ marginTop: 0 }}>Последняя оценка: {GRADE_RU[p.assessment!.target_grade]} · {Math.round(p.assessment!.score * 100)}% правильных ответов</p>
-              <div className="progress" aria-hidden="true"><span style={{ width: `${Math.round(p.assessment!.score * 100)}%` }} /></div>
-            </>
-          ) : <p className="muted" style={{ marginTop: 0 }}>Оценка ещё не пройдена. Без неё работодатели видят грейд как заявленный, а не подтверждённый.</p>}
-          <button className="primary" onClick={() => go("test")}>{assessed ? "Пройти ещё раз / другой грейд" : "Пройти оценку"}</button>
+            <div className="progress-card">
+              <Ring value={p.assessment!.score} caption="верных" />
+              <div>
+                <b>{GRADE_RU[p.assessment!.target_grade]}</b>
+                <p className="muted" style={{ margin: "2px 0 10px" }}>Последняя попытка · {Math.round(p.assessment!.score * 100)}% правильных ответов</p>
+                <button onClick={() => go("test")}>Другой грейд / ещё раз</button>
+              </div>
+            </div>
+          ) : (
+            <div className="progress-card">
+              <Ring value={0} caption="не начата" />
+              <div><p className="muted" style={{ margin: "0 0 10px" }}>Оценка ещё не пройдена.</p><button className="primary" onClick={() => go("test")}>Пройти оценку</button></div>
+            </div>
+          )}
         </Card>
       </div>
       <Card title="Последние приглашения" aside={invs && invs.length > 0 ? <button className="small" onClick={() => go("invitations")}>Все приглашения</button> : undefined}>
-        {!invs ? <Loading /> : invs.length === 0 ? <Empty>Приглашений пока нет. Работодатели находят вас по подтверждённым навыкам и пишут адресно — с зарплатой.</Empty> :
-          invs.slice(0, 3).map((i) => (
-            <div className="invite-row" key={i.id}>
-              <div><b>{i.company}</b><div className="muted">{i.role} · {i.salary_from.toLocaleString("ru-RU")}–{i.salary_to.toLocaleString("ru-RU")} ₽ {i.salary_type}</div></div>
-              <Badge tone={i.status === "DECLINED" ? "bad" : i.status === "SENT" || i.status === "VIEWED" ? "info" : "ok"}>{STATUS_RU[i.status] ?? i.status}</Badge>
-            </div>))}
+        {!invs ? <Loading /> : invs.length === 0 ? (
+          <Empty compact icon="mail" title="Приглашений пока нет">Работодатели находят вас по подтверждённым навыкам и пишут адресно — с зарплатной вилкой.</Empty>
+        ) : invs.slice(0, 3).map((i) => (
+          <div className="invite-row" key={i.id}>
+            <CompanyMark name={i.company} />
+            <div><b>{i.company}</b><div className="muted">{i.role} · {money(i.salary_from)}–{money(i.salary_to)} ₽ {i.salary_type}</div></div>
+            <Badge tone={INV_TONE(i.status)}>{STATUS_RU[i.status] ?? i.status}</Badge>
+          </div>))}
       </Card>
     </div>
   );
@@ -215,9 +261,10 @@ function ExperienceCard({ session, skills }: { session: Session; skills: { code:
         <label>Начало<input type="date" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} /></label>
         <label>Окончание (пусто — работаю сейчас)<input type="date" value={f.end_date} onChange={(e) => setF({ ...f, end_date: e.target.value })} /></label>
       </div>
-      <fieldset><legend>Стек</legend>
-        {skills.map((s) => <label key={s.code} className="check"><input type="checkbox" checked={f.stack.includes(s.code)} onChange={() => toggle(s.code)} />{skillName(s.code, s.name)}</label>)}
-      </fieldset>
+      <div className="form-sec">Стек</div>
+      <div className="chip-pick">
+        {skills.map((s) => <label key={s.code} className={f.stack.includes(s.code) ? "on" : ""}><input type="checkbox" checked={f.stack.includes(s.code)} onChange={() => toggle(s.code)} /><span className="mark" />{skillName(s.code, s.name)}</label>)}
+      </div>
       <label>Задачи<textarea value={f.tasks} onChange={(e) => setF({ ...f, tasks: e.target.value })} /></label>
       <label>Проекты<textarea value={f.projects} onChange={(e) => setF({ ...f, projects: e.target.value })} /></label>
       <label>Достижения<textarea value={f.achievements} onChange={(e) => setF({ ...f, achievements: e.target.value })} /></label>
@@ -262,19 +309,42 @@ function ProfileTab({ session }: { session: Session }) {
         phone: form.phone || null, salary_min: form.salary_min ? Number(form.salary_min) : null,
         salary_type: form.salary_min ? form.salary_type : null, work_formats: form.formats.length ? form.formats : null,
         location: form.location || null, available_in_days: form.available_in_days ? Number(form.available_in_days) : null,
-        ...(me.email_verified || !form.visible ? { profile_visible: form.visible } : {}),
+        profile_visible: form.visible,
         open_to_invitations: form.open } });
       setSaved(true);
     } catch (e) { setErr((e as Error).message); }
   };
   return (
     <div className="grid-2" style={{ alignItems: "start" }}>
+      <Card title="Предпочтения для подбора">
+        <div className="row">
+          <label>Минимальная зарплата, ₽<input inputMode="numeric" value={form.salary_min} onChange={(e) => set("salary_min", e.target.value.replace(/\D/g, ""))} /></label>
+          <label>Тип<select value={form.salary_type} onChange={(e) => set("salary_type", e.target.value)}><option value="GROSS">{SALARY_TYPE_RU.GROSS}</option><option value="NET">{SALARY_TYPE_RU.NET}</option></select></label>
+        </div>
+        <div className="form-sec">Формат работы</div>
+        <div className="chip-pick">
+          {Object.entries(FORMAT_RU).map(([k, v]) => (
+            <label key={k} className={form.formats.includes(k) ? "on" : ""}><input type="checkbox" checked={form.formats.includes(k)} onChange={() => toggleFormat(k)} /><span className="mark" />{v}</label>
+          ))}
+        </div>
+        <div className="row">
+          <label>Город<input value={form.location} onChange={(e) => set("location", e.target.value)} /></label>
+          <label>Готов выйти через, дней<input inputMode="numeric" value={form.available_in_days} onChange={(e) => set("available_in_days", e.target.value.replace(/\D/g, ""))} /></label>
+        </div>
+        <label className="toggle-row"><span>Профиль виден работодателям<small>без контактов</small></span><input type="checkbox" checked={form.visible} onChange={(e) => set("visible", e.target.checked)} /></label>
+        <label className="toggle-row"><span>Готов получать приглашения<small>адресные предложения с зарплатной вилкой</small></span><input type="checkbox" checked={form.open} onChange={(e) => set("open", e.target.checked)} /></label>
+        {form.visible && !me.email_verified && <p className="muted">Профиль станет виден работодателям после подтверждения email — пока он скрыт.</p>}
+        {me.preferences?.publish_blockers?.includes("not_open_to_invitations") && <p className="muted">Включите «Готов получать приглашения», иначе вы не попадёте в подбор.</p>}
+        <button className="primary" style={{ marginTop: 10 }} onClick={save}>Сохранить</button>
+        {saved && <p className="ok" role="status">Сохранено</p>}
+        {err && <ErrorBox message={err} />}
+      </Card>
       <Card title="Кандидат" aside={<VerificationBadge status={me.verification_status} />}>
         <p className="muted">Заявленный грейд — это заявка. Подтверждённый грейд платформы определяет только основная оценка компетенций: не резюме, не достижения ФСП и не вакансия.</p>
         <label>Имя<input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} /></label>
         <label>Email (виден только вам)<input value={me.email} disabled /></label>
         {me.email_verified ? <p className="ok">Email подтверждён.</p> : <EmailBanner session={session} />}
-        <label>Телефон (скрыт до вашего согласия)<input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></label>
+        <label>Телефон (скрыт до вашего согласия)<input type="tel" inputMode="tel" placeholder="+7 900 123-45-67" maxLength={24} value={form.phone} onChange={(e) => set("phone", e.target.value.replace(/[^\d\s+().-]/g, ""))} /></label>
         <div className="row">
           <label>Специализация
             <select value={form.specialization} onChange={(e) => set("specialization", e.target.value)}>
@@ -291,30 +361,16 @@ function ProfileTab({ session }: { session: Session }) {
           ? <p className="warn">Для этой специализации тестирование ещё не реализовано: профиль сохранится, но подтвердить грейд можно только по Backend / Python.</p>
           : <p className="muted">Полная оценка реализована для Backend / Python.</p>}
       </Card>
-      <Card title="Предпочтения для подбора">
-        <div className="row">
-          <label>Минимальная зарплата, ₽<input inputMode="numeric" value={form.salary_min} onChange={(e) => set("salary_min", e.target.value.replace(/\D/g, ""))} /></label>
-          <label>Тип<select value={form.salary_type} onChange={(e) => set("salary_type", e.target.value)}><option value="GROSS">{SALARY_TYPE_RU.GROSS}</option><option value="NET">{SALARY_TYPE_RU.NET}</option></select></label>
-        </div>
-        <fieldset><legend>Формат работы</legend>
-          {Object.entries(FORMAT_RU).map(([k, v]) => (
-            <label key={k} className="check"><input type="checkbox" checked={form.formats.includes(k)} onChange={() => toggleFormat(k)} />{v}</label>
-          ))}
-        </fieldset>
-        <div className="row">
-          <label>Город<input value={form.location} onChange={(e) => set("location", e.target.value)} /></label>
-          <label>Готов выйти через, дней<input inputMode="numeric" value={form.available_in_days} onChange={(e) => set("available_in_days", e.target.value.replace(/\D/g, ""))} /></label>
-        </div>
-        <label className="check"><input type="checkbox" checked={form.visible} onChange={(e) => set("visible", e.target.checked)} />Профиль виден работодателям (без контактов)</label>
-        <label className="check"><input type="checkbox" checked={form.open} onChange={(e) => set("open", e.target.checked)} />Готов получать приглашения</label>
-        <button className="primary" onClick={save}>Сохранить</button>
-        {saved && <p className="ok" role="status">Сохранено</p>}
-        {err && <ErrorBox message={err} />}
-      </Card>
       <div style={{ gridColumn: "1 / -1" }}><ExperienceCard session={session} skills={catalog.skills} /></div>
     </div>
   );
 }
+
+const COMP_ORDER = ["python", "sql", "api_fastapi", "testing", "docker_basics", "system_thinking"];
+const PASS_PCT: Record<string, number> = { JUNIOR: 60, MIDDLE: 70, SENIOR: 75 };
+
+// 0 is a valid numeric answer: only missing/blank strings/empty lists count as unanswered
+export const answeredOf = (a: Answer | undefined | null) => (Array.isArray(a) ? a.length > 0 : typeof a === "number" ? Number.isFinite(a) : typeof a === "string" && a.trim() !== "");
 
 function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; demoMode: boolean; goEvidence: () => void }) {
   const [grade, setGrade] = useState("MIDDLE");
@@ -324,12 +380,12 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-    const start = async () => {
+  const start = async () => {
     setErr(""); setResult(null); setBusy(true);
     try {
       const a = await api<Attempt>("/api/assessments", { token: session.token, body: { target_grade: grade } });
       setAttempt(a); setLeft(a.remaining_seconds);
-      setAnswers(Object.fromEntries(Object.entries(a.saved_answers ?? {}).map(([k, v]) => [Number(k), v])));
+      setAnswers(Object.fromEntries(Object.entries(a.saved_answers ?? {}).map(([k, v]) => [Number(k), typeof v === "number" ? String(v) : v])));
     } catch (e) {
       setErr(e instanceof ApiError && e.status === 409
         ? (e.message.includes("not available yet") ? "Тестирование для выбранной специализации ещё не реализовано. Доступна оценка Backend / Python." : `Повторная попытка пока недоступна: ${e.message}`)
@@ -339,7 +395,7 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
   const fillReference = async () => {
     if (!attempt) return;
     const r = await api<{ answers: Record<string, Answer> }>(`/api/demo/assessments/${attempt.attempt_id}/reference-answers`, { token: session.token });
-    setAnswers(Object.fromEntries(Object.entries(r.answers).map(([k, v]) => [Number(k), v])));
+    setAnswers(Object.fromEntries(Object.entries(r.answers).map(([k, v]) => [Number(k), typeof v === "number" ? String(v) : v])));
   };
   const submit = async () => {
     if (!attempt) return;
@@ -361,30 +417,66 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
   if (result) return <ResultCard result={result} goEvidence={goEvidence} again={() => setResult(null)} />;
   if (!attempt) {
     return (
-      <Card title="Основная оценка компетенций (Core Assessment): Backend / Python">
-        <p>Короткая оценка (11 заданий, на выполнение отводится 15–23 минуты): Python, SQL, API/FastAPI, тестирование, Docker, системное мышление. Задания параметризованы: у каждого кандидата свои варианты с тем же уровнем сложности и теми же критериями. Оценка полностью детерминирована — без нейросетей.</p>
-        <label>Грейд, который вы подтверждаете
-          <select value={grade} onChange={(e) => setGrade(e.target.value)}>
-            {Object.entries(GRADE_RU).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </label>
-        <button className="primary" disabled={busy} onClick={start}>Начать оценку</button>
-        {err && <ErrorBox message={err} />}
-      </Card>
+      <div className="assess-start">
+        <section className="assess-hero" aria-label="Core Assessment">
+          <span className="hero-eyebrow" style={{ alignSelf: "flex-start" }}><Icon name="shield" size={14} />Core Assessment · Backend / Python</span>
+          <h2>Подтвердите грейд за 15–23 минуты</h2>
+          <p>11 заданий по шести компетенциям. Варианты заданий параметризованы: у каждого кандидата свои числа и сценарии с тем же уровнем сложности и теми же критериями. Оценка полностью детерминирована — без нейросетей.</p>
+          <div className="facts">
+            <div className="fact"><b>11</b><span>заданий</span></div>
+            <div className="fact"><b>15–23</b><span>минуты на выполнение</span></div>
+            <div className="fact"><b>6</b><span>компетенций</span></div>
+          </div>
+          <div>
+            <div className="muted" style={{ fontSize: 13, marginBottom: 6 }}>Что проверяется</div>
+            <div className="comp-list">{COMP_ORDER.map((c) => <span key={c} className="chip-skill on" style={{ margin: 0 }}><Icon name="tick" size={13} />{skillName(c)}</span>)}</div>
+          </div>
+        </section>
+        <Card title="Выберите грейд для подтверждения">
+          <div className="grade-cards" role="radiogroup" aria-label="Грейд, который вы подтверждаете">
+            {Object.entries(GRADE_RU).map(([k, v]) => (
+              <button key={k} role="radio" aria-checked={grade === k} className={`grade-card${grade === k ? " active" : ""}`} onClick={() => setGrade(k)}>
+                <b>{v}</b><span>порог {PASS_PCT[k]}%</span>
+              </button>))}
+          </div>
+          <button className="primary large" style={{ width: "100%" }} disabled={busy} onClick={start}><Icon name="bolt" size={16} />Начать оценку</button>
+          {err && <div style={{ marginTop: 12 }}><ErrorBox message={err} /></div>}
+          <ul className="muted" style={{ margin: "14px 0 0", paddingLeft: 18, fontSize: 13 }}>
+            <li>Ответы сохраняются автоматически; по истечении времени отправятся сохранённые.</li>
+            <li>Верхний подуровень (J2/M2/S2 и выше) — от 85% правильных ответов.</li>
+            <li>Повторная попытка того же грейда после неуспеха — через 7 дней.</li>
+          </ul>
+        </Card>
+      </div>
     );
   }
-  const done = attempt.tasks.every((t) => { const a = answers[t.variant_id]; return Array.isArray(a) ? a.length > 0 : !!a; });
-  const answered = attempt.tasks.filter((t) => { const a = answers[t.variant_id]; return Array.isArray(a) ? a.length > 0 : !!a; }).length;
+  const total = attempt.tasks.length;
+  const answered = attempt.tasks.filter((t) => answeredOf(answers[t.variant_id])).length;
+  const done = answered === total;
   const mm = String(Math.floor(left / 60)).padStart(2, "0"), ss = String(left % 60).padStart(2, "0");
+  const jump = (id: number) => document.getElementById(`task-${id}`)?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   return (
     <div>
-      <Card title={`Оценка ${GRADE_RU[attempt.target_grade]} · ${attempt.tasks.length} заданий`} aside={<span className={left <= 60 ? "bad" : "muted"} role="timer">Осталось {mm}:{ss}</span>}>
-        <p className="muted" style={{ margin: 0 }}>Отвечено: {answered} из {attempt.tasks.length}</p>
-        <div className="progress" aria-hidden="true"><span style={{ width: `${Math.round((answered / Math.max(1, attempt.tasks.length)) * 100)}%` }} /></div>
-        {demoMode && <button onClick={fillReference}>Демо: заполнить эталонными ответами</button>}
-      </Card>
+      <div className="test-bar">
+        <div className="test-bar-inner">
+          <div>
+            <h3>Оценка {GRADE_RU[attempt.target_grade]} · {total} заданий</h3>
+            <span className="muted">Отвечено: {answered} из {total}</span>
+          </div>
+          <span className={`timer${left <= 60 ? " low" : ""}`} role="timer"><Icon name="clock" size={18} />Осталось {mm}:{ss}</span>
+          <div className="progress" aria-hidden="true"><span style={{ width: `${Math.round((answered / Math.max(1, total)) * 100)}%` }} /></div>
+          <div className="navigator" aria-label="Навигация по заданиям">
+            {attempt.tasks.map((t, i) => (
+              <button key={t.variant_id} className={answeredOf(answers[t.variant_id]) ? "done" : ""} aria-label={`Задание ${i + 1}${answeredOf(answers[t.variant_id]) ? ", есть ответ" : ""}`} onClick={() => jump(t.variant_id)}>{i + 1}</button>
+            ))}
+            {demoMode && <button style={{ width: "auto", padding: "0 12px" }} onClick={fillReference}>Демо: эталонные ответы</button>}
+          </div>
+        </div>
+      </div>
       {attempt.tasks.map((t, i) => (
-        <Card key={t.variant_id} title={`${i + 1}. ${skillName(t.competency)}`}>
+        <section key={t.variant_id} id={`task-${t.variant_id}`} className={`card task-card${answeredOf(answers[t.variant_id]) ? " done" : ""}`} style={{ scrollMarginTop: 150 }}>
+          <div className="task-head"><span className="task-no">{i + 1}</span><h3>{skillName(t.competency)}</h3>
+            <span className="muted" style={{ marginLeft: "auto", fontSize: 13 }}>{t.answer_type === "multi" ? "несколько ответов" : t.answer_type === "number" ? "число" : "один ответ"}</span></div>
           <pre className="prompt">{t.prompt}</pre>
           {t.answer_type === "number" ? (
             <input inputMode="decimal" aria-label="Ответ" value={(answers[t.variant_id] as string) ?? ""} onChange={(e) => setAnswer(t.variant_id, e.target.value.replace(/[^0-9.,-]/g, ""))} />
@@ -399,7 +491,7 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
               <b>{k}</b> <span>{v}</span>
             </label>
           ))}
-        </Card>
+        </section>
       ))}
       <div className="sticky-submit">
         <button className="primary large" disabled={!done || busy} onClick={submit}>Отправить ответы</button>
@@ -410,24 +502,55 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
   );
 }
 
+function CompBars({ scores }: { scores: Record<string, number> }) {
+  const keys = [...COMP_ORDER.filter((k) => k in scores), ...Object.keys(scores).filter((k) => !COMP_ORDER.includes(k))];
+  return (
+    <div className="comp-bars">
+      {keys.map((k) => (
+        <div className="comp-bar" key={k}>
+          <span>{skillName(k)}</span>
+          <div className="progress" aria-hidden="true"><span style={{ width: `${Math.round(scores[k] * 100)}%` }} /></div>
+          <b>{Math.round(scores[k] * 100)}%</b>
+        </div>))}
+    </div>
+  );
+}
+
 function ResultCard({ result, goEvidence, again }: { result: Result; goEvidence: () => void; again: () => void }) {
   const ok = result.verification_status === "VERIFIED";
   return (
     <Card title="Результат основной оценки компетенций" aside={<VerificationBadge status={result.verification_status} />}>
-      <p className="big">Backend / {GRADE_RU[result.target_grade]}{ok && result.achieved_sublevel ? ` (${result.achieved_sublevel})` : ""}</p>
-      {ok ? (
-        <p className="ok">Уровень подтверждён тестом. Он появился в вашем профиле подтверждённых компетенций.</p>
-      ) : (
-        <p>
-          Грейд <b>{GRADE_RU[result.claimed_grade]}</b> пока не подтверждён. Заявленный грейд {GRADE_RU[result.claimed_grade]} сохраняется (не подтверждён) — платформа не понижает вас автоматически до Junior.
-          Можно пройти повторную попытку после паузы или оценку другого грейда.
-        </p>
-      )}
-      <table className="table"><thead><tr><th>Компетенция</th><th>Результат</th></tr></thead>
-        <tbody>{Object.entries(result.competency_scores).map(([k, v]) => <tr key={k}><td data-label="Компетенция">{skillName(k)}</td><td data-label="Результат">{Math.round(v * 100)}%</td></tr>)}</tbody></table>
-      <div className="row"><button className="primary" onClick={goEvidence}>Открыть профиль подтверждённых компетенций</button><button onClick={again}>Закрыть</button></div>
+      <div className="result-hero">
+        <Ring size={110} value={result.score} caption="верных" />
+        <div>
+          <p className="big" style={{ marginTop: 0 }}>Backend / {GRADE_RU[result.target_grade]}{ok && result.achieved_sublevel ? ` (${result.achieved_sublevel})` : ""}</p>
+          {ok ? (
+            <p className="ok">Уровень подтверждён тестом. Он появился в вашем профиле подтверждённых компетенций.</p>
+          ) : (
+            <p style={{ margin: 0 }}>
+              Грейд <b>{GRADE_RU[result.claimed_grade]}</b> пока не подтверждён. Заявленный грейд {GRADE_RU[result.claimed_grade]} сохраняется (не подтверждён) — платформа не понижает вас автоматически до Junior.
+              Можно пройти повторную попытку после паузы или оценку другого грейда.
+            </p>
+          )}
+        </div>
+      </div>
+      <h4>Результат по компетенциям</h4>
+      <CompBars scores={result.competency_scores} />
+      <div className="row" style={{ marginTop: 16 }}><button className="primary" onClick={goEvidence}>Открыть профиль подтверждённых компетенций</button><button onClick={again}>Закрыть</button></div>
     </Card>
   );
+}
+
+function EvidenceIcon({ e }: { e: Profile["skills"][number]["evidence"][number] }) {
+  if (e.type === "FSP_ACHIEVEMENT") return <span className="ico info"><Icon name="trophy" size={13} /></span>;
+  if (e.type === "PROFESSIONAL_EXPERIENCE") return <span className="ico no"><Icon name="doc" size={13} /></span>;
+  if (e.type === "RECENT_CHALLENGE") return <span className="ico"><Icon name="bolt" size={13} /></span>;
+  return <span className={`ico${e.confirmed ? "" : " no"}`}><Icon name={e.confirmed ? "tick" : "warn"} size={13} /></span>;
+}
+function evidenceTitle(e: Profile["skills"][number]["evidence"][number]): string {
+  if (e.type === "FSP_ACHIEVEMENT") return "Демо-данные ФСП";
+  if (e.type === "CORE_ASSESSMENT" || e.type === "TECHNOLOGY_ASSESSMENT") return e.confirmed ? "Подтверждено тестом" : "Не подтверждено тестом";
+  return e.confirmed ? "Подтверждено" : "Не подтверждено";
 }
 
 function EvidenceTab({ session }: { session: Session }) {
@@ -449,48 +572,124 @@ function EvidenceTab({ session }: { session: Session }) {
   };
   if (err) return <ErrorBox message={err} />;
   if (!p) return <Loading what="Собираем профиль подтверждённых компетенций" />;
+  const confirmed = p.skills.filter((s) => s.verified_level).length;
+  const claimedOnly = p.skills.length - confirmed;
+  const evidenceCount = p.skills.reduce((n, s) => n + s.evidence.length, 0);
+  const vIdx = p.verified_sublevel ? LADDER.indexOf(p.verified_sublevel) : -1;
   return (
-    <div>
+    <div className="stack">
       <Card title="Профиль подтверждённых компетенций" aside={<VerificationBadge status={p.verification_status} />}>
-        <p className="big">Backend / {p.claimed_grade ? GRADE_RU[p.claimed_grade] : "—"} (заявлено)
-          {p.verified_grade && <> · <Badge tone="ok">подтверждено: {GRADE_RU[p.verified_grade]} {subLabel(p.verified_sublevel)}</Badge></>}</p>
-        {p.verification_status === "NOT_VERIFIED" && <p>Заявленный грейд не подтверждён. Он сохранён — платформа не заменяет его более низким.</p>}
-        {p.verification_status === "UNVERIFIED" && <p className="muted">Пройдите основную оценку компетенций, чтобы подтвердить грейд.</p>}
-        <div className="chips" aria-label="Шкала грейдов J1–S3">
-          {LADDER.map((l) => <Badge key={l} tone={l === p.verified_sublevel ? "brand" : "muted"}>{l}</Badge>)}
+        <div className="summary-split">
+          <Ring size={104} value={p.skills.length ? confirmed / p.skills.length : 0} label={`${confirmed}/${p.skills.length}`} caption="навыков" />
+          <div>
+            <p className="big" style={{ margin: 0 }}>Backend / {p.claimed_grade ? GRADE_RU[p.claimed_grade] : "—"} <span className="muted" style={{ fontWeight: 500, fontSize: 15 }}>(заявлено)</span></p>
+            <div style={{ marginTop: 6 }}>
+              {p.verified_grade
+                ? <Badge tone="ok">подтверждено: {GRADE_RU[p.verified_grade]} {subLabel(p.verified_sublevel)}</Badge>
+                : <Badge tone="muted">грейд не подтверждён</Badge>}
+            </div>
+            {p.verification_status === "NOT_VERIFIED" && <p style={{ margin: "6px 0 0" }}>Заявленный грейд не подтверждён. Он сохранён — платформа не заменяет его более низким.</p>}
+            {p.verification_status === "UNVERIFIED" && <p className="muted" style={{ margin: "6px 0 0" }}>Пройдите основную оценку компетенций, чтобы подтвердить грейд.</p>}
+            <div className="stat-row">
+              <span className="stat-pill ok"><b>{confirmed}</b>подтверждено</span>
+              <span className="stat-pill"><b>{claimedOnly}</b>только заявлено</span>
+              <span className="stat-pill"><b>{evidenceCount}</b>подтверждений</span>
+            </div>
+          </div>
         </div>
-        <p className="muted">Здесь нет единого «рейтинга кандидата»: только заявки и то, чем они подтверждены.</p>
+        <div className="ladder" role="img" aria-label={`Шкала грейдов J1–S3${p.verified_sublevel ? `, подтверждён ${p.verified_sublevel}` : ""}`}>
+          {LADDER.map((l, i) => (
+            <div key={l} className={`rung${i <= vIdx ? " reached" : ""}${i === vIdx ? " current" : ""}`}><i /><span>{l}</span></div>
+          ))}
+        </div>
+        <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>Здесь нет единого «рейтинга кандидата»: только заявки и то, чем они подтверждены.</p>
       </Card>
-      {p.skills.length === 0 ? <Empty>Подтверждённых навыков пока нет. Заявки без подтверждения ничего не меняют.</Empty> : (
-        <Card title="Навыки: заявка → подтверждение">
-          <table className="table"><thead><tr><th>Навык</th><th>Заявка</th><th>Подтверждение</th><th>Подтверждённый грейд платформы</th></tr></thead>
-            <tbody>{p.skills.map((s) => (
-              <tr key={s.skill}>
-                <td data-label="Навык"><b>{skillName(s.skill, s.name)}</b></td>
-                <td data-label="Заявка">{s.claimed_level ? GRADE_RU[s.claimed_level] : "—"}<br /><span className="muted">{SOURCE_RU[s.claim_source] ?? s.claim_source}</span></td>
-                <td data-label="Подтверждение">{s.evidence.length === 0 ? <span className="muted">нет подтверждений</span> : s.evidence.map((e, i) => (
-                  <div key={i}><Badge tone={e.type === "FSP_ACHIEVEMENT" ? "info" : e.confirmed ? "ok" : "muted"}>{e.type === "FSP_ACHIEVEMENT" ? "Демо-данные ФСП" : e.type === "CORE_ASSESSMENT" || e.type === "TECHNOLOGY_ASSESSMENT" ? (e.confirmed ? "Подтверждено тестом" : "Не подтверждено тестом") : e.confirmed ? "Подтверждено" : "Не подтверждено"}</Badge> {EVIDENCE_RU[e.type] ?? e.type}{e.title ? ` · ${e.title}` : ""}</div>
-                ))}</td>
-                <td data-label="Подтверждённый грейд платформы">{s.verified_level ? <Badge tone="ok">{GRADE_RU[s.verified_level]} {subLabel(s.verified_sublevel)}</Badge> : <Badge tone="muted">не подтверждён</Badge>}</td>
-              </tr>))}</tbody></table>
-        </Card>
-      )}
+
       {p.assessment && (
-        <Card title="Результат основной оценки">
-          <p>{GRADE_RU[p.assessment.target_grade]}: <VerificationBadge status={p.assessment.verification_status} /> · {Math.round(p.assessment.score * 100)}% правильных ответов</p>
+        <Card title="Результат основной оценки" aside={<VerificationBadge status={p.assessment.verification_status} />}>
+          <p style={{ margin: 0 }}>{GRADE_RU[p.assessment.target_grade]} · {Math.round(p.assessment.score * 100)}% правильных ответов</p>
+          <CompBars scores={p.assessment.competency_scores} />
         </Card>
       )}
+
+      {p.skills.length === 0 ? (
+        <Empty icon="shield" title="Подтверждённых навыков пока нет">Заявки без подтверждения ничего не меняют. Пройдите оценку — навыки появятся здесь с уровнем и источником.</Empty>
+      ) : (
+        <div>
+          <h3 style={{ margin: "0 0 10px", fontSize: 15.5 }}>Навыки: заявка → подтверждение</h3>
+          <div className="skill-cards">
+            {p.skills.map((s) => (
+              <article key={s.skill} className={`skill-card${s.verified_level ? " on" : ""}`}>
+                <div className="skill-card-head">
+                  <div><b>{skillName(s.skill, s.name)}</b>
+                    <small>{s.claimed_level ? `заявлено: ${GRADE_RU[s.claimed_level]}` : "заявка не указывалась"} · {SOURCE_RU[s.claim_source] ?? s.claim_source}</small></div>
+                  {s.verified_level ? <span className="lvl-tag">{GRADE_RU[s.verified_level]} {subLabel(s.verified_sublevel)}</span> : <span className="lvl-tag none">не подтверждён</span>}
+                </div>
+                <LevelMeter claimed={s.claimed_level} verified={s.verified_level} sublevel={s.verified_sublevel} />
+                <div className="evid">
+                  {s.evidence.length === 0 ? <span className="muted">нет подтверждений</span> : s.evidence.slice(0, 2).map((e, i) => (
+                    <div key={i} className="evid-item">
+                      <EvidenceIcon e={e} />
+                      <div><b>{evidenceTitle(e)}</b><small>{EVIDENCE_RU[e.type] ?? e.type}{e.title ? ` · ${e.title}` : ""}</small></div>
+                    </div>))}
+                  {s.evidence.length > 2 && (
+                    <details><summary>История подтверждений ({s.evidence.length - 2})</summary>
+                      {s.evidence.slice(2).map((e, i) => (
+                        <div key={i} className="evid-item">
+                          <EvidenceIcon e={e} />
+                          <div><b>{evidenceTitle(e)}</b><small>{EVIDENCE_RU[e.type] ?? e.type}{e.title ? ` · ${e.title}` : ""}</small></div>
+                        </div>))}
+                    </details>)}
+                </div>
+              </article>))}
+          </div>
+          <p className="muted" style={{ margin: "8px 0 0", fontSize: 13 }}>Шкала: заполненная часть — подтверждённый платформой уровень; жёлтая рамка — заявленный.</p>
+        </div>
+      )}
+
       <Card title="Достижения ФСП (демо-данные)">
         {p.fsp.has_history ? <p className="ok">Найдено подтверждений: {p.fsp.evidence_items}. Они привязаны к релевантным навыкам и не меняют ваш уровень.</p>
           : <Empty>Истории ФСП нет — это нормально. Отсутствие достижений не ухудшает ваш уровень и профиль.</Empty>}
-        <div className="row"><input placeholder="ФСП ID, например FSP-1001" value={fsp} onChange={(e) => setFsp(e.target.value)} /><button onClick={link} disabled={!fsp}>Подключить ФСП ID (демо)</button></div>
+        <div className="fsp-link" style={{ marginTop: 10 }}>
+          <input placeholder="ФСП ID, например FSP-1001" aria-label="ФСП ID" value={fsp} onChange={(e) => setFsp(e.target.value)} />
+          <button onClick={link} disabled={!fsp}>Подключить ФСП ID (демо)</button>
+        </div>
         {fspMsg && <p role="status">{fspMsg}</p>}
       </Card>
     </div>
   );
 }
 
-function InvitationsTab({ session, onChange }: { session: Session; onChange: () => void }) {
+function InviteHelp({ session, go }: { session: Session; go: (t: Tab) => void }) {
+  const [state, setState] = useState<{ assessed: boolean; visible: boolean; open: boolean } | null>(null);
+  useEffect(() => {
+    Promise.all([api<Profile>("/api/candidates/me/profile", { token: session.token }), api<Me>("/api/candidates/me", { token: session.token })])
+      .then(([p, m]) => setState({ assessed: p.assessment !== null, visible: m.preferences.profile_visible && m.email_verified, open: m.preferences.open_to_invitations }))
+      .catch(() => undefined);
+  }, [session.token]);
+  const steps: { done: boolean; text: string; to: Tab; cta: string }[] = state ? [
+    { done: state.assessed, text: "Пройти оценку компетенций", to: "test", cta: "Пройти" },
+    { done: state.visible, text: "Профиль виден работодателям (нужен подтверждённый email)", to: "profile", cta: "Настройки" },
+    { done: state.open, text: "Готов получать приглашения", to: "profile", cta: "Настройки" },
+  ] : [];
+  return (
+    <Empty icon="mail" title="Приглашений пока нет"
+      action={steps.length > 0 ? (
+        <ul className="help-steps">
+          {steps.map((st) => (
+            <li key={st.text} className={st.done ? "done" : ""}>
+              <span className="ico">{st.done && <Icon name="tick" size={13} />}</span>{st.text}
+              {!st.done && <button className="small" onClick={() => go(st.to)}>{st.cta}</button>}
+            </li>))}
+        </ul>) : undefined}>
+      Работодатели находят вас по подтверждённым навыкам и пишут адресно — с зарплатной вилкой. Контакты открываются только после вашего согласия.
+    </Empty>
+  );
+}
+
+const FLOW: [string, string][] = [["SENT", "Отправлено"], ["VIEWED", "Просмотрено"], ["ACCEPTED", "Принято"], ["CONTACTS_UNLOCKED", "Контакты открыты"]];
+
+function InvitationsTab({ session, onChange, go }: { session: Session; onChange: () => void; go: (t: Tab) => void }) {
   const [list, setList] = useState<Invitation[] | null>(null);
   const [open, setOpen] = useState<Invitation | null>(null);
   const [err, setErr] = useState("");
@@ -505,31 +704,40 @@ function InvitationsTab({ session, onChange }: { session: Session; onChange: () 
   };
   if (err) return <ErrorBox message={err} />;
   if (!list) return <Loading what="Загружаем приглашения" />;
+  if (list.length === 0) return <InviteHelp session={session} go={go} />;
+  const reached = open ? FLOW.findIndex(([k]) => k === open.status) : -1;
   return (
-    <div className="grid">
-      <div className="stack">
-        {list.length === 0 ? <Empty>Приглашений пока нет. Работодатели находят вас по подтверждённым навыкам и пишут адресно — с зарплатой.</Empty> :
-          list.map((i) => (
-            <Card key={i.id} title={`${i.company} — ${i.role}`} aside={<Badge tone={i.status === "DECLINED" ? "bad" : i.status.startsWith("ACC") || i.status === "CONTACTS_UNLOCKED" ? "ok" : "info"}>{STATUS_RU[i.status]}</Badge>}>
-              <SalaryBanner from={i.salary_from} to={i.salary_to} type={i.salary_type} />
-              <button onClick={() => view(i.id)}>Открыть</button>
-            </Card>))}
+    <div className="inv-layout">
+      <div>
+        {list.map((i) => (
+          <button key={i.id} className={`inv-item${open?.id === i.id ? " active" : ""}${i.status === "SENT" ? " fresh" : ""}`} onClick={() => view(i.id)}>
+            <CompanyMark name={i.company} />
+            <span><b>{i.company}</b><span className="muted" style={{ fontWeight: 400 }}>{i.role}</span></span>
+            <span className="meta"><span>{money(i.salary_from)}–{money(i.salary_to)} ₽ {i.salary_type}</span><Badge tone={INV_TONE(i.status)}>{STATUS_RU[i.status]}</Badge></span>
+          </button>))}
       </div>
-      {open && (
-        <Card title={`${open.company} — ${open.role}`} aside={<Badge tone="info">{STATUS_RU[open.status]}</Badge>}>
+      {open ? (
+        <Card title={`${open.company} — ${open.role}`} aside={<Badge tone={INV_TONE(open.status)}>{STATUS_RU[open.status]}</Badge>}>
+          <div className="timeline" aria-label="Статус приглашения">
+            {open.status === "DECLINED"
+              ? <><span className="on">Отправлено</span><span className="bad">Отклонено</span></>
+              : FLOW.map(([k, l], i) => <span key={k} className={i <= reached ? "on" : ""}>{l}</span>)}
+          </div>
           <SalaryBanner from={open.salary_from} to={open.salary_to} type={open.salary_type} />
           <p><b>Формат:</b> {FORMAT_RU[open.work_format] ?? open.work_format}</p>
-          <p>{open.description}</p>
+          <p style={{ whiteSpace: "pre-wrap" }}>{open.description}</p>
           <blockquote>{open.message}</blockquote>
           {(open.status === "SENT" || open.status === "VIEWED") ? (
             <div className="row">
-              <button className="primary" onClick={() => respond(open.id, "accept")}>Принять и открыть контакты</button>
+              <button className="primary" onClick={() => respond(open.id, "accept")}><Icon name="unlock" size={16} />Принять и открыть контакты</button>
               <button onClick={() => respond(open.id, "decline")}>Отклонить</button>
             </div>
           ) : open.status === "DECLINED" ? <p className="muted">Вы отклонили приглашение. Ваши контакты остались скрыты.</p>
             : <p className="ok">Вы приняли приглашение — работодатель теперь видит ваши контакты.</p>}
-          <p className="muted">Открытие контактов происходит только если вы нажмёте «Принять и открыть контакты».</p>
+          <p className="muted" style={{ fontSize: 13 }}>Открытие контактов происходит только если вы нажмёте «Принять и открыть контакты».</p>
         </Card>
+      ) : (
+        <Empty icon="eye" title="Выберите приглашение">Откройте приглашение слева: увидите зарплатную вилку, условия и сообщение работодателя. Контакты остаются скрытыми, пока вы не согласитесь.</Empty>
       )}
     </div>
   );

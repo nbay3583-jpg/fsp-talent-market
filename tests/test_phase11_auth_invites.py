@@ -130,7 +130,7 @@ def test_invitation_from_need_accept_unlocks_contacts_for_sender_only(env):  # n
     assert ok.status_code == 200
     after = client.get(f"/api/employer/invitations/{inv['id']}", headers=eh).json()
     assert after["contacts"]["email"] and after["status"] == "CONTACTS_UNLOCKED"
-    detail = client.get(f"/api/employer/candidates/{cid}", headers=eh).json()
+    detail = client.get(f"/api/employer/candidates/{cid}?need_id={need['id']}", headers=eh).json()
     assert detail["contact_status"] == "UNLOCKED" and detail["invitation_status"] == "CONTACTS_UNLOCKED"
     foreign = client.get(f"/api/employer/candidates/{cid}", headers=other).json()
     assert foreign["contact_status"] == "LOCKED" and "contacts" not in foreign

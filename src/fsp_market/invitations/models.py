@@ -15,11 +15,13 @@ class Invitation(Base):
 
     __tablename__ = "invitations"
     __table_args__ = (
-        # backend-level duplicate guard: one live invitation per employer+candidate pair
+        # backend-level duplicate guard: one live invitation per employer+candidate+need scenario
+        # (need_id NULL = standalone invitation, its own scenario)
         Index(
-            "uq_invitations_one_open_per_pair",
+            "uq_invitations_one_open_per_scope",
             "employer_id",
             "candidate_id",
+            text("coalesce(need_id, 0)"),
             unique=True,
             postgresql_where=text("status IN ('SENT','VIEWED','ACCEPTED','CONTACTS_UNLOCKED')"),
             sqlite_where=text("status IN ('SENT','VIEWED','ACCEPTED','CONTACTS_UNLOCKED')"),

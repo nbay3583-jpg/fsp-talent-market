@@ -76,8 +76,18 @@ export function Loading({ what = "Загрузка" }: { what?: string }) {
 export function ErrorBox({ message }: { message: string }) {
   return <p className="error" role="alert">⚠ {message}</p>;
 }
-export function Empty({ children }: { children: ReactNode }) {
-  return <p className="empty">{children}</p>;
+export function Empty({ children, icon, title, action, compact }: { children: ReactNode; icon?: string; title?: string; action?: ReactNode; compact?: boolean }) {
+  if (!icon && !title && !action) return <p className="empty">{children}</p>;
+  return (
+    <div className={`empty empty-rich${compact ? " compact" : ""}`}>
+      {icon && <span className="empty-icon"><Icon name={icon} size={compact ? 18 : 22} /></span>}
+      <div className="empty-text">
+        {title && <b>{title}</b>}
+        <p>{children}</p>
+        {action && <div className="empty-action">{action}</div>}
+      </div>
+    </div>
+  );
 }
 
 export function FitBlock({ label, fit, why, gaps }: { label: string; fit: number; why: Reason[]; gaps: Reason[] }) {
@@ -165,6 +175,20 @@ const ICONS: Record<string, string> = {
   filter: "M3 5h18l-7 8v6l-4-2v-4z",
   download: "M12 4v11M7 11l5 5 5-5M5 20h14",
   book: "M5 4h10a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h10",
+  clock: "M12 22a10 10 0 110-20 10 10 0 010 20zM12 6v6l4 2",
+  lock: "M6 11h12v9H6zM8 11V8a4 4 0 018 0v3",
+  unlock: "M6 11h12v9H6zM8 11V8a4 4 0 017.5-2",
+  target: "M12 22a10 10 0 110-20 10 10 0 010 20zM12 17a5 5 0 110-10 5 5 0 010 10zM12 13a1 1 0 110-2 1 1 0 010 2z",
+  bolt: "M13 2L4 14h7l-1 8 9-12h-7z",
+  trophy: "M7 4h10v5a5 5 0 01-10 0zM7 6H4v2a3 3 0 003 3M17 6h3v2a3 3 0 01-3 3M12 14v4M8 21h8",
+  building: "M4 21V5l8-2v18M12 9h8v12M7 9h2M7 13h2M7 17h2M15 13h2M15 17h2",
+  arrow: "M5 12h14M13 6l6 6-6 6",
+  tick: "M5 12.5l4.5 4.5L19 7.5",
+  bookmark: "M6 4h12v17l-6-4-6 4z",
+  doc: "M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6",
+  users: "M9 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5M17 4.5a3.5 3.5 0 010 6.5M18.5 14.7c2 .6 3 2.3 3 5.3",
+  warn: "M12 3l10 18H2zM12 10v5M12 18h.01",
+  eye: "M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6z",
 };
 export function Icon({ name, size = 18 }: { name: keyof typeof ICONS | string; size?: number }) {
   return (
@@ -174,14 +198,53 @@ export function Icon({ name, size = 18 }: { name: keyof typeof ICONS | string; s
   );
 }
 
-export function Kpi({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: ReactNode; tone?: "mint" | "dark" }) {
+export function Kpi({ label, value, sub, tone, icon, progress }: { label: string; value: ReactNode; sub?: ReactNode; tone?: "mint" | "dark"; icon?: string; progress?: number }) {
   return (
-    <div className={`kpi${tone ? ` ${tone}` : ""}`}>
-      <div className="kpi-label">{label}</div>
+    <div className={`kpi${tone ? ` ${tone === "dark" ? "mint" : tone}` : ""}`}>
+      <div className="kpi-top">
+        <div className="kpi-label">{label}</div>
+        {icon && <span className="kpi-icon"><Icon name={icon} size={16} /></span>}
+      </div>
       <div className="kpi-value">{value}</div>
+      {progress !== undefined && <div className="progress thin" aria-hidden="true"><span style={{ width: `${Math.round(Math.min(1, Math.max(0, progress)) * 100)}%` }} /></div>}
       {sub && <div className="kpi-sub">{sub}</div>}
     </div>
   );
+}
+
+/** Circular progress (0..1) with a centred label; purely presentational. */
+export function Ring({ value, size = 84, label, caption }: { value: number; size?: number; label?: ReactNode; caption?: ReactNode }) {
+  const r = (size - 12) / 2, c = 2 * Math.PI * r, v = Math.min(1, Math.max(0, value));
+  return (
+    <span className="ring" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+        <circle cx={size / 2} cy={size / 2} r={r} className="ring-track" />
+        <circle cx={size / 2} cy={size / 2} r={r} className="ring-fill" strokeDasharray={`${c * v} ${c}`} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+      </svg>
+      <span className="ring-label"><b>{label ?? `${Math.round(v * 100)}%`}</b>{caption && <small>{caption}</small>}</span>
+    </span>
+  );
+}
+
+/** Three-step level meter (Junior / Middle / Senior): verified fills the bar, claimed is marked. */
+export function LevelMeter({ claimed, verified, sublevel }: { claimed: string | null; verified: string | null; sublevel?: string | null }) {
+  const order = ["JUNIOR", "MIDDLE", "SENIOR"];
+  const vi = verified ? order.indexOf(verified) : -1, ci = claimed ? order.indexOf(claimed) : -1;
+  return (
+    <div className="level-meter" role="img" aria-label={verified ? `Подтверждено: ${GRADE_RU[verified]}${sublevel ? ` ${sublevel}` : ""}` : "Не подтверждено"}>
+      <div className="level-steps">
+        {order.map((g, i) => (
+          <span key={g} className={`level-step${i <= vi ? " on" : ""}${i === ci ? " claimed" : ""}`}>
+            <i />{GRADE_RU[g]}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function CompanyMark({ name }: { name: string }) {
+  return <span className="company-mark" aria-hidden="true">{(name.trim()[0] ?? "?").toUpperCase()}</span>;
 }
 
 export function Avatar({ name }: { name: string }) {

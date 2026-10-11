@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections import Counter
 from datetime import UTC, datetime
 from typing import Any
@@ -126,11 +127,22 @@ def need_to_dict(session: Session, need: EmployerNeed) -> dict[str, Any]:
         "location": need.location,
         "max_start_days": need.max_start_days,
         "description": need.description,
+        "status": need.status or "OPEN",
+        "public_to_candidates": bool(need.public_to_candidates),
+        "closed_at": need.closed_at.isoformat() if need.closed_at else None,
     }
 
 
 def _all_candidates(session: Session) -> list[Candidate]:
     return list(session.scalars(select(Candidate).order_by(Candidate.id)))
+
+
+def _fingerprint(spec, candidates: list[Candidate], facts: dict) -> str:
+    """Hash of everything that influences a run: equal fingerprints must give equal results."""
+    parts = [repr(spec)] + [
+        repr((c.id, sorted(facts[c.id].skills.items()), facts[c.id])) for c in candidates
+    ]
+    return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:16]
 
 
 def run_match(
@@ -141,7 +153,12 @@ def run_match(
     policy: MatchingPolicy = DEFAULT_POLICY,
 ) -> MatchRun:
     """Hard constraints first, then Requirement Fit; persists the top `match_pool_size`."""
+    if (need.status or "OPEN") != "OPEN":
+        raise NeedError("need is closed")
+    # Evaluate at the start of the UTC day: freshness/recency are day-granular, so two runs on the
+    # same data on the same day are identical (state changes are visible via `input_fingerprint`).
     now = now or datetime.now(UTC)
+    now = now.replace(hour=0, minute=0, second=0, microsecond=0)
     spec = load_need_spec(session, need)
     candidates = _all_candidates(session)
     facts = load_candidate_facts(session, candidates)
@@ -158,7 +175,11 @@ def run_match(
     scored.sort(key=lambda t: t[:3])  # fit desc, verified first, candidate id: stable
     run = MatchRun(
         need_id=need.id,
-        policy={**policy.snapshot(), "evaluated_at": now.isoformat()},
+        policy={
+            **policy.snapshot(),
+            "evaluated_at": now.isoformat(),
+            "input_fingerprint": _fingerprint(spec, candidates, facts),
+        },
         candidates_considered=len(candidates),
         excluded_summary=dict(sorted(excluded.items())),
     )
@@ -304,7 +325,11 @@ def full_pool(
     offset: int = 0,
 ) -> dict[str, Any]:
     """Whole visible candidate bank with filters. Visibility is enforced here, not by callers."""
-    q = select(Candidate).where(Candidate.profile_visible.is_(True)).order_by(Candidate.id)
+    q = (
+        select(Candidate)
+        .where(Candidate.profile_visible.is_(True), Candidate.email_verified.is_(True))
+        .order_by(Candidate.id)
+    )
     if specialization:
         q = q.join(Specialization, Specialization.id == Candidate.specialization_id).where(
             Specialization.code == specialization
@@ -349,7 +374,7 @@ def candidate_detail(
     session: Session, candidate_id: int, need: EmployerNeed | None, now: datetime | None = None
 ) -> dict[str, Any] | None:
     c = session.get(Candidate, candidate_id)
-    if c is None or not c.profile_visible:
+    if c is None or not (c.profile_visible and c.email_verified):
         return None
     f = load_candidate_facts(session, [c])[c.id]
     detail = public_candidate(c, f)
@@ -361,7 +386,8 @@ def candidate_detail(
         if exclusions:
             detail["fit"] = {"eligible": False, "exclusions": exclusions}
         else:
-            fit = requirement_fit(spec, f, now or datetime.now(UTC), policy)
+            day = (now or datetime.now(UTC)).replace(hour=0, minute=0, second=0, microsecond=0)
+            fit = requirement_fit(spec, f, day, policy)
             detail["fit"] = {
                 "eligible": True,
                 "requirement_fit": fit.fit,

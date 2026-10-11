@@ -151,6 +151,7 @@ def register(body: RegisterIn, session: Session = SessionDep) -> dict[str, Any]:
         full_name=body.full_name,
         specialization_id=spec.id,
         claimed_grade=body.claimed_grade,
+        profile_visible=True,  # intent; effective only after the email is verified
         password_hash=hash_password(body.password) if body.password else None,
     )
     session.add(candidate)
@@ -340,6 +341,15 @@ def _candidate_me(session: Session, cand: Candidate) -> dict[str, Any]:
             "location": cand.location,
             "available_in_days": cand.available_in_days,
             "profile_visible": cand.profile_visible,
+            "published": bool(cand.profile_visible and cand.email_verified),
+            "publish_blockers": [
+                b for b, bad in (
+                    ("email_not_verified", not cand.email_verified),
+                    ("profile_hidden", not cand.profile_visible),
+                    ("not_open_to_invitations", not cand.open_to_invitations),
+                    ("no_specialization", cand.specialization_id is None),
+                ) if bad
+            ],
             "open_to_invitations": cand.open_to_invitations,
         },
     }

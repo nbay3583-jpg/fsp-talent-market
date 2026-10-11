@@ -80,6 +80,8 @@ export interface Catalog {
 }
 export interface Need {
   id: number;
+  status?: "OPEN" | "CLOSED";
+  public_to_candidates?: boolean;
   title: string;
   target_grade: string;
   target_sublevel: string | null;

@@ -101,7 +101,12 @@ def test_candidate_recommendations_explain_both_sides(env):
     assert r.status_code == 200
     assert client.put("/api/candidates/me/work-style", headers=ch, json={"answers": ANS}).status_code == 200
     eh = _emp(client)
-    client.post("/api/employer/needs", headers=eh, json=NEED)
+    n = client.post("/api/employer/needs", headers=eh, json=NEED).json()
+    # unpublished (internal) needs are never shown to candidates
+    hidden = client.get("/api/candidates/me/recommendations", headers=ch).json()
+    assert hidden["items"] == [] and hidden["general_feedback"]["unpublished_matching_needs"] >= 1
+    assert "company" not in str(hidden["general_feedback"]) and NEED["title"] not in str(hidden)
+    assert client.put(f"/api/employer/needs/{n['id']}/publication", headers=eh, json={"public": True}).status_code == 200
     rec = client.get("/api/candidates/me/recommendations", headers=ch).json()
     assert rec["total"] >= 1
     top = rec["items"][0]

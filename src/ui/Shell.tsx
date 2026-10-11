@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Icon, Logo } from "./ui";
+import { Avatar, Icon, Logo } from "./ui";
 
 export interface NavItem { key: string; label: string; icon: string; count?: number }
 /** What App passes to a cabinet so it can render the shared frame. */
@@ -9,6 +9,10 @@ export interface ShellProps {
   active: string;
   onSelect: (key: string) => void;
   who: { role: string; label: string };
+  /** Optional compact status card above the user card (e.g. the verified grade). */
+  foot?: ReactNode;
+  /** Session opened from the prepared demo accounts. */
+  demoSession?: boolean;
   health: "checking" | "ok" | "unavailable";
   demoMode: boolean;
   onLogout: () => void;
@@ -18,7 +22,7 @@ export interface ShellProps {
 
 const HEALTH_RU = { checking: "Проверка системы…", ok: "Система работает", unavailable: "Система недоступна" };
 
-/** Dark-graphite cabinet frame: sidebar on desktop, drawer + top bar on mobile. */
+/** Light cabinet frame: compact sidebar on desktop, drawer + top bar on mobile. */
 export default function Shell(p: ShellProps) {
   const [open, setOpen] = useState(false);
   const pick = (k: string) => { p.onSelect(k); setOpen(false); };
@@ -40,7 +44,8 @@ export default function Shell(p: ShellProps) {
           ))}
         </nav>
         <div className="side-foot">
-          <div className="side-card"><b>{p.who.label}</b>{p.who.role}{p.demoMode ? " · демо-режим" : ""}</div>
+          {p.foot}
+          <div className="side-card"><b>{p.who.label}</b>{p.who.role}{p.demoSession ? " · демо-аккаунт" : p.demoMode ? " · демо-режим" : ""}</div>
           <span className={`health health-${p.health}`}>{HEALTH_RU[p.health]}</span>
           <div className="side-links">
             <button onClick={() => { p.onValidation(); setOpen(false); }}>Валидация</button>
@@ -49,7 +54,13 @@ export default function Shell(p: ShellProps) {
           </div>
         </div>
       </aside>
-      <main className="cabinet-main">{p.children}</main>
+      <main className="cabinet-main">
+        <div className="cabinet-top">
+          <button className="small" onClick={p.onValidation}><Icon name="chart" size={15} />Валидация</button>
+          <span className="who-chip"><Avatar name={p.who.label} /><span><b>{p.who.label}</b><small>{p.who.role}</small></span></span>
+        </div>
+        {p.children}
+      </main>
     </div>
   );
 }

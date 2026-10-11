@@ -4,6 +4,8 @@ export interface Session {
   token: string;
   id: number;
   fspId?: string | null;
+  /** true: opened via the prepared demo accounts, not a registered user. */
+  demo?: boolean;
 }
 
 const KEY = "fsp.session";

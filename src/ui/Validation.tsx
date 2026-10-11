@@ -42,7 +42,7 @@ export default function Validation() {
     <div>
       <PageHead title="Валидация" sub="MVP-валидация на собственном фиксированном наборе, воспроизводимая командой python -m fsp_market.validation" />
       <div className="kpis">
-        <Kpi tone="dark" label="Кандидатов в наборе" value={s.dataset.candidates} sub="синтетические профили" />
+        <Kpi tone="mint" icon="users" label="Кандидатов в наборе" value={s.dataset.candidates} sub="синтетические профили" />
         <Kpi label="Потребностей" value={s.dataset.needs} sub="разметка вручную" />
         <Kpi label="Метода подбора" value={methods.length} sub="сравниваются на одних данных" />
         <Kpi tone="mint" label="Детерминизм" value={s.deterministic_ordering && s.assessment.deterministic ? "Да" : s.deterministic_ordering || s.assessment.deterministic ? "Частично" : "Нет"} sub="подбор и оценка" />
@@ -50,21 +50,25 @@ export default function Validation() {
 
       <div className="grid-2" style={{ alignItems: "start" }}>
         <Card title="Сравнение методов подбора">
-          <div className="seg" role="tablist" aria-label="Метрика">
-            {METRICS.map(([k, l]) => <button key={k} role="tab" aria-selected={metric === k} className={metric === k ? "active" : ""} onClick={() => setMetric(k)}>{l}</button>)}
+          <div className="cols" role="img" aria-label="Метрики подбора по методам">
+            <div className="cols-axis" aria-hidden="true">{[0, 0.25, 0.5, 0.75, 1].map((t) => <span key={t}>{t.toFixed(2)}</span>)}</div>
+            <div className="cols-plot" style={{ ["--groups" as string]: METRICS.length }}>
+              {METRICS.map(([m]) => (
+                <div key={m} className={`cols-group${metric === m ? " sel" : ""}`}>
+                  {methods.map((k) => {
+                    const val = s.matching[k][m];
+                    return <div key={k} className={`col ${toneOf(k)}`} title={`${NAMES[k]}: ${f3(val)}`}><b>{val.toFixed(2)}</b><i style={{ height: `${Math.max(1, val * 100)}%` }} /></div>;
+                  })}
+                </div>))}
+            </div>
+            <div className="cols-labels" style={{ ["--groups" as string]: METRICS.length }} role="tablist" aria-label="Метрика">
+              {METRICS.map(([k, l]) => <button key={k} role="tab" aria-selected={metric === k} className={metric === k ? "active" : ""} onClick={() => setMetric(k)}>{l}</button>)}
+            </div>
           </div>
-          <div className="chart" style={{ marginTop: 16 }} role="img" aria-label={`${label} по методам`}>
-            {methods.map((k) => {
-              const v = s.matching[k][metric];
-              return (
-                <div key={k} className={`cbar ${toneOf(k)}`}>
-                  <span>{NAMES[k]}</span>
-                  <span className="track"><span style={{ width: `${Math.min(100, Math.max(2, v * 100))}%` }} /></span>
-                  <b>{f3(v)}</b>
-                </div>);
-            })}
+          <div className="legend-row">
+            {methods.map((k) => <span key={k}><i className={toneOf(k)} />{NAMES[k]}</span>)}
           </div>
-          <p className="muted" style={{ marginBottom: 0 }}>Шкала 0–1, выше — лучше. Все методы оценены на одних данных.</p>
+          <p className="muted" style={{ marginBottom: 0, fontSize: 13 }}>Шкала 0–1, выше — лучше. Все методы оценены на одних данных. Выбранная метрика: {label}.</p>
         </Card>
         <Card title="Основные выводы">
           <ol className="takeaways">

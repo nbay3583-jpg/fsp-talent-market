@@ -3,7 +3,18 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy import false as sa_false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fsp_market.common.enums import Grade, SalaryType, SkillImportance, Sublevel
@@ -29,6 +40,13 @@ class EmployerNeed(Base):
     location: Mapped[str | None] = mapped_column(String(128), nullable=True)
     max_start_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     description: Mapped[str] = mapped_column(Text, default="")
+    # OPEN needs take part in matching and new invitations; CLOSED keeps history intact.
+    status: Mapped[str] = mapped_column(String(8), default="OPEN", server_default="OPEN")
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Candidates see a need in their recommendations only when the employer published it.
+    public_to_candidates: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=sa_false()
+    )
     # Team profile inputs: the manager's work-style answers and the hash of the anonymous survey link.
     work_style: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     team_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)

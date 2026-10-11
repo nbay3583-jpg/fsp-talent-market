@@ -122,6 +122,7 @@ def load_candidate_facts(
             select(SkillClaim.id, SkillClaim.candidate_id, Skill.code)
             .join(Skill, Skill.id == SkillClaim.skill_id)
             .where(SkillClaim.candidate_id.in_(ids))
+            .order_by(SkillClaim.id)
         ).all()
         by_claim = {}
         for claim_id, cand_id, code in claim_rows:
@@ -193,7 +194,8 @@ def load_candidate_facts(
             work_formats=tuple(c.work_formats or ()),
             location=c.location,
             available_in_days=c.available_in_days,
-            profile_visible=c.profile_visible,
+            # published = the candidate wants it AND the email is verified
+            profile_visible=bool(c.profile_visible and c.email_verified),
             open_to_invitations=c.open_to_invitations,
             skills=sk,
             experience=tuple(exp[c.id]),

@@ -30,7 +30,8 @@ def test_recommendations_insufficient_data_without_assessment(env):  # noqa: F81
     assert r.status_code == 201
     h = {"Authorization": f"Bearer {r.json()['access_token']}"}
     eh = _emp(client)
-    client.post("/api/employer/needs", headers=eh, json=NEED)
+    n = client.post("/api/employer/needs", headers=eh, json=NEED).json()
+    assert client.put(f"/api/employer/needs/{n['id']}/publication", headers=eh, json={"public": True}).status_code == 200
     rec = client.get("/api/candidates/me/recommendations", headers=h).json()
     assert rec["assessed"] is False and rec["next_action"] == "take_assessment"
     assert rec["items"] and all(i["fit_state"] == "insufficient_data" and i["mutual_fit"] is None for i in rec["items"])
@@ -39,6 +40,9 @@ def test_recommendations_insufficient_data_without_assessment(env):  # noqa: F81
 def test_assessed_candidate_keeps_numeric_fit(env):  # noqa: F811
     client, engine = env
     _, ch = _cand(engine, "anna")
+    eh = _emp(client)
+    n = client.post("/api/employer/needs", headers=eh, json=NEED).json()
+    assert client.put(f"/api/employer/needs/{n['id']}/publication", headers=eh, json={"public": True}).status_code == 200
     items = client.get("/api/candidates/me/recommendations", headers=ch).json()["items"]
     assert items and all(i["fit_state"] == "ready" and i["requirement_fit"] is not None for i in items)
 

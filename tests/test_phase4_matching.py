@@ -453,9 +453,11 @@ def test_candidate_preferences_endpoint(env):
         "work_formats": ["REMOTE"],
         "profile_visible": True,
     }
-    # publishing the profile requires a confirmed email
-    blocked = env.patch("/api/candidates/me/preferences", headers=ch, json=prefs)
-    assert blocked.status_code == 403
+    # the visibility intent is stored, but employers see the profile only after email verification
+    pending = env.patch("/api/candidates/me/preferences", headers=ch, json=prefs)
+    assert pending.status_code == 200
+    me = env.get("/api/candidates/me", headers=ch).json()["preferences"]
+    assert me["profile_visible"] is True and me["published"] is False
     from fsp_market.notifications.email import OUTBOX
 
     token = OUTBOX[-1]["body"].split("verify_email=")[1].split()[0]

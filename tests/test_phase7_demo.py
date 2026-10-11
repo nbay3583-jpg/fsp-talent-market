@@ -176,13 +176,13 @@ def test_canonical_demo_decline_path_and_no_fsp_candidate(env):
             "description": "Разработка и поддержка backend-сервисов на FastAPI и PostgreSQL в продуктовой команде",
             "salary_from": 210000,
             "salary_to": 240000,
-            "salary_type": "NET",
+            "salary_type": "GROSS",
             "work_format": "REMOTE",
             "message": "m",
         },
     ).json()["id"]
     seen = client.get(f"/api/candidates/me/invitations/{inv_id}", headers=ch).json()
-    assert seen["salary_type"] == "NET"
+    assert seen["salary_type"] == "GROSS"
     assert (
         client.post(f"/api/candidates/me/invitations/{inv_id}/decline", headers=ch).json()["status"]
         == "DECLINED"

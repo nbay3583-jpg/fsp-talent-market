@@ -89,6 +89,7 @@ def build_database(session: Session, cands: list[dict], needs: list[dict]) -> di
             location=c["location"],
             available_in_days=c["available_in_days"],
             profile_visible=c["profile_visible"],
+            email_verified=True,
             open_to_invitations=c["open_to_invitations"],
         )
         session.add(row)

@@ -6,7 +6,7 @@ import Assistant from "./Assistant";
 import Validation from "./Validation";
 import { TeamSurvey } from "./TeamFit";
 import type { Catalog } from "./types";
-import { Badge, Card, ErrorBox, GRADE_RU, Logo, skillName } from "./ui";
+import { Avatar, Badge, Card, ErrorBox, GRADE_RU, Icon, Logo, skillName } from "./ui";
 
 interface DemoAccount { key: string; role: Role; label: string; fsp_id: string | null; note: string }
 interface DemoConfig { demo_mode: boolean; accounts: DemoAccount[] }
@@ -184,9 +184,14 @@ function Showcase({ facts }: { facts: Facts }) {
   const max = facts.matching ? Math.max(...facts.matching.map((m) => m.p5), 0.0001) : 1;
   return (
     <aside className="showcase" aria-label="Что получает кандидат и работодатель">
+      <div className="showcase-head">
+        <span className="company-mark"><Icon name="shield" size={18} /></span>
+        <div>
+          <h3>Профиль подтверждённых навыков</h3>
+          <div className="sub">Каждый навык помечен: подтверждён оценкой или только заявлен</div>
+        </div>
+      </div>
       <div>
-        <h3>Профиль подтверждённых навыков</h3>
-        <p className="muted" style={{ margin: "2px 0 10px" }}>Каждый навык помечен: подтверждён оценкой или только заявлен.</p>
         {skills ? skills.map((s) => (
           <div className="showcase-skill" key={s.code} style={{ marginBottom: 6 }}>
             <span className={`tick${s.verifiable ? "" : " no"}`}>{s.verifiable ? "✓" : "–"}</span>
@@ -292,6 +297,8 @@ function AuthCard({ mode, setMode, role, setRole, demoMode, onSession }: {
   );
 }
 
+const FEATURED = "candidate_verified";
+
 function DemoPanel({ demo, onSession }: { demo: DemoConfig; onSession: (s: Session) => void }) {
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState("");
@@ -299,36 +306,60 @@ function DemoPanel({ demo, onSession }: { demo: DemoConfig; onSession: (s: Sessi
     setErr(""); setBusy(a.key);
     try {
       const r = await api<{ role: Role; id: number; access_token: string; fsp_id: string | null }>("/api/demo/login", { body: { account: a.key } });
-      onSession({ role: r.role, token: r.access_token, id: r.id, fspId: r.fsp_id });
+      onSession({ role: r.role, token: r.access_token, id: r.id, fspId: r.fsp_id, demo: true });
     } catch (e) { setErr((e as Error).message); setBusy(""); }
   };
   const parts = (a: DemoAccount) => {
     const m = /^(.*?)\s*\((.*)\)\s*$/.exec(a.label);
     return { name: m ? m[1] : a.label, hint: m ? m[2] : "" };
   };
+  const featured = demo.accounts.find((a) => a.key === FEATURED);
+  const others = demo.accounts.filter((a) => a.key !== FEATURED);
   return (
     <div>
-      <h3 style={{ margin: "6px 0 4px", fontSize: 20 }}>Демо-вход</h3>
-      <p className="muted" style={{ margin: "0 0 14px" }}>Готовые учётные записи — пароль не нужен.</p>
       {err && <ErrorBox message={err} />}
       {!demo.demo_mode ? <p className="empty">Демо-режим выключен.</p> : (
-        <div className="demo-list">
-          {demo.accounts.map((a) => {
-            const { name, hint } = parts(a);
-            return (
-              <div key={a.key} className="demo-item">
+        <>
+          {featured && (
+            <section className="demo-path" aria-label="Демонстрационный путь">
+              <span className="demo-flag"><Icon name="eye" size={13} />Демонстрационный путь · подготовленные данные</span>
+              <div className="demo-path-top">
+                <Avatar name={parts(featured).name} />
                 <div>
-                  <b>{name}</b>
-                  <span><Badge tone={a.role === "candidate" ? "info" : "brand"}>{a.role === "candidate" ? "Кандидат" : "Работодатель"}</Badge>
-                    {hint && <Badge tone="muted">{hint}</Badge>}{a.fsp_id && <Badge tone="info">ФСП</Badge>}</span>
-                  <p>{a.note}</p>
+                  <h3>{parts(featured).name}</h3>
+                  <p>Готовый подтверждённый кандидат: пройденная оценка, уровни по навыкам, рекомендации. Это отдельный демо-аккаунт — он не смешивается с данными новых пользователей.</p>
                 </div>
-                <button className="primary" disabled={!!busy} onClick={() => enter(a)}>{busy === a.key ? "Входим…" : "Войти"}</button>
-              </div>);
-          })}
-        </div>)}
-      {demo.demo_mode && (
-        <Card><p className="muted" style={{ margin: 0 }}><b style={{ color: "var(--ink)" }}>Сценарий демонстрации.</b> Алексей Демо → оценка компетенций → профиль подтверждённых компетенций → подключение ФСП ID → Демо-компания → потребность → подбор → приглашение → принятие → открытие контактов.</p></Card>
+                <button className="primary" disabled={!!busy} onClick={() => enter(featured)}>{busy === featured.key ? "Входим…" : "Открыть профиль"}</button>
+              </div>
+              <ol className="demo-steps">
+                <li>Evidence Profile: уровни и подтверждения</li>
+                <li>Оценка и результат по компетенциям</li>
+                <li>Рекомендованные вакансии</li>
+                <li>Демо-компания: подбор → приглашение</li>
+              </ol>
+            </section>
+          )}
+          <h3 style={{ margin: "14px 0 4px", fontSize: 17 }}>Другие демо-сценарии</h3>
+          <p className="muted" style={{ margin: "0 0 10px" }}>Готовые учётные записи — пароль не нужен.</p>
+          <div className="demo-list">
+            {others.map((a) => {
+              const { name, hint } = parts(a);
+              return (
+                <div key={a.key} className="demo-item">
+                  <div>
+                    <b>{name}</b>
+                    <span><Badge tone={a.role === "candidate" ? "info" : "brand"}>{a.role === "candidate" ? "Кандидат" : "Работодатель"}</Badge>
+                      {hint && <Badge tone="muted">{hint}</Badge>}{a.fsp_id && <Badge tone="info">ФСП</Badge>}</span>
+                    <p>{a.note}</p>
+                  </div>
+                  <button disabled={!!busy} onClick={() => enter(a)}>{busy === a.key ? "Входим…" : "Войти"}</button>
+                </div>);
+            })}
+          </div>
+          <p className="muted" style={{ margin: "12px 2px 0", fontSize: 13 }}>
+            <b style={{ color: "var(--ink)" }}>Сценарий демонстрации.</b> Алексей Демо → оценка компетенций → профиль подтверждённых компетенций → подключение ФСП ID → Демо-компания → потребность → подбор → приглашение → принятие → открытие контактов.
+          </p>
+        </>
       )}
     </div>
   );

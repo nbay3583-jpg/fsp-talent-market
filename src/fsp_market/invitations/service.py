@@ -53,6 +53,50 @@ def contacts_visible(inv: Invitation) -> bool:
     return S(inv.status) in CONTACT_STATES
 
 
+def _check_need_terms(
+    session: Session,
+    need: EmployerNeed,
+    candidate: Candidate,
+    *,
+    role: str | None,
+    salary_from: int,
+    salary_to: int,
+    salary_type,
+    work_format,
+) -> None:
+    """Server-side guard: an invitation for a saved need may not deviate from that need's
+    essential terms nor go to a candidate the need's hard filters exclude."""
+    from fsp_market.matching.engine import hard_filter
+    from fsp_market.matching.facts import load_candidate_facts, load_need_spec
+    from fsp_market.matching.policy import DEFAULT_POLICY
+
+    if role and role.strip().casefold() != need.title.strip().casefold():
+        raise InvitationError("role must match the saved need; use a standalone invitation instead")
+    if str(salary_type) != str(need.salary_type):
+        raise InvitationError(f"salary type must be {need.salary_type} as in the need")
+    if salary_from < need.salary_from or salary_to > need.salary_to:
+        raise InvitationError(
+            f"salary range must stay within the need's {need.salary_from}-{need.salary_to}"
+        )
+    if str(work_format) not in {str(f) for f in need.work_formats}:
+        raise InvitationError("work format is not allowed by the need")
+    if candidate.work_formats and str(work_format) not in {str(f) for f in candidate.work_formats}:
+        raise InvitationError("work format is not acceptable to the candidate")
+    if candidate.salary_min is not None:
+        offered_top = float(salary_to)
+        cand_type = candidate.salary_type
+        if cand_type and str(cand_type) != str(salary_type):
+            rate = DEFAULT_POLICY.ndfl_rate
+            offered_top = salary_to * (1 - rate) if str(salary_type) == "GROSS" else salary_to / (1 - rate)
+        if offered_top < candidate.salary_min:
+            raise InvitationError("offered salary is below the candidate's stated minimum")
+    spec = load_need_spec(session, need)
+    facts = load_candidate_facts(session, [candidate])[candidate.id]
+    codes = hard_filter(spec, facts, DEFAULT_POLICY)
+    if codes:
+        raise InvitationError("candidate does not meet the need's hard requirements: " + ", ".join(codes))
+
+
 def send_invitation(
     session: Session,
     employer_id: int,
@@ -73,7 +117,7 @@ def send_invitation(
         raise InvitationError("salary range (from > 0, to >= from) and GROSS/NET type are required")
     employer = session.get(Employer, employer_id)
     candidate = session.get(Candidate, candidate_id)
-    if candidate is None or not candidate.profile_visible:
+    if candidate is None or not (candidate.profile_visible and candidate.email_verified):
         raise LookupError("candidate not found")
     if not candidate.open_to_invitations:
         raise InvitationError("candidate does not accept invitations")
@@ -82,6 +126,13 @@ def send_invitation(
         need = session.get(EmployerNeed, need_id)
         if need is None or need.employer_id != employer_id:
             raise LookupError("need not found")
+        if (need.status or "OPEN") != "OPEN":
+            raise InvitationError("need is closed; no new invitations can be sent for it")
+        _check_need_terms(
+            session, need, candidate, role=role, salary_from=salary_from, salary_to=salary_to,
+            salary_type=salary_type, work_format=work_format,
+        )
+        role = need.title  # the role is fixed by the saved need
     if match_run_id is not None:
         run = session.get(MatchRun, match_run_id)
         if run is None or need is None or run.need_id != need.id:
@@ -92,10 +143,12 @@ def send_invitation(
         )
     ).all()
     for old in existing:
+        if old.need_id != need_id:  # another vacancy / standalone is a separate scenario
+            continue
         status = S(old.status)
         if status in OPEN_STATES or status in CONTACT_STATES:
             raise InvitationError("an active invitation to this candidate already exists")
-        if status == S.DECLINED and need_id is not None and old.need_id == need_id:
+        if status == S.DECLINED and need_id is not None:
             raise InvitationError("candidate already declined an invitation for this need")
     inv = Invitation(
         employer_id=employer_id,
@@ -188,21 +241,36 @@ def candidate_view(inv: Invitation) -> dict[str, Any]:
     }
 
 
-def invitation_statuses(session: Session, employer_id: int, candidate_ids: list[int]) -> dict[int, dict]:
-    """Latest invitation (id, status) of this employer per candidate, for pool/shortlist/profile."""
+def invitation_statuses(
+    session: Session,
+    employer_id: int,
+    candidate_ids: list[int],
+    need_id: int | None = None,
+) -> dict[int, dict]:
+    """Latest invitation (id, status) of this employer per candidate IN THE GIVEN SCENARIO:
+    `need_id` for a vacancy context, None for standalone (pool / profile without a need)."""
     if not candidate_ids:
         return {}
+    cond = Invitation.need_id.is_(None) if need_id is None else Invitation.need_id == need_id
     rows = session.scalars(
         select(Invitation)
         .where(Invitation.employer_id == employer_id, Invitation.candidate_id.in_(candidate_ids))
+        .where(cond)
         .order_by(Invitation.id)
     )
     return {r.candidate_id: {"invitation_id": r.id, "invitation_status": str(r.status)} for r in rows}
 
 
-def annotate(session: Session, employer_id: int, candidates: list[dict[str, Any]]) -> None:
+def annotate(
+    session: Session,
+    employer_id: int,
+    candidates: list[dict[str, Any]],
+    need_id: int | None = None,
+) -> None:
     """Adds invitation_id / invitation_status (or None) to public candidate dicts in place."""
-    found = invitation_statuses(session, employer_id, [c["candidate_id"] for c in candidates])
+    found = invitation_statuses(
+        session, employer_id, [c["candidate_id"] for c in candidates], need_id
+    )
     for c in candidates:
         info = found.get(c["candidate_id"], {})
         c["invitation_id"] = info.get("invitation_id")

@@ -44,7 +44,7 @@ DEMO_ACCOUNTS: dict[str, dict[str, str | None]] = {
     "candidate_verified": {
         "role": "candidate",
         "email": "anna@demo.example",
-        "label": "Анна — профиль подтверждён (Middle M2)",
+        "label": "Анна — профиль подтверждён (Middle)",
         "fsp_id": None,
         "note": "Оценка уже пройдена. Можно посмотреть готовый профиль подтверждённых компетенций и получение приглашений.",
     },
