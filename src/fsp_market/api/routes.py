@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from fsp_market.api.deps import CandidateDep, ProviderDep, SessionDep
+from fsp_market.assessments.breakdown import competency_breakdown
 from fsp_market.assessments.models import (
     AssessmentAttempt,
     TaskFamily,
@@ -112,6 +113,7 @@ def _result_payload(session: Session, candidate_id: int, attempt, result, expire
         "passed": result.passed,
         "score": result.total_score,
         "competency_scores": result.subscores,
+        "competency_breakdown": competency_breakdown(session, result),
         "achieved_sublevel": result.achieved_sublevel,
         "claimed_grade": session.get(Candidate, candidate_id).claimed_grade,
         "expired": expired or attempt.expired,

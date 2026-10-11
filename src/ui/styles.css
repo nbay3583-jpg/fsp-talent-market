@@ -563,3 +563,8 @@ blockquote { margin: 12px 0; padding: 10px 14px; border-left: 3px solid var(--mi
   .topbar-actions { margin-left: auto; min-width: 0; }
 }
 @media (max-width: 960px) { .hero::before { inset: -10px 0 auto auto; } }
+.comp-bar { grid-template-columns: minmax(110px, 190px) 1fr 48px; }
+.comp-bar .comp-detail, .comp-bar .comp-note { grid-column: 1 / -1; color: var(--muted, #667); font-size: 12.5px; line-height: 1.35; }
+.comp-bar .comp-note { color: var(--warn-ink, #8a5a00); }
+.comp-bar.empty .progress { opacity: .45; }
+.comp-caveat { margin: 12px 0 0; font-size: 13px; }

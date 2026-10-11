@@ -8,6 +8,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from fsp_market.assessments.breakdown import competency_breakdown
 from fsp_market.assessments.models import AssessmentAttempt, AssessmentResult
 from fsp_market.candidates.models import Candidate
 from fsp_market.common.enums import EvidenceType
@@ -45,6 +46,7 @@ def build_evidence_profile(session: Session, candidate_id: int) -> dict[str, Any
             "passed": result.passed,
             "score": result.total_score,  # score of THIS assessment, not a talent score
             "competency_scores": result.subscores,
+            "competency_breakdown": competency_breakdown(session, result),
             "achieved_sublevel": _value(result.achieved_sublevel),
             "scored_at": attempt.scored_at.isoformat() if attempt.scored_at else None,
         }

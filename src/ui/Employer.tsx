@@ -108,7 +108,7 @@ function CandidateRow({ c, fit, starred, onStar, onOpen, children }: {
         <div className="cand-name">{c.display_name}<VerificationBadge status={c.verification_status} /></div>
         <div className="cand-meta">{gradeLine(c)}{c.location ? ` · ${c.location}` : ""}{c.salary_expectation ? ` · от ${c.salary_expectation.min.toLocaleString("ru-RU")} ₽ ${c.salary_expectation.type}` : ""}</div>
         <div className="chips">
-          {verified.map((s) => <span key={s.skill} className="chip-skill on mini" title={`${skillName(s.skill)}: подтверждено оценкой`}><Icon name="tick" size={12} />{skillName(s.skill)}</span>)}
+          {verified.map((s) => <span key={s.skill} className="chip-skill on mini" title={`${skillName(s.skill)}: результат комплексной оценки по направлению (не сертификат)`}><Icon name="tick" size={12} />{skillName(s.skill)}</span>)}
           {allVerified.length > verified.length && <span className="chip-skill mini">+{allVerified.length - verified.length}</span>}
           {(c.work_experience ?? []).length > 0 && <Badge tone="muted">опыт: {c.work_experience!.length} (заявлен)</Badge>}
           {c.has_fsp && <Badge tone="info">ФСП (демо)</Badge>}
@@ -299,7 +299,7 @@ function CandidatePanel({ session, id, need, close }: { session: Session; id: nu
         <table className="table"><thead><tr><th>Навык</th><th>Подтверждение</th></tr></thead><tbody>
           {d.skills.map((s) => (
             <tr key={s.skill}><td data-label="Навык">{skillName(s.skill)}</td><td data-label="Подтверждение">
-              {s.verified_level ? <Badge tone="ok">подтверждено оценкой: {GRADE_RU[s.verified_level]}</Badge> : s.claimed_only ? <Badge tone="muted">только заявлено</Badge> : null}
+              {s.verified_level ? <Badge tone="ok">результат оценки: {GRADE_RU[s.verified_level]}</Badge> : s.claimed_only ? <Badge tone="muted">только заявлено</Badge> : null}
               {s.has_professional_experience && <Badge tone="muted">опыт (не подтверждён)</Badge>}
               {s.fsp_achievements.map((a) => <Badge key={a} tone="info">ФСП (демо): {a}</Badge>)}</td></tr>))}
         </tbody></table>)}

@@ -16,17 +16,22 @@ interface Me {
     published?: boolean; publish_blockers?: string[];
   };
 }
+interface Breakdown {
+  competency: string; percent: number | null; tasks: number | null; answered: number | null;
+  points_earned: number | null; points_max: number | null; reliability: "none" | "limited" | "moderate" | "unknown";
+}
 interface Task { variant_id: number; competency: string; prompt: string; answer_type: "single" | "multi" | "number"; options: Record<string, string> | null }
 type Answer = string | number | string[]
 interface Attempt { attempt_id: number; target_grade: string; tasks: Task[]; remaining_seconds: number; saved_answers?: Record<string, Answer> }
 interface Result {
   verification_status: string; claimed_grade: string; target_grade: string; achieved_sublevel: string | null;
   score: number; competency_scores: Record<string, number>;
+  competency_breakdown?: Breakdown[];
 }
 interface Profile {
   specialization: string | null; claimed_grade: string | null; verification_status: string;
   verified_grade: string | null; verified_sublevel: string | null;
-  assessment: { target_grade: string; verification_status: string; achieved_sublevel: string | null; score: number; competency_scores: Record<string, number>; scored_at: string | null } | null;
+  assessment: { target_grade: string; verification_status: string; achieved_sublevel: string | null; score: number; competency_scores: Record<string, number>; competency_breakdown?: Breakdown[]; passed?: boolean; scored_at: string | null } | null;
   skills: {
     skill: string; name: string; claimed_level: string | null; claim_source: string; verified_level: string | null;
     verified_sublevel: string | null;
@@ -511,17 +516,51 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
   );
 }
 
-function CompBars({ scores }: { scores: Record<string, number> }) {
-  const keys = [...COMP_ORDER.filter((k) => k in scores), ...Object.keys(scores).filter((k) => !COMP_ORDER.includes(k))];
+function tasksWord(n: number): string {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return "задание";
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return "задания";
+  return "заданий";
+}
+
+const RELIABILITY_RU: Record<string, string> = {
+  none: "в этой попытке заданий по направлению не было — оценки нет",
+  limited: "проверено малым числом заданий — это ориентир, а не подтверждение уровня по технологии",
+  moderate: "направление проверено несколькими заданиями; результат всё равно относится только к этой попытке",
+  unknown: "число заданий для этой попытки не сохранено — показан только процент",
+};
+
+function CompBars({ scores, breakdown }: { scores: Record<string, number>; breakdown?: Breakdown[] }) {
+  const rows: Breakdown[] = breakdown && breakdown.length
+    ? breakdown
+    : [...COMP_ORDER.filter((k) => k in scores), ...Object.keys(scores).filter((k) => !COMP_ORDER.includes(k))]
+        .map((k) => ({ competency: k, percent: scores[k], tasks: null, answered: null, points_earned: null, points_max: null, reliability: "unknown" as const }));
   return (
     <div className="comp-bars">
-      {keys.map((k) => (
-        <div className="comp-bar" key={k}>
-          <span>{skillName(k)}</span>
-          <div className="progress" aria-hidden="true"><span style={{ width: `${Math.round(scores[k] * 100)}%` }} /></div>
-          <b>{Math.round(scores[k] * 100)}%</b>
-        </div>))}
+      {rows.map((r) => {
+        const pct = r.percent === null ? null : Math.round(r.percent * 100);
+        const detail = r.tasks === null ? null
+          : r.tasks === 0 ? "заданий не было"
+          : `${r.tasks} ${tasksWord(r.tasks)}${r.points_max !== null ? ` · ${r.points_earned} из ${r.points_max} баллов` : ""}${r.answered !== null && r.answered < r.tasks ? ` · без ответа: ${r.tasks - r.answered}` : ""}`;
+        return (
+          <div className={`comp-bar${r.reliability === "none" ? " empty" : ""}`} key={r.competency}>
+            <span>{skillName(r.competency)}</span>
+            <div className="progress" aria-hidden="true"><span style={{ width: `${pct ?? 0}%` }} /></div>
+            <b>{pct === null ? "—" : `${pct}%`}</b>
+            {detail && <small className="comp-detail">{detail}</small>}
+            {(r.reliability === "limited" || r.reliability === "none") && <small className="comp-note">{RELIABILITY_RU[r.reliability]}</small>}
+          </div>);
+      })}
     </div>
+  );
+}
+
+function CompCaveat() {
+  return (
+    <p className="muted comp-caveat">
+      Это доля верных ответов в одной попытке комплексной оценки, а не независимый сертификат по технологии.
+      Направления проверены небольшим числом заданий (обычно 1–3), поэтому процент — ориентир.
+    </p>
   );
 }
 
@@ -543,8 +582,9 @@ function ResultCard({ result, goEvidence, again }: { result: Result; goEvidence:
           )}
         </div>
       </div>
-      <h4>Результат по компетенциям</h4>
-      <CompBars scores={result.competency_scores} />
+      <h4>Результат по направлениям</h4>
+      <CompBars scores={result.competency_scores} breakdown={result.competency_breakdown} />
+      <CompCaveat />
       <div className="row" style={{ marginTop: 16 }}><button className="primary" onClick={goEvidence}>Открыть профиль подтверждённых компетенций</button><button onClick={again}>Закрыть</button></div>
     </Card>
   );
@@ -591,7 +631,7 @@ function EvidenceTab({ session }: { session: Session }) {
         <div className="summary-split">
           <Ring size={104} value={p.skills.length ? confirmed / p.skills.length : 0} label={`${confirmed}/${p.skills.length}`} caption="навыков" />
           <div>
-            <p className="big" style={{ margin: 0 }}>Backend / {p.claimed_grade ? GRADE_RU[p.claimed_grade] : "—"} <span className="muted" style={{ fontWeight: 500, fontSize: 15 }}>(заявлено)</span></p>
+            <p className="big" style={{ margin: 0 }}>Backend / {p.claimed_grade ? GRADE_RU[p.claimed_grade] : "—"} <span className="muted" style={{ fontWeight: 500, fontSize: 15 }}>(заявлено кандидатом, не проверено)</span></p>
             <div style={{ marginTop: 6 }}>
               {p.verified_grade
                 ? <Badge tone="ok">подтверждено: {GRADE_RU[p.verified_grade]} {subLabel(p.verified_sublevel)}</Badge>
@@ -616,8 +656,10 @@ function EvidenceTab({ session }: { session: Session }) {
 
       {p.assessment && (
         <Card title="Результат основной оценки" aside={<VerificationBadge status={p.assessment.verification_status} />}>
-          <p style={{ margin: 0 }}>{GRADE_RU[p.assessment.target_grade]} · {Math.round(p.assessment.score * 100)}% правильных ответов</p>
-          <CompBars scores={p.assessment.competency_scores} />
+          <p style={{ margin: 0 }}>Попытка на {GRADE_RU[p.assessment.target_grade]} · {Math.round(p.assessment.score * 100)}% верных ответов в целом (порог {PASS_PCT[p.assessment.target_grade] ?? "—"}%)</p>
+          <h4>Результат по направлениям</h4>
+          <CompBars scores={p.assessment.competency_scores} breakdown={p.assessment.competency_breakdown} />
+          <CompCaveat />
         </Card>
       )}
 
