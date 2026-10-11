@@ -6,6 +6,7 @@ export interface Reason {
 export interface SkillView {
   skill: string;
   verified_level: string | null;
+  confirmed_by_exam?: boolean;
   verified_sublevel: string | null;
   has_professional_experience: boolean;
   fsp_achievements: string[];

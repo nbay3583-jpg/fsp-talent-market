@@ -22,8 +22,10 @@ interface Breakdown {
 }
 interface Task { variant_id: number; competency: string; prompt: string; answer_type: "single" | "multi" | "number"; options: Record<string, string> | null }
 type Answer = string | number | string[]
-interface Attempt { attempt_id: number; target_grade: string; tasks: Task[]; remaining_seconds: number; saved_answers?: Record<string, Answer> }
+interface TechExam { attempt_id: number; exam: string; skill: string; name: string; target_grade: string; passed: boolean; score: number; achieved_sublevel: string | null; tasks: number; scored_at: string | null }
+interface Attempt { attempt_id: number; exam?: string | null; target_grade: string; tasks: Task[]; remaining_seconds: number; saved_answers?: Record<string, Answer> }
 interface Result {
+  exam?: string | null; passed?: boolean;
   verification_status: string; claimed_grade: string; target_grade: string; achieved_sublevel: string | null;
   score: number; competency_scores: Record<string, number>;
   competency_breakdown?: Breakdown[];
@@ -31,6 +33,7 @@ interface Result {
 interface Profile {
   specialization: string | null; claimed_grade: string | null; verification_status: string;
   verified_grade: string | null; verified_sublevel: string | null;
+  tech_exams?: TechExam[];
   assessment: { target_grade: string; verification_status: string; achieved_sublevel: string | null; score: number; competency_scores: Record<string, number>; competency_breakdown?: Breakdown[]; passed?: boolean; scored_at: string | null } | null;
   skills: {
     skill: string; name: string; claimed_level: string | null; claim_source: string; verified_level: string | null;
@@ -42,7 +45,7 @@ interface Profile {
 }
 
 const EVIDENCE_RU: Record<string, string> = {
-  CORE_ASSESSMENT: "Основная оценка компетенций", TECHNOLOGY_ASSESSMENT: "Оценка по технологии",
+  CORE_ASSESSMENT: "Основная оценка компетенций", TECHNOLOGY_ASSESSMENT: "Независимый экзамен по технологии (подтверждает один навык)",
   PROFESSIONAL_EXPERIENCE: "Самоописанный опыт (не проверен)", FSP_ACHIEVEMENT: "Достижение ФСП (демо-данные, не реальная проверка)", RECENT_CHALLENGE: "Свежее задание",
 };
 interface Job {
@@ -50,7 +53,7 @@ interface Job {
   stack: string[]; tasks: string; projects: string; achievements: string;
 }
 const SOURCE_RU: Record<string, string> = {
-  self_reported: "заявлено кандидатом", core_assessment: "создано тестом", fsp: "демо-данные ФСП", experience: "самоописанный опыт",
+  self_reported: "заявлено кандидатом", core_assessment: "создано тестом", technology_exam: "создано экзаменом по технологии", fsp: "демо-данные ФСП", experience: "самоописанный опыт",
 };
 
 type Tab = "overview" | "evidence" | "test" | "fit" | "invitations" | "profile";
@@ -394,10 +397,10 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const start = async () => {
+  const start = async (exam: string | null = null) => {
     setErr(""); setResult(null); setBusy(true);
     try {
-      const a = await api<Attempt>("/api/assessments", { token: session.token, body: { target_grade: grade } });
+      const a = await api<Attempt>("/api/assessments", { token: session.token, body: { target_grade: grade, ...(exam ? { exam } : {}) } });
       setAttempt(a); setLeft(a.remaining_seconds);
       setAnswers(Object.fromEntries(Object.entries(a.saved_answers ?? {}).map(([k, v]) => [Number(k), typeof v === "number" ? String(v) : v])));
     } catch (e) {
@@ -434,11 +437,11 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
       <div className="assess-start">
         <section className="assess-hero" aria-label="Основная оценка">
           <span className="hero-eyebrow" style={{ alignSelf: "flex-start" }}><Icon name="shield" size={14} />Основная оценка · Backend / Python</span>
-          <h2>Подтвердите грейд за 15–23 минуты</h2>
-          <p>11 заданий по шести компетенциям. Варианты заданий параметризованы: у каждого кандидата свои числа и сценарии с тем же уровнем сложности и теми же критериями. Оценка полностью детерминирована — без нейросетей.</p>
+          <h2>Подтвердите грейд за 22–34 минуты</h2>
+          <p>17 заданий по шести компетенциям (для новых попыток; прежние попытки и результаты не меняются). Варианты заданий параметризованы: у каждого кандидата свои числа и сценарии с тем же уровнем сложности и теми же критериями. Оценка полностью детерминирована — без нейросетей.</p>
           <div className="facts">
-            <div className="fact"><b>11</b><span>заданий</span></div>
-            <div className="fact"><b>15–23</b><span>минуты на выполнение</span></div>
+            <div className="fact"><b>17</b><span>заданий</span></div>
+            <div className="fact"><b>22–34</b><span>минуты на выполнение</span></div>
             <div className="fact"><b>6</b><span>компетенций</span></div>
           </div>
           <div>
@@ -453,13 +456,23 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
                 <b>{v}</b><span>порог {PASS_PCT[k]}%</span>
               </button>))}
           </div>
-          <button className="primary large" style={{ width: "100%" }} disabled={busy} onClick={start}><Icon name="bolt" size={16} />Начать оценку</button>
+          <button className="primary large" style={{ width: "100%" }} disabled={busy} onClick={() => start()}><Icon name="bolt" size={16} />Начать оценку</button>
           {err && <div style={{ marginTop: 12 }}><ErrorBox message={err} /></div>}
           <ul className="muted" style={{ margin: "14px 0 0", paddingLeft: 18, fontSize: 13 }}>
             <li>Ответы сохраняются автоматически; по истечении времени отправятся сохранённые.</li>
             <li>Верхний подуровень (J2/M2/S2 и выше) — от 85% правильных ответов.</li>
             <li>Повторная попытка того же грейда после неуспеха — через 7 дней.</li>
           </ul>
+        </Card>
+        <Card title="Независимые технологические экзамены">
+          <p className="muted" style={{ marginTop: 0 }}>
+            Отдельные экзамены по одной технологии, по 10–12 заданий. Успешный результат подтверждает только этот навык и не меняет ваш общий грейд Backend / Python.
+            Грейд выбирается выше; повтор после неуспеха — через 7 дней.
+          </p>
+          <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+            <button disabled={busy} onClick={() => start("fastapi")}><Icon name="bolt" size={15} />Экзамен FastAPI · {GRADE_RU[grade]}</button>
+            <button disabled={busy} onClick={() => start("postgresql")}><Icon name="bolt" size={15} />Экзамен PostgreSQL · {GRADE_RU[grade]}</button>
+          </div>
         </Card>
       </div>
     );
@@ -474,7 +487,7 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
       <div className="test-bar">
         <div className="test-bar-inner">
           <div>
-            <h3>Оценка {GRADE_RU[attempt.target_grade]} · {total} заданий</h3>
+            <h3>{attempt.exam ? `Экзамен ${skillName(attempt.exam === "fastapi" ? "api_fastapi" : attempt.exam)}` : "Оценка"} {GRADE_RU[attempt.target_grade]} · {total} заданий</h3>
             <span className="muted">Отвечено: {answered} из {total}</span>
           </div>
           <span className={`timer${left <= 60 ? " low" : ""}`} role="timer"><Icon name="clock" size={18} />Осталось {mm}:{ss}</span>
@@ -564,7 +577,27 @@ function CompCaveat() {
   );
 }
 
+function ExamResultCard({ result, goEvidence, again }: { result: Result; goEvidence: () => void; again: () => void }) {
+  const skill = result.exam === "fastapi" ? "api_fastapi" : (result.exam ?? "");
+  return (
+    <Card title={`Результат экзамена: ${skillName(skill)}`} aside={<Badge tone={result.passed ? "ok" : "muted"}>{result.passed ? "пройден" : "не пройден"}</Badge>}>
+      <div className="result-hero">
+        <Ring size={110} value={result.score} caption="верных" />
+        <div>
+          <p className="big" style={{ marginTop: 0 }}>{skillName(skill)} · {GRADE_RU[result.target_grade]}{result.passed && result.achieved_sublevel ? ` (${result.achieved_sublevel})` : ""}</p>
+          {result.passed
+            ? <p className="ok">Навык {skillName(skill)} подтверждён экзаменом на уровне {GRADE_RU[result.target_grade]}. Это отдельное подтверждение одного навыка.</p>
+            : <p style={{ margin: 0 }}>Порог {PASS_PCT[result.target_grade]}% не достигнут, навык не подтверждён. Повтор — через 7 дней.</p>}
+          <p className="muted" style={{ margin: "8px 0 0" }}>Общий грейд Backend / Python и результаты основной оценки не изменились.</p>
+        </div>
+      </div>
+      <div className="row" style={{ marginTop: 16 }}><button className="primary" onClick={goEvidence}>Открыть мои компетенции</button><button onClick={again}>Закрыть</button></div>
+    </Card>
+  );
+}
+
 function ResultCard({ result, goEvidence, again }: { result: Result; goEvidence: () => void; again: () => void }) {
+  if (result.exam) return <ExamResultCard result={result} goEvidence={goEvidence} again={again} />;
   const ok = result.verification_status === "VERIFIED";
   return (
     <Card title="Результат основной оценки компетенций" aside={<VerificationBadge status={result.verification_status} />}>
@@ -660,6 +693,20 @@ function EvidenceTab({ session }: { session: Session }) {
           <h4>Результат по направлениям</h4>
           <CompBars scores={p.assessment.competency_scores} breakdown={p.assessment.competency_breakdown} />
           <CompCaveat />
+        </Card>
+      )}
+
+      {(p.tech_exams ?? []).length > 0 && (
+        <Card title="Независимые технологические экзамены">
+          <p className="muted" style={{ marginTop: 0 }}>Подтверждают один навык и не влияют на общий грейд. История попыток:</p>
+          <ul className="exam-history">
+            {(p.tech_exams ?? []).map((x) => (
+              <li key={x.attempt_id}>
+                <b>{skillName(x.skill, x.name)}</b> · {GRADE_RU[x.target_grade]}{x.passed && x.achieved_sublevel ? ` (${x.achieved_sublevel})` : ""} ·{" "}
+                {Math.round(x.score * 100)}% из {x.tasks} {tasksWord(x.tasks)} · {x.passed ? <span className="ok">навык подтверждён</span> : <span className="muted">не пройден</span>}
+                {x.scored_at ? ` · ${x.scored_at.slice(0, 10)}` : ""}
+              </li>))}
+          </ul>
         </Card>
       )}
 
