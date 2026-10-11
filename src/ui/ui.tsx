@@ -141,3 +141,60 @@ export function SalaryBanner({ from, to, type }: { from: number; to: number; typ
     </div>
   );
 }
+
+export function Logo() {
+  return <span className="brand"><span className="logo">FSP</span>Talent Market</span>;
+}
+
+const ICONS: Record<string, string> = {
+  home: "M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10",
+  user: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6",
+  check: "M12 22a10 10 0 110-20 10 10 0 010 20zM8 12l3 3 5-6",
+  shield: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3zM9 12l2 2 4-4",
+  mail: "M3 6h18v12H3zM3 7l9 6 9-6",
+  chat: "M4 5h16v11H9l-5 4z",
+  search: "M11 18a7 7 0 110-14 7 7 0 010 14zM21 21l-5-5",
+  star: "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z",
+  list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+  chart: "M4 20V10M10 20V4M16 20v-8M22 20H2",
+  gear: "M12 15a3 3 0 100-6 3 3 0 000 6zM19 12l2-1-1-3-2 .5-1.5-1.5.5-2-3-1-1 2h-2l-1-2-3 1 .5 2L6 7.5 4 7l-1 3 2 1v2l-2 1 1 3 2-.5L7.5 18l-.5 2 3 1 1-2h2l1 2 3-1-.5-2 1.5-1.5 2 .5 1-3-2-1z",
+  menu: "M4 7h16M4 12h16M4 17h16",
+  close: "M6 6l12 12M18 6L6 18",
+  logout: "M9 4H5v16h4M16 8l4 4-4 4M20 12H9",
+  plus: "M12 5v14M5 12h14",
+  filter: "M3 5h18l-7 8v6l-4-2v-4z",
+  download: "M12 4v11M7 11l5 5 5-5M5 20h14",
+  book: "M5 4h10a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h10",
+};
+export function Icon({ name, size = 18 }: { name: keyof typeof ICONS | string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "none" }}>
+      <path d={ICONS[name] ?? ICONS.list} />
+    </svg>
+  );
+}
+
+export function Kpi({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: ReactNode; tone?: "mint" | "dark" }) {
+  return (
+    <div className={`kpi${tone ? ` ${tone}` : ""}`}>
+      <div className="kpi-label">{label}</div>
+      <div className="kpi-value">{value}</div>
+      {sub && <div className="kpi-sub">{sub}</div>}
+    </div>
+  );
+}
+
+export function Avatar({ name }: { name: string }) {
+  const parts = name.replace(/[^\p{L}\s]/gu, "").trim().split(/\s+/).filter(Boolean);
+  const letters = (parts.length > 1 ? parts[0][0] + parts[1][0] : (parts[0] ?? "?").slice(0, 2)).toUpperCase();
+  return <span className="avatar" aria-hidden="true">{letters}</span>;
+}
+
+export function PageHead({ title, sub, aside }: { title: string; sub?: ReactNode; aside?: ReactNode }) {
+  return (
+    <div className="page-head">
+      <div><h1>{title}</h1>{sub && <p>{sub}</p>}</div>
+      {aside}
+    </div>
+  );
+}

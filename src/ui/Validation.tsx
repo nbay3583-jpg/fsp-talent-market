@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
-import { Card, ErrorBox, Loading } from "./ui";
+import { Card, ErrorBox, Kpi, Loading, PageHead } from "./ui";
 
 type Row = Record<string, number>;
 interface Summary {
@@ -17,38 +17,107 @@ interface Summary {
 }
 
 const NAMES: Record<string, string> = { keyword_baseline: "Поиск по ключевым словам", hard_filters_only: "Только обязательные ограничения", evidence_matching: "Подбор по подтверждённым компетенциям (наша система)" };
+const METRICS: [string, string][] = [["p@3", "Precision@3"], ["p@5", "Precision@5"], ["r@10", "Recall@10"], ["ndcg@10", "nDCG@10"]];
+const f3 = (n: number) => n.toFixed(3);
+const signed = (n: number) => `${n >= 0 ? "+" : "−"}${Math.abs(n).toFixed(3)}`;
 
 export default function Validation() {
   const [s, setS] = useState<Summary | null>(null);
   const [err, setErr] = useState("");
+  const [metric, setMetric] = useState("p@5");
   useEffect(() => { api<Summary>("/api/validation/summary").then(setS).catch((e: Error) => setErr(e.message)); }, []);
   if (err) return <ErrorBox message={`Артефакт валидации недоступен: ${err}`} />;
   if (!s) return <Loading />;
-  const f = (n: number) => n.toFixed(3);
+
+  const methods = Object.keys(NAMES).filter((k) => s.matching[k]);
+  const ours = s.matching.evidence_matching, kw = s.matching.keyword_baseline, hf = s.matching.hard_filters_only;
+  const label = METRICS.find(([k]) => k === metric)?.[1] ?? metric;
+  const toneOf = (k: string) => (k === "evidence_matching" ? "hl" : k === "hard_filters_only" ? "mid" : "");
+  const takeaways: string[] = [];
+  if (ours && kw) takeaways.push(`Наша система против поиска по ключевым словам: Precision@5 ${f3(ours["p@5"])} против ${f3(kw["p@5"])} (${signed(ours["p@5"] - kw["p@5"])}), nDCG@10 ${f3(ours["ndcg@10"])} против ${f3(kw["ndcg@10"])}.`);
+  if (ours && hf) takeaways.push(`Против «только обязательных ограничений»: Precision@5 ${signed(ours["p@5"] - hf["p@5"])}, Recall@10 ${signed(ours["r@10"] - hf["r@10"])}.`);
+  if (ours) takeaways.push(`Нарушений обязательных ограничений в top-10 у нашей системы: ${ours["constraint_violations@10"]} из ${ours["returned@10"]}; порядок выдачи детерминирован: ${s.deterministic_ordering ? "да" : "нет"}.`);
+
   return (
     <div>
-      <Card title="Валидация (MVP, воспроизводимая)">
-        <p>Это MVP-валидация на собственном фиксированном наборе ({s.dataset.candidates} кандидатов, {s.dataset.needs} потребностей, разметка вручную), а не психометрическая калибровка. Организаторы не предоставили официальный датасет. Все числа взяты из <code>artifacts/validation/latest.json</code>, который строится командой <code>python -m fsp_market.validation</code>.</p>
-      </Card>
-      <Card title="Подбор: сравнение методов на одних данных">
-        <table className="table"><thead><tr><th>Метод</th><th>P@3</th><th>P@5</th><th>R@10</th><th>nDCG@10</th><th>Нарушения ограничений в top-10</th></tr></thead><tbody>
-          {Object.entries(NAMES).map(([k, name]) => { const r = s.matching[k]; return (
-            <tr key={k}><td>{name}</td><td>{f(r["p@3"])}</td><td>{f(r["p@5"])}</td><td>{f(r["r@10"])}</td><td>{f(r["ndcg@10"])}</td><td>{r["constraint_violations@10"]}/{r["returned@10"]}</td></tr>); })}
-        </tbody></table>
-        <p className="muted">Порядок выдачи детерминирован: {s.deterministic_ordering ? "да" : "нет"}.</p>
-      </Card>
-      <Card title="Основная оценка: проверка на синтетических персонах">
-        <ul>
-          <li>Точность грейда относительно ожиданий: {f(s.assessment.grade_accuracy)} ({s.assessment.cases} кейсов)</li>
-          <li>Стабильность вариантов: одинаковый результат в {f(s.assessment.variant_stability.identical_outcome_rate)} пар, макс. разница баллов {f(s.assessment.variant_stability.max_abs_score_diff)}</li>
-          <li>Расхождение больше чем на подуровень: {f(s.assessment.disagreement_over_one_sublevel_rate)}</li>
-          <li>Разделение грейдов (AUC): {Object.entries(s.assessment.discrimination).map(([g, d]) => `${g} ${f(d.auc_knowers_vs_others)}`).join(" · ")}</li>
-          <li>Случайно угадывающий проходит: {Object.entries(s.assessment.guessing_baseline).map(([g, d]) => `${g} ${(d.false_verification_rate * 100).toFixed(1)}% (${d.items} вопр.)`).join(" · ")}</li>
-          <li>Детерминизм оценки: {s.assessment.deterministic ? "да" : "нет"}</li>
-        </ul>
-        <p className="muted">{s.assessment.kind}</p>
-      </Card>
-      <Card title="Ограничения"><ul>{s.limitations.map((l) => <li key={l}>{l}</li>)}</ul></Card>
+      <PageHead title="Валидация" sub="MVP-валидация на собственном фиксированном наборе, воспроизводимая командой python -m fsp_market.validation" />
+      <div className="kpis">
+        <Kpi tone="dark" label="Кандидатов в наборе" value={s.dataset.candidates} sub="синтетические профили" />
+        <Kpi label="Потребностей" value={s.dataset.needs} sub="разметка вручную" />
+        <Kpi label="Метода подбора" value={methods.length} sub="сравниваются на одних данных" />
+        <Kpi tone="mint" label="Детерминизм" value={s.deterministic_ordering && s.assessment.deterministic ? "Да" : s.deterministic_ordering || s.assessment.deterministic ? "Частично" : "Нет"} sub="подбор и оценка" />
+      </div>
+
+      <div className="grid-2" style={{ alignItems: "start" }}>
+        <Card title="Сравнение методов подбора">
+          <div className="seg" role="tablist" aria-label="Метрика">
+            {METRICS.map(([k, l]) => <button key={k} role="tab" aria-selected={metric === k} className={metric === k ? "active" : ""} onClick={() => setMetric(k)}>{l}</button>)}
+          </div>
+          <div className="chart" style={{ marginTop: 16 }} role="img" aria-label={`${label} по методам`}>
+            {methods.map((k) => {
+              const v = s.matching[k][metric];
+              return (
+                <div key={k} className={`cbar ${toneOf(k)}`}>
+                  <span>{NAMES[k]}</span>
+                  <span className="track"><span style={{ width: `${Math.min(100, Math.max(2, v * 100))}%` }} /></span>
+                  <b>{f3(v)}</b>
+                </div>);
+            })}
+          </div>
+          <p className="muted" style={{ marginBottom: 0 }}>Шкала 0–1, выше — лучше. Все методы оценены на одних данных.</p>
+        </Card>
+        <Card title="Основные выводы">
+          <ol className="takeaways">
+            {takeaways.map((t, i) => <li key={i}><span className="n">{i + 1}</span><span>{t}</span></li>)}
+          </ol>
+        </Card>
+      </div>
+
+      <h2 className="section-title" style={{ marginTop: 28 }}>Основная оценка компетенций</h2>
+      <p className="section-sub">{s.assessment.cases} синтетических кейсов. Это проверка корректности, а не психометрическая калибровка.</p>
+      <div className="kpis">
+        <Kpi tone="mint" label="Точность грейда" value={f3(s.assessment.grade_accuracy)} sub="относительно ожиданий" />
+        <Kpi label="Стабильность вариантов" value={f3(s.assessment.variant_stability.identical_outcome_rate)} sub={`${s.assessment.variant_stability.pairs} пар, макс. Δ баллов ${f3(s.assessment.variant_stability.max_abs_score_diff)}`} />
+        <Kpi label="Расхождение > 1 подуровня" value={f3(s.assessment.disagreement_over_one_sublevel_rate)} sub="доля кейсов" />
+        <Kpi label="Детерминизм оценки" value={s.assessment.deterministic ? "Да" : "Нет"} sub="одинаковый вход → одинаковый результат" />
+      </div>
+      <div className="grid-2" style={{ alignItems: "start" }}>
+        <Card title="Разделение грейдов (AUC)">
+          <div className="chart">
+            {Object.entries(s.assessment.discrimination).map(([g, d]) => (
+              <div key={g} className="cbar hl"><span>{g}</span><span className="track"><span style={{ width: `${d.auc_knowers_vs_others * 100}%` }} /></span><b>{f3(d.auc_knowers_vs_others)}</b></div>
+            ))}
+          </div>
+        </Card>
+        <Card title="Случайно угадывающий проходит">
+          <div className="chart">
+            {Object.entries(s.assessment.guessing_baseline).map(([g, d]) => (
+              <div key={g} className="cbar"><span>{g} ({d.items} вопр.)</span><span className="track"><span style={{ width: `${Math.max(1, d.false_verification_rate * 100)}%` }} /></span><b>{(d.false_verification_rate * 100).toFixed(1)}%</b></div>
+            ))}
+          </div>
+          <p className="muted" style={{ marginBottom: 0 }}>Чем ниже, тем лучше: доля ложных подтверждений при случайных ответах.</p>
+        </Card>
+      </div>
+
+      <div style={{ marginTop: 24 }}>
+        <details className="acc">
+          <summary>Методология и данные</summary>
+          <p>Это MVP-валидация на собственном фиксированном наборе ({s.dataset.candidates} кандидатов, {s.dataset.needs} потребностей, разметка вручную), а не психометрическая калибровка. Организаторы не предоставили официальный датасет.</p>
+          <p>Все числа взяты из <code>artifacts/validation/latest.json</code>, который строится командой <code>python -m fsp_market.validation</code>. Размечено ячеек: {s.dataset.label_cells}, ненулевых оценок релевантности: {s.dataset.nonzero_labels}; порог релевантности: {s.dataset.relevant_threshold}.</p>
+          <p className="muted">{s.assessment.kind}</p>
+        </details>
+        <details className="acc">
+          <summary>Таблица метрик по методам</summary>
+          <table className="table"><thead><tr><th>Метод</th><th>P@3</th><th>P@5</th><th>R@10</th><th>nDCG@10</th><th>Нарушения ограничений в top-10</th></tr></thead><tbody>
+            {methods.map((k) => { const r = s.matching[k]; return (
+              <tr key={k}><td data-label="Метод">{NAMES[k]}</td><td data-label="P@3">{f3(r["p@3"])}</td><td data-label="P@5">{f3(r["p@5"])}</td><td data-label="R@10">{f3(r["r@10"])}</td><td data-label="nDCG@10">{f3(r["ndcg@10"])}</td><td data-label="Нарушения в top-10">{r["constraint_violations@10"]}/{r["returned@10"]}</td></tr>); })}
+          </tbody></table>
+        </details>
+        <details className="acc">
+          <summary>Ограничения ({s.limitations.length})</summary>
+          <ul>{s.limitations.map((l) => <li key={l}>{l}</li>)}</ul>
+        </details>
+      </div>
     </div>
   );
 }

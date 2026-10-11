@@ -3,8 +3,9 @@ import { api, type Session } from "./api";
 import { EmployerFit } from "./TeamFit";
 import type { Catalog, Fit, Invitation, MatchRow, Need, PublicCandidate } from "./types";
 import {
-  Badge, Card, ContactBox, Empty, ErrorBox, FitBlock, FORMAT_RU, GRADE_RU, Loading, SalaryBanner, salaryRange, SALARY_TYPE_RU, skillName,
+  Avatar, Badge, Card, ContactBox, Empty, ErrorBox, FitBlock, FORMAT_RU, GRADE_RU, Icon, Loading, PageHead, SalaryBanner, salaryRange, SALARY_TYPE_RU, skillName,
   STATUS_RU, VerificationBadge, subLabel, gradeLine, InviteBadge, OPEN_INVITE } from "./ui";
+import Shell, { type ShellCtx } from "./Shell";
 
 interface Detail extends PublicCandidate { compat?: { reverse_fit: number | null; why: { text: string }[]; gaps: { text: string }[] }; fit: Fit | null; contact_status: "LOCKED" | "UNLOCKED"; contacts?: { full_name: string; email: string; phone: string | null } }
 interface MatchResponse {
@@ -18,23 +19,89 @@ const EXCLUSION_RU: Record<string, string> = {
   AVAILABILITY_MISMATCH: "не готов выйти в срок", GRADE_UNKNOWN: "грейд не указан",
 };
 
-export default function EmployerApp({ session }: { session: Session }) {
-  const [tab, setTab] = useState<"match" | "pool" | "fit" | "invitations">("match");
+type Tab = "match" | "pool" | "fit" | "invitations";
+const TITLES: Record<Tab, [string, string]> = {
+  match: ["Подбор по потребности", "Опишите вакансию — получите короткий объяснимый список с Requirement Fit, причинами выбора и пробелами"],
+  pool: ["Поиск кандидатов", "Весь пул: фильтры по подтверждённому грейду, навыкам, формату и ожиданиям"],
+  fit: ["Избранное и рекомендации", "Сохранённые кандидаты, взаимное соответствие и профиль команды"],
+  invitations: ["Приглашения", "Отправленные предложения и их статусы"],
+};
+
+export default function EmployerApp({ session, shell }: { session: Session; shell: ShellCtx }) {
+  const [tab, setTab] = useState<Tab>("match");
+  const [company, setCompany] = useState("Работодатель");
   const [detail, setDetail] = useState<{ id: number; need: Need | null } | null>(null);
-  const open = (id: number, need: Need | null) => { setDetail({ id, need }); window.scrollTo?.({ top: 0 }); };
-  const tabs: [typeof tab, string][] = [["match", "Подбор по потребности"], ["pool", "Весь пул кандидатов"], ["fit", "Избранное и рекомендации"], ["invitations", "Отправленные приглашения"]];
+  useEffect(() => { api<{ company_name: string }>("/api/employers/me", { token: session.token }).then((m) => setCompany(m.company_name)).catch(() => undefined); }, [session.token]);
+  const open = (id: number, need: Need | null) => setDetail({ id, need });
+  const items = [
+    { key: "match", label: "Подбор", icon: "search" },
+    { key: "pool", label: "Поиск кандидатов", icon: "list" },
+    { key: "fit", label: "Избранное", icon: "star" },
+    { key: "invitations", label: "Приглашения", icon: "mail" },
+  ];
+  const [title, sub] = TITLES[tab];
   return (
-    <>
-      <h2 className="section-title">Кабинет работодателя</h2>
-      <nav className="tabs" aria-label="Работодатель">
-        {tabs.map(([k, l]) => <button key={k} className={tab === k ? "tab active" : "tab"} onClick={() => { setTab(k); setDetail(null); }}>{l}</button>)}
-      </nav>
-      {detail && <CandidatePanel session={session} id={detail.id} need={detail.need} close={() => setDetail(null)} />}
+    <Shell items={items} active={tab} onSelect={(k) => { setTab(k as Tab); setDetail(null); }} who={{ label: company, role: "Работодатель" }}
+      health={shell.health} demoMode={shell.demoMode} onLogout={shell.onLogout} onValidation={shell.onValidation}>
+      {shell.banners}
+      <PageHead title={title} sub={sub} />
+      {detail && (
+        <div className="drawer-scrim" onClick={(e) => { if (e.target === e.currentTarget) setDetail(null); }}>
+          <div className="drawer" role="dialog" aria-label="Карточка кандидата">
+            <CandidatePanel session={session} id={detail.id} need={detail.need} close={() => setDetail(null)} />
+          </div>
+        </div>
+      )}
       {tab === "match" && <MatchTab session={session} open={open} />}
       {tab === "pool" && <PoolTab session={session} open={(id) => open(id, null)} />}
       {tab === "fit" && <EmployerFit session={session} open={open} />}
       {tab === "invitations" && <SentTab session={session} open={(id) => open(id, null)} />}
-    </>
+    </Shell>
+  );
+}
+
+/** Favorite ids for the star toggle; the server is the source of truth. */
+function useFavorites(session: Session) {
+  const [ids, setIds] = useState<Set<number>>(new Set());
+  useEffect(() => {
+    api<{ items: { candidate: { candidate_id: number } }[] }>("/api/employer/favorites", { token: session.token })
+      .then((r) => setIds(new Set(r.items.map((i) => i.candidate.candidate_id)))).catch(() => undefined);
+  }, [session.token]);
+  const toggle = async (candidateId: number, needId: number | null) => {
+    const on = ids.has(candidateId);
+    try {
+      if (on) await api(`/api/employer/favorites/${candidateId}`, { method: "DELETE", token: session.token });
+      else await api("/api/employer/favorites", { token: session.token, body: { candidate_id: candidateId, need_id: needId, note: "" } });
+      setIds((p) => { const n = new Set(p); if (on) n.delete(candidateId); else n.add(candidateId); return n; });
+    } catch { /* the star stays as it was; the detail card shows the server message */ }
+  };
+  return { ids, toggle };
+}
+
+function CandidateRow({ c, fit, starred, onStar, onOpen, children }: {
+  c: PublicCandidate; fit?: number; starred: boolean; onStar: () => void; onOpen: () => void; children?: React.ReactNode;
+}) {
+  const verified = (c.skills ?? []).filter((s) => s.verified_level).slice(0, 4);
+  return (
+    <div className="cand">
+      <Avatar name={c.display_name} />
+      <div className="cand-main">
+        <div className="cand-name">{c.display_name}<VerificationBadge status={c.verification_status} /></div>
+        <div className="cand-meta">{gradeLine(c)}{c.location ? ` · ${c.location}` : ""}{c.salary_expectation ? ` · от ${c.salary_expectation.min.toLocaleString("ru-RU")} ₽ ${c.salary_expectation.type}` : ""}</div>
+        <div className="chips">
+          {verified.map((s) => <Badge key={s.skill} tone="ok">{skillName(s.skill)}: подтверждено</Badge>)}
+          {(c.work_experience ?? []).length > 0 && <Badge tone="muted">опыт: {c.work_experience!.length} (заявлен)</Badge>}
+          {c.has_fsp && <Badge tone="info">ФСП (демо)</Badge>}
+          <InviteBadge status={c.invitation_status} />
+        </div>
+      </div>
+      <div className="cand-actions">
+        {fit !== undefined && <div className="fit-pct"><b>{Math.round(fit * 100)}%</b><span>Requirement Fit</span></div>}
+        <button className="primary small" onClick={onOpen}>Открыть</button>
+        <button className={`star${starred ? " on" : ""}`} aria-pressed={starred} aria-label={starred ? "Убрать из избранного" : "В избранное"} title={starred ? "Убрать из избранного" : "В избранное"} onClick={onStar}><Icon name="star" size={16} /></button>
+      </div>
+      {children && <div className="cand-why">{children}</div>}
+    </div>
   );
 }
 
@@ -57,6 +124,7 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
   const [showAll, setShowAll] = useState(false);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const favs = useFavorites(session);
   const [f, setF] = useState({ title: "Python Backend (FastAPI)", grade: "MIDDLE", sub: "M2", req: ["api_fastapi", "postgresql"], opt: ["kafka", "docker_basics"],
     from: "200000", to: "250000", type: "GROSS", formats: ["REMOTE"], location: "", start: "", description: "Удалённая команда Python-бэкенда" });
   useEffect(() => {
@@ -109,35 +177,38 @@ function MatchTab({ session, open }: { session: Session; open: (id: number, need
           <label>Город (для офиса/гибрида)<input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} /></label>
           <label>Выход не позже, дней<input inputMode="numeric" value={f.start} onChange={(e) => setF({ ...f, start: e.target.value.replace(/\D/g, "") })} /></label>
         </div>
-        <button className="primary" disabled={busy || f.req.length === 0 || f.formats.length === 0} onClick={create}>Подобрать кандидатов</button>
+        <button className="primary large" style={{ width: "100%", marginTop: 8 }} disabled={busy || f.req.length === 0 || f.formats.length === 0} onClick={create}>Подобрать кандидатов</button>
         {needs.length > 0 && (
-          <div><h4>Ваши потребности</h4>{needs.map((n) => <button key={n.id} className="link" onClick={() => run(n)}>{n.title} · {salaryRange(n.salary_from, n.salary_to, n.salary_type)}</button>)}</div>
+          <div><h4>Ваши потребности</h4>{needs.map((n) => <button key={n.id} className="link" style={{ display: "block", textAlign: "left" }} onClick={() => run(n)}>{n.title} · {salaryRange(n.salary_from, n.salary_to, n.salary_type)}</button>)}</div>
         )}
         {err && <ErrorBox message={err} />}
       </Card>
-      <div>
+      <div className="stack">
         {busy && <Loading what="Подбираем" />}
         {!res && !busy && <Empty>Опишите потребность — получите небольшой объяснимый список кандидатов: почему подходит и какие пробелы.</Empty>}
         {res && need && (
           <>
             <Card title={`Подбор: ${need.title}`}>
               <p>Рассмотрено кандидатов: {res.candidates_considered}. Обязательные ограничения прошли: {res.matched_total}.</p>
-              <p className="row">Экспорт в ATS (без контактов):
-                <button className="link" onClick={() => void download(session, res.run_id, "csv")}>CSV</button>
-                <button className="link" onClick={() => void download(session, res.run_id, "json")}>JSON</button></p>
+              <div className="row" style={{ alignItems: "center", gap: 8 }}>
+                <span className="muted">Экспорт в ATS (без контактов):</span>
+                <button className="small" onClick={() => void download(session, res.run_id, "csv")}><Icon name="download" size={14} /> CSV</button>
+                <button className="small" onClick={() => void download(session, res.run_id, "json")}><Icon name="download" size={14} /> JSON</button>
+              </div>
               {Object.keys(res.excluded_summary).length > 0 && (
                 <details><summary>Отсеяно по обязательным ограничениям</summary>
                   <ul>{Object.entries(res.excluded_summary).map(([k, v]) => <li key={k}>{EXCLUSION_RU[k] ?? k}: {v}</li>)}</ul></details>)}
             </Card>
             {res.results.length === 0 && <Empty>Подходящих кандидатов нет. Попробуйте расширить вилку или формат работы.</Empty>}
-            {rows.map((r) => (
-              <Card key={r.candidate.candidate_id} title={`#${r.rank} ${r.candidate.display_name}`} aside={<VerificationBadge status={r.candidate.verification_status} />}>
-                <p className="muted">{gradeLine(r.candidate)}
-                  {r.candidate.has_fsp && <> · <Badge tone="info">достижения ФСП (демо-данные)</Badge></>} · <InviteBadge status={r.candidate.invitation_status} /></p>
-                <div className="chips">{(r.candidate.skills ?? []).filter((s) => s.verified_level).slice(0, 4).map((s) => <Badge key={s.skill} tone="ok">{skillName(s.skill)}: подтверждено</Badge>)}{(r.candidate.work_experience ?? []).length > 0 && <Badge tone="muted">опыт: {r.candidate.work_experience!.length} (заявлен)</Badge>}</div>
-                <FitBlock label={r.requirement_fit_label} fit={r.requirement_fit} why={r.why} gaps={r.gaps} />
-                <button className="primary" onClick={() => open(r.candidate.candidate_id, need)}>Открыть кандидата</button>
-              </Card>))}
+            <div className="rows">
+              {rows.map((r) => (
+                <CandidateRow key={r.candidate.candidate_id} c={r.candidate} fit={r.requirement_fit} starred={favs.ids.has(r.candidate.candidate_id)}
+                  onStar={() => void favs.toggle(r.candidate.candidate_id, need.id)} onOpen={() => open(r.candidate.candidate_id, need)}>
+                  <details><summary>Почему подходит и пробелы ({r.why.length + r.gaps.length})</summary>
+                    <FitBlock label={r.requirement_fit_label} fit={r.requirement_fit} why={r.why} gaps={r.gaps} />
+                  </details>
+                </CandidateRow>))}
+            </div>
             {!showAll && res.results.length > 5 && <button onClick={() => setShowAll(true)}>Показать ещё ({res.results.length - 5})</button>}
           </>
         )}
@@ -175,7 +246,7 @@ function CandidatePanel({ session, id, need, close }: { session: Session; id: nu
       {d.skills.length === 0 ? <Empty>Подтверждённых навыков нет.</Empty> : (
         <table className="table"><thead><tr><th>Навык</th><th>Подтверждение</th></tr></thead><tbody>
           {d.skills.map((s) => (
-            <tr key={s.skill}><td>{skillName(s.skill)}</td><td>
+            <tr key={s.skill}><td data-label="Навык">{skillName(s.skill)}</td><td data-label="Подтверждение">
               {s.verified_level ? <Badge tone="ok">подтверждено оценкой: {GRADE_RU[s.verified_level]}</Badge> : s.claimed_only ? <Badge tone="muted">только заявлено</Badge> : null}
               {s.has_professional_experience && <Badge tone="muted">опыт (не подтверждён)</Badge>}
               {s.fsp_achievements.map((a) => <Badge key={a} tone="info">ФСП (демо): {a}</Badge>)}</td></tr>))}
@@ -288,6 +359,9 @@ function PoolTab({ session, open }: { session: Session; open: (id: number) => vo
   const [q, setQ] = useState({ grade: "", sublevel: "", verification: "", skill: "", has_fsp: "", work_format: "", location: "", salary_max: "" });
   const [res, setRes] = useState<{ total: number; candidates: PublicCandidate[] } | null>(null);
   const [err, setErr] = useState("");
+  const [text, setText] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const favs = useFavorites(session);
   useEffect(() => { api<Catalog>("/api/catalog").then(setCatalog).catch((e: Error) => setErr(e.message)); }, []);
   const search = useCallback(() => {
     const p = new URLSearchParams({ limit: "100" });
@@ -297,32 +371,34 @@ function PoolTab({ session, open }: { session: Session; open: (id: number) => vo
   useEffect(search, [search]);
   const sel = (k: keyof typeof q, opts: [string, string][], label: string) => (
     <label>{label}<select value={q[k]} onChange={(e) => setQ({ ...q, [k]: e.target.value, ...(k === "grade" ? { sublevel: "" } : {}) })}><option value="">любой</option>{opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>);
+  const needle = text.trim().toLowerCase();
+  const shown = (res?.candidates ?? []).filter((c) => !needle || [c.display_name, c.specialization ?? "", c.location ?? "", ...(c.skills ?? []).map((s) => skillName(s.skill))].join(" ").toLowerCase().includes(needle));
+  const active = Object.values(q).filter(Boolean).length;
   return (
-    <div className="grid">
-      <Card title="Фильтры">
-        {sel("grade", Object.entries(GRADE_RU), "Подтверждённый грейд платформы")}
-        {sel("sublevel", (q.grade && catalog ? catalog.grades[q.grade] : ["J1", "J2", "J3", "M1", "M2", "M3", "S1", "S2", "S3"]).map((s) => [s, subLabel(s)]), "Подуровень (подтверждён тестом)")}
-        {sel("verification", [["VERIFIED", "Подтверждено"], ["NOT_VERIFIED", "Не подтверждено"], ["UNVERIFIED", "Оценка не пройдена"]], "Статус подтверждения")}
-        {catalog && sel("skill", catalog.skills.map((s) => [s.code, skillName(s.code, s.name)]), "Подтверждённый навык")}
-        {sel("has_fsp", [["true", "есть"], ["false", "нет"]], "Достижения ФСП")}
-        {sel("work_format", Object.entries(FORMAT_RU), "Формат работы")}
-        <label>Город<input value={q.location} onChange={(e) => setQ({ ...q, location: e.target.value })} /></label>
-        <label>Ожидания не выше, ₽<input inputMode="numeric" value={q.salary_max} onChange={(e) => setQ({ ...q, salary_max: e.target.value.replace(/\D/g, "") })} /></label>
-      </Card>
-      <div>
-        {err && <ErrorBox message={err} />}
-        {!res ? <Loading /> : (<>
-          <p className="muted">Найдено: {res.total}. Контакты кандидатов скрыты до их согласия (открытие контактов — только после принятия приглашения).</p>
-          {res.candidates.length === 0 && <Empty>По этим фильтрам никого нет.</Empty>}
-          {res.candidates.map((c) => (
-            <Card key={c.candidate_id} title={c.display_name} aside={<VerificationBadge status={c.verification_status} />}>
-              <p className="muted">{gradeLine(c)}
-                {c.has_fsp ? " · ФСП (демо)" : ""}{c.salary_expectation ? ` · от ${c.salary_expectation.min.toLocaleString("ru-RU")} ₽ ${c.salary_expectation.type}` : ""} · <InviteBadge status={c.invitation_status} /></p>
-              <div className="chips">{(c.skills ?? []).filter((s) => s.verified_level).slice(0, 4).map((s) => <Badge key={s.skill} tone="ok">{skillName(s.skill)}: подтверждено</Badge>)}{(c.work_experience ?? []).length > 0 && <Badge tone="muted">опыт: {c.work_experience!.length} (заявлен)</Badge>}</div>
-                <button onClick={() => open(c.candidate_id)}>Открыть</button>
-            </Card>))}
-        </>)}
+    <div>
+      <div className="search">
+        <input aria-label="Поиск по имени, навыкам, городу" placeholder="Поиск по имени, навыкам, городу…" value={text} onChange={(e) => setText(e.target.value)} />
+        <button onClick={() => setShowFilters(!showFilters)} aria-expanded={showFilters}><Icon name="filter" size={16} /> Фильтры{active > 0 ? ` (${active})` : ""}</button>
       </div>
+      {showFilters && (
+        <div className="filters">
+          {sel("grade", Object.entries(GRADE_RU), "Подтверждённый грейд платформы")}
+          {sel("sublevel", (q.grade && catalog ? catalog.grades[q.grade] : ["J1", "J2", "J3", "M1", "M2", "M3", "S1", "S2", "S3"]).map((s) => [s, subLabel(s)]), "Подуровень (подтверждён тестом)")}
+          {sel("verification", [["VERIFIED", "Подтверждено"], ["NOT_VERIFIED", "Не подтверждено"], ["UNVERIFIED", "Оценка не пройдена"]], "Статус подтверждения")}
+          {catalog && sel("skill", catalog.skills.map((s) => [s.code, skillName(s.code, s.name)]), "Подтверждённый навык")}
+          {sel("has_fsp", [["true", "есть"], ["false", "нет"]], "Достижения ФСП")}
+          {sel("work_format", Object.entries(FORMAT_RU), "Формат работы")}
+          <label>Город<input value={q.location} onChange={(e) => setQ({ ...q, location: e.target.value })} /></label>
+          <label>Ожидания не выше, ₽<input inputMode="numeric" value={q.salary_max} onChange={(e) => setQ({ ...q, salary_max: e.target.value.replace(/\D/g, "") })} /></label>
+        </div>)}
+      {err && <ErrorBox message={err} />}
+      {!res ? <Loading /> : (<>
+        <p className="muted">Найдено: {res.total}{needle ? ` · по запросу: ${shown.length}` : ""}. Контакты кандидатов скрыты до их согласия (открытие контактов — только после принятия приглашения).</p>
+        {shown.length === 0 ? <Empty>По этим фильтрам никого нет.</Empty> : (
+          <div className="rows">
+            {shown.map((c) => <CandidateRow key={c.candidate_id} c={c} starred={favs.ids.has(c.candidate_id)} onStar={() => void favs.toggle(c.candidate_id, null)} onOpen={() => open(c.candidate_id)} />)}
+          </div>)}
+      </>)}
     </div>
   );
 }
@@ -335,8 +411,8 @@ function SentTab({ session, open }: { session: Session; open: (id: number) => vo
   if (err) return <ErrorBox message={err} />;
   if (!list) return <Loading />;
   return (
-    <div>
-      <button onClick={load}>Обновить статусы</button>
+    <div className="stack">
+      <div><button onClick={load}>Обновить статусы</button></div>
       {list.length === 0 ? <Empty>Вы ещё не отправляли приглашений. Откройте кандидата из подбора и отправьте предложение с зарплатой.</Empty> : list.map((i) => (
         <Card key={i.id} title={`${i.candidate?.display_name ?? "Кандидат"} — ${i.role}`} aside={<Badge tone={i.status === "DECLINED" ? "bad" : i.contacts_unlocked ? "ok" : "info"}>{STATUS_RU[i.status]}</Badge>}>
           {i.candidate && <p className="muted">{gradeLine(i.candidate)}</p>}

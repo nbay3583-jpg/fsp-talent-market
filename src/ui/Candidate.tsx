@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, type Session } from "./api";
 import type { Catalog, Invitation } from "./types";
 import {
-  Badge, Card, Empty, ErrorBox, FORMAT_RU, GRADE_RU, Loading, SALARY_TYPE_RU, SalaryBanner, skillName, STATUS_RU, subLabel, VerificationBadge,
+  Badge, Card, Empty, ErrorBox, FORMAT_RU, GRADE_RU, Kpi, Loading, PageHead, SALARY_TYPE_RU, SalaryBanner, skillName, STATUS_RU, subLabel, VerificationBadge,
 } from "./ui";
-import { ContactBox } from "./ui";
 import { CandidateFit } from "./TeamFit";
+import Shell, { type ShellCtx } from "./Shell";
 
 interface Me {
   id: number; full_name: string; email: string; email_verified: boolean; phone: string | null; specialization: string | null;
@@ -47,25 +47,101 @@ const SOURCE_RU: Record<string, string> = {
   self_reported: "заявлено кандидатом", core_assessment: "создано тестом", fsp: "демо-данные ФСП", experience: "самоописанный опыт",
 };
 
-export default function CandidateApp({ session, demoMode }: { session: Session; demoMode: boolean }) {
-  const [tab, setTab] = useState<"profile" | "test" | "evidence" | "invitations" | "fit">("profile");
-  const tabs: [typeof tab, string][] = [
-    ["profile", "Профиль"], ["test", "Основная оценка"], ["evidence", "Профиль подтверждённых компетенций"], ["fit", "Рекомендации"], ["invitations", "Приглашения"],
+type Tab = "overview" | "evidence" | "test" | "fit" | "invitations" | "profile";
+const TITLES: Record<Tab, [string, string]> = {
+  overview: ["Обзор", "Грейд, подтверждённые навыки и новые приглашения"],
+  evidence: ["Evidence Profile", "Заявка → подтверждение: что подтверждено оценкой, а что только заявлено"],
+  test: ["Оценка навыков", "Core Assessment: подтверждение грейда J1–S3"],
+  fit: ["Рекомендации", "Подходящие вакансии, интересы и анкета предпочтений"],
+  invitations: ["Приглашения", "Предложения работодателей с зарплатной вилкой"],
+  profile: ["Настройки профиля", "Личные данные, предпочтения и опыт"],
+};
+const LADDER = ["J1", "J2", "J3", "M1", "M2", "M3", "S1", "S2", "S3"];
+
+export default function CandidateApp({ session, shell, demoMode }: { session: Session; shell: ShellCtx; demoMode?: boolean }) {
+  const [tab, setTab] = useState<Tab>("overview");
+  const [name, setName] = useState("Кандидат");
+  const [invs, setInvs] = useState<Invitation[] | null>(null);
+  const reloadInvs = useCallback(() => {
+    api<Invitation[]>("/api/candidates/me/invitations", { token: session.token }).then(setInvs).catch(() => setInvs([]));
+  }, [session.token]);
+  useEffect(() => {
+    api<Me>("/api/candidates/me", { token: session.token }).then((m) => setName(m.full_name)).catch(() => undefined);
+    reloadInvs();
+  }, [session.token, reloadInvs]);
+  const fresh = (invs ?? []).filter((i) => i.status === "SENT").length;
+  const items = [
+    { key: "overview", label: "Обзор", icon: "home" },
+    { key: "evidence", label: "Evidence Profile", icon: "shield" },
+    { key: "test", label: "Оценка навыков", icon: "check" },
+    { key: "fit", label: "Рекомендации", icon: "star" },
+    { key: "invitations", label: "Приглашения", icon: "mail", count: fresh },
+    { key: "profile", label: "Настройки", icon: "gear" },
   ];
+  const [title, sub] = TITLES[tab];
   return (
-    <>
-      <h2 className="section-title">Кабинет кандидата</h2>
-      <nav className="tabs" aria-label="Кандидат">
-        {tabs.map(([k, label]) => (
-          <button key={k} className={tab === k ? "tab active" : "tab"} onClick={() => setTab(k)}>{label}</button>
-        ))}
-      </nav>
+    <Shell items={items} active={tab} onSelect={(k) => setTab(k as Tab)} who={{ label: name, role: "Кандидат" }}
+      health={shell.health} demoMode={shell.demoMode} onLogout={shell.onLogout} onValidation={shell.onValidation}>
+      {shell.banners}
+      <PageHead title={title} sub={sub} />
+      {tab === "overview" && <OverviewTab session={session} invs={invs} go={setTab} />}
       {tab === "profile" && <ProfileTab session={session} />}
-      {tab === "test" && <AssessmentTab session={session} demoMode={demoMode} goEvidence={() => setTab("evidence")} />}
+      {tab === "test" && <AssessmentTab session={session} demoMode={demoMode ?? shell.demoMode} goEvidence={() => setTab("evidence")} />}
       {tab === "evidence" && <EvidenceTab session={session} />}
       {tab === "fit" && <CandidateFit session={session} />}
-      {tab === "invitations" && <InvitationsTab session={session} />}
-    </>
+      {tab === "invitations" && <InvitationsTab session={session} onChange={reloadInvs} />}
+    </Shell>
+  );
+}
+
+function OverviewTab({ session, invs, go }: { session: Session; invs: Invitation[] | null; go: (t: Tab) => void }) {
+  const [p, setP] = useState<Profile | null>(null);
+  const [err, setErr] = useState("");
+  useEffect(() => { api<Profile>("/api/candidates/me/profile", { token: session.token }).then(setP).catch((e: Error) => setErr(e.message)); }, [session.token]);
+  if (err) return <ErrorBox message={err} />;
+  if (!p) return <Loading what="Загружаем обзор" />;
+  const confirmed = p.skills.filter((s) => s.verified_level).length;
+  const fresh = (invs ?? []).filter((i) => i.status === "SENT").length;
+  const assessed = p.assessment !== null;
+  const status = p.verification_status === "VERIFIED" ? "Подтверждён" : p.verification_status === "NOT_VERIFIED" ? "Не подтверждён" : "Оценка не пройдена";
+  return (
+    <div className="stack">
+      <div className="kpis">
+        <Kpi tone="dark" label="Подтверждённый грейд" value={p.verified_sublevel ?? "—"} sub={p.verified_grade ? `${GRADE_RU[p.verified_grade]} · ${subLabel(p.verified_sublevel)}` : "пока не подтверждён"} />
+        <Kpi label="Заявленный грейд" value={p.claimed_grade ? GRADE_RU[p.claimed_grade] : "—"} sub={status} />
+        <Kpi tone="mint" label="Подтверждённые навыки" value={`${confirmed}`} sub={`из ${p.skills.length} в профиле`} />
+        <Kpi label="Приглашения" value={`${invs?.length ?? "…"}`} sub={fresh > 0 ? `новых: ${fresh}` : "новых нет"} />
+      </div>
+      <div className="grid-2">
+        <Card title="Навыки и технологии" aside={<button className="small" onClick={() => go("evidence")}>Evidence Profile</button>}>
+          {p.skills.length === 0 ? <Empty>Навыков пока нет. Пройдите оценку, чтобы они появились в профиле.</Empty> : (
+            <div className="skill-grid">
+              {p.skills.map((s) => (
+                <div key={s.skill} className={`skill-tile${s.verified_level ? " on" : ""}`}>
+                  <b>{skillName(s.skill, s.name)}</b>
+                  <span className="muted">{s.verified_level ? `подтверждено: ${GRADE_RU[s.verified_level]} ${subLabel(s.verified_sublevel)}` : "не подтверждено"}</span>
+                </div>))}
+            </div>)}
+        </Card>
+        <Card title="Core Assessment" aside={<VerificationBadge status={p.verification_status} />}>
+          {assessed ? (
+            <>
+              <p className="muted" style={{ marginTop: 0 }}>Последняя оценка: {GRADE_RU[p.assessment!.target_grade]} · {Math.round(p.assessment!.score * 100)}% правильных ответов</p>
+              <div className="progress" aria-hidden="true"><span style={{ width: `${Math.round(p.assessment!.score * 100)}%` }} /></div>
+            </>
+          ) : <p className="muted" style={{ marginTop: 0 }}>Оценка ещё не пройдена. Без неё работодатели видят грейд как заявленный, а не подтверждённый.</p>}
+          <button className="primary" onClick={() => go("test")}>{assessed ? "Пройти ещё раз / другой грейд" : "Пройти оценку"}</button>
+        </Card>
+      </div>
+      <Card title="Последние приглашения" aside={invs && invs.length > 0 ? <button className="small" onClick={() => go("invitations")}>Все приглашения</button> : undefined}>
+        {!invs ? <Loading /> : invs.length === 0 ? <Empty>Приглашений пока нет. Работодатели находят вас по подтверждённым навыкам и пишут адресно — с зарплатой.</Empty> :
+          invs.slice(0, 3).map((i) => (
+            <div className="invite-row" key={i.id}>
+              <div><b>{i.company}</b><div className="muted">{i.role} · {i.salary_from.toLocaleString("ru-RU")}–{i.salary_to.toLocaleString("ru-RU")} ₽ {i.salary_type}</div></div>
+              <Badge tone={i.status === "DECLINED" ? "bad" : i.status === "SENT" || i.status === "VIEWED" ? "info" : "ok"}>{STATUS_RU[i.status] ?? i.status}</Badge>
+            </div>))}
+      </Card>
+    </div>
   );
 }
 
@@ -192,7 +268,7 @@ function ProfileTab({ session }: { session: Session }) {
     } catch (e) { setErr((e as Error).message); }
   };
   return (
-    <div className="grid">
+    <div className="grid-2" style={{ alignItems: "start" }}>
       <Card title="Кандидат" aside={<VerificationBadge status={me.verification_status} />}>
         <p className="muted">Заявленный грейд — это заявка. Подтверждённый грейд платформы определяет только основная оценка компетенций: не резюме, не достижения ФСП и не вакансия.</p>
         <label>Имя<input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} /></label>
@@ -215,7 +291,6 @@ function ProfileTab({ session }: { session: Session }) {
           ? <p className="warn">Для этой специализации тестирование ещё не реализовано: профиль сохранится, но подтвердить грейд можно только по Backend / Python.</p>
           : <p className="muted">Полная оценка реализована для Backend / Python.</p>}
       </Card>
-      <ExperienceCard session={session} skills={catalog.skills} />
       <Card title="Предпочтения для подбора">
         <div className="row">
           <label>Минимальная зарплата, ₽<input inputMode="numeric" value={form.salary_min} onChange={(e) => set("salary_min", e.target.value.replace(/\D/g, ""))} /></label>
@@ -236,6 +311,7 @@ function ProfileTab({ session }: { session: Session }) {
         {saved && <p className="ok" role="status">Сохранено</p>}
         {err && <ErrorBox message={err} />}
       </Card>
+      <div style={{ gridColumn: "1 / -1" }}><ExperienceCard session={session} skills={catalog.skills} /></div>
     </div>
   );
 }
@@ -298,10 +374,13 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
     );
   }
   const done = attempt.tasks.every((t) => { const a = answers[t.variant_id]; return Array.isArray(a) ? a.length > 0 : !!a; });
+  const answered = attempt.tasks.filter((t) => { const a = answers[t.variant_id]; return Array.isArray(a) ? a.length > 0 : !!a; }).length;
   const mm = String(Math.floor(left / 60)).padStart(2, "0"), ss = String(left % 60).padStart(2, "0");
   return (
     <div>
       <Card title={`Оценка ${GRADE_RU[attempt.target_grade]} · ${attempt.tasks.length} заданий`} aside={<span className={left <= 60 ? "bad" : "muted"} role="timer">Осталось {mm}:{ss}</span>}>
+        <p className="muted" style={{ margin: 0 }}>Отвечено: {answered} из {attempt.tasks.length}</p>
+        <div className="progress" aria-hidden="true"><span style={{ width: `${Math.round((answered / Math.max(1, attempt.tasks.length)) * 100)}%` }} /></div>
         {demoMode && <button onClick={fillReference}>Демо: заполнить эталонными ответами</button>}
       </Card>
       {attempt.tasks.map((t, i) => (
@@ -322,9 +401,11 @@ function AssessmentTab({ session, demoMode, goEvidence }: { session: Session; de
           ))}
         </Card>
       ))}
-      <button className="primary" disabled={!done || busy} onClick={submit}>Отправить ответы</button>
-      {!done && <p className="muted">Ответьте на все задания, чтобы отправить ответы. Ответы сохраняются автоматически; по истечении времени отправятся сохранённые.</p>}
-      {err && <ErrorBox message={err} />}
+      <div className="sticky-submit">
+        <button className="primary large" disabled={!done || busy} onClick={submit}>Отправить ответы</button>
+        {!done && <p className="muted" style={{ margin: "8px 0 0" }}>Ответьте на все задания, чтобы отправить ответы. Ответы сохраняются автоматически; по истечении времени отправятся сохранённые.</p>}
+        {err && <ErrorBox message={err} />}
+      </div>
     </div>
   );
 }
@@ -343,7 +424,7 @@ function ResultCard({ result, goEvidence, again }: { result: Result; goEvidence:
         </p>
       )}
       <table className="table"><thead><tr><th>Компетенция</th><th>Результат</th></tr></thead>
-        <tbody>{Object.entries(result.competency_scores).map(([k, v]) => <tr key={k}><td>{skillName(k)}</td><td>{Math.round(v * 100)}%</td></tr>)}</tbody></table>
+        <tbody>{Object.entries(result.competency_scores).map(([k, v]) => <tr key={k}><td data-label="Компетенция">{skillName(k)}</td><td data-label="Результат">{Math.round(v * 100)}%</td></tr>)}</tbody></table>
       <div className="row"><button className="primary" onClick={goEvidence}>Открыть профиль подтверждённых компетенций</button><button onClick={again}>Закрыть</button></div>
     </Card>
   );
@@ -375,6 +456,9 @@ function EvidenceTab({ session }: { session: Session }) {
           {p.verified_grade && <> · <Badge tone="ok">подтверждено: {GRADE_RU[p.verified_grade]} {subLabel(p.verified_sublevel)}</Badge></>}</p>
         {p.verification_status === "NOT_VERIFIED" && <p>Заявленный грейд не подтверждён. Он сохранён — платформа не заменяет его более низким.</p>}
         {p.verification_status === "UNVERIFIED" && <p className="muted">Пройдите основную оценку компетенций, чтобы подтвердить грейд.</p>}
+        <div className="chips" aria-label="Шкала грейдов J1–S3">
+          {LADDER.map((l) => <Badge key={l} tone={l === p.verified_sublevel ? "brand" : "muted"}>{l}</Badge>)}
+        </div>
         <p className="muted">Здесь нет единого «рейтинга кандидата»: только заявки и то, чем они подтверждены.</p>
       </Card>
       {p.skills.length === 0 ? <Empty>Подтверждённых навыков пока нет. Заявки без подтверждения ничего не меняют.</Empty> : (
@@ -382,12 +466,12 @@ function EvidenceTab({ session }: { session: Session }) {
           <table className="table"><thead><tr><th>Навык</th><th>Заявка</th><th>Подтверждение</th><th>Подтверждённый грейд платформы</th></tr></thead>
             <tbody>{p.skills.map((s) => (
               <tr key={s.skill}>
-                <td><b>{skillName(s.skill, s.name)}</b></td>
-                <td>{s.claimed_level ? GRADE_RU[s.claimed_level] : "—"}<br /><span className="muted">{SOURCE_RU[s.claim_source] ?? s.claim_source}</span></td>
-                <td>{s.evidence.length === 0 ? <span className="muted">нет подтверждений</span> : s.evidence.map((e, i) => (
+                <td data-label="Навык"><b>{skillName(s.skill, s.name)}</b></td>
+                <td data-label="Заявка">{s.claimed_level ? GRADE_RU[s.claimed_level] : "—"}<br /><span className="muted">{SOURCE_RU[s.claim_source] ?? s.claim_source}</span></td>
+                <td data-label="Подтверждение">{s.evidence.length === 0 ? <span className="muted">нет подтверждений</span> : s.evidence.map((e, i) => (
                   <div key={i}><Badge tone={e.type === "FSP_ACHIEVEMENT" ? "info" : e.confirmed ? "ok" : "muted"}>{e.type === "FSP_ACHIEVEMENT" ? "Демо-данные ФСП" : e.type === "CORE_ASSESSMENT" || e.type === "TECHNOLOGY_ASSESSMENT" ? (e.confirmed ? "Подтверждено тестом" : "Не подтверждено тестом") : e.confirmed ? "Подтверждено" : "Не подтверждено"}</Badge> {EVIDENCE_RU[e.type] ?? e.type}{e.title ? ` · ${e.title}` : ""}</div>
                 ))}</td>
-                <td>{s.verified_level ? <Badge tone="ok">{GRADE_RU[s.verified_level]} {subLabel(s.verified_sublevel)}</Badge> : <Badge tone="muted">не подтверждён</Badge>}</td>
+                <td data-label="Подтверждённый грейд платформы">{s.verified_level ? <Badge tone="ok">{GRADE_RU[s.verified_level]} {subLabel(s.verified_sublevel)}</Badge> : <Badge tone="muted">не подтверждён</Badge>}</td>
               </tr>))}</tbody></table>
         </Card>
       )}
@@ -406,13 +490,13 @@ function EvidenceTab({ session }: { session: Session }) {
   );
 }
 
-function InvitationsTab({ session }: { session: Session }) {
+function InvitationsTab({ session, onChange }: { session: Session; onChange: () => void }) {
   const [list, setList] = useState<Invitation[] | null>(null);
   const [open, setOpen] = useState<Invitation | null>(null);
   const [err, setErr] = useState("");
   const load = useCallback(() => {
-    api<Invitation[]>("/api/candidates/me/invitations", { token: session.token }).then(setList).catch((e: Error) => setErr(e.message));
-  }, [session.token]);
+    api<Invitation[]>("/api/candidates/me/invitations", { token: session.token }).then((l) => { setList(l); onChange(); }).catch((e: Error) => setErr(e.message));
+  }, [session.token, onChange]);
   useEffect(load, [load]);
   const view = async (id: number) => { setOpen(await api<Invitation>(`/api/candidates/me/invitations/${id}`, { token: session.token })); load(); };
   const respond = async (id: number, action: "accept" | "decline") => {
@@ -423,7 +507,7 @@ function InvitationsTab({ session }: { session: Session }) {
   if (!list) return <Loading what="Загружаем приглашения" />;
   return (
     <div className="grid">
-      <div>
+      <div className="stack">
         {list.length === 0 ? <Empty>Приглашений пока нет. Работодатели находят вас по подтверждённым навыкам и пишут адресно — с зарплатой.</Empty> :
           list.map((i) => (
             <Card key={i.id} title={`${i.company} — ${i.role}`} aside={<Badge tone={i.status === "DECLINED" ? "bad" : i.status.startsWith("ACC") || i.status === "CONTACTS_UNLOCKED" ? "ok" : "info"}>{STATUS_RU[i.status]}</Badge>}>
