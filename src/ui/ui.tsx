@@ -163,6 +163,7 @@ const ICONS: Record<string, string> = {
   shield: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3zM9 12l2 2 4-4",
   mail: "M3 6h18v12H3zM3 7l9 6 9-6",
   chat: "M4 5h16v11H9l-5 4z",
+  assistant: "M7.9 20A9 9 0 104 16.1L2 22zM8.5 12h.01M12 12h.01M15.5 12h.01",
   search: "M11 18a7 7 0 110-14 7 7 0 010 14zM21 21l-5-5",
   star: "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z",
   list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",

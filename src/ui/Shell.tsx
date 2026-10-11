@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { setAssistantPage } from "./assistantContext";
 import { Avatar, Icon, Logo } from "./ui";
 
 export interface NavItem { key: string; label: string; icon: string; count?: number }
@@ -25,6 +26,7 @@ const HEALTH_RU = { checking: "Проверка системы…", ok: "Сис�
 /** Light cabinet frame: compact sidebar on desktop, drawer + top bar on mobile. */
 export default function Shell(p: ShellProps) {
   const [open, setOpen] = useState(false);
+  useEffect(() => { setAssistantPage(p.active); return () => setAssistantPage(null); }, [p.active]);
   const pick = (k: string) => { p.onSelect(k); setOpen(false); };
   return (
     <div className="cabinet">
