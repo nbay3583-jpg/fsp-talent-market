@@ -570,3 +570,20 @@ button.assistant-fab.hidden { opacity: 0; pointer-events: none; transform: scale
 .comp-bar.empty .progress { opacity: .45; }
 .comp-caveat { margin: 12px 0 0; font-size: 13px; }
 .why li.partial { color: var(--muted, #667); }
+
+/* ---------- Python practice ---------- */
+.code-editor { position: relative; border: 1px solid var(--line-strong, #cfd8d6); border-radius: var(--radius-control, 10px); background: #fbfcfc; height: 280px; overflow: hidden; }
+.code-editor pre, .code-editor textarea { position: absolute; inset: 0; margin: 0; padding: 12px 14px; font: 13.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; tab-size: 4; white-space: pre; overflow: auto; border: 0; box-sizing: border-box; }
+.code-editor pre { pointer-events: none; color: var(--ink, #16201f); }
+.code-editor textarea { background: transparent; color: transparent; caret-color: var(--ink, #16201f); resize: none; outline: none; width: 100%; height: 100%; }
+.code-editor:focus-within { outline: 3px solid var(--mint-300, #8fd3c5); outline-offset: 1px; }
+.tok-k { color: #0b6b5d; font-weight: 600; } .tok-s { color: #a14a00; } .tok-c { color: #6b7b78; font-style: italic; } .tok-n { color: #6a3fb5; } .tok-b { color: #1f5fa8; }
+.code-meta { font-size: 12.5px; margin-top: 6px; }
+.custom-input { display: grid; gap: 6px; margin-top: 12px; font-size: 13.5px; }
+.env-state { font-size: 13px; color: var(--muted, #667); } .env-state.ready { color: var(--mint-700, #0b6b5d); } .env-state.error { color: #b3261e; }
+.test-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.test-list li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 8px 10px; border-radius: 10px; background: var(--soft, #f2f6f5); }
+.test-list li.t-passed .t-mark { color: #0b6b5d; } .test-list li.t-failed, .test-list li.t-error { background: #fdf1ee; } .test-list li.t-failed .t-mark, .test-list li.t-error .t-mark { color: #b3261e; }
+.test-list small { display: block; color: var(--muted, #667); font-size: 12.5px; overflow-wrap: anywhere; }
+.code-out { background: #101817; color: #e6f2ef; padding: 10px 12px; border-radius: 10px; overflow: auto; max-height: 220px; font-size: 13px; }
+@media (max-width: 560px) { .code-editor { height: 240px; } .code-editor pre, .code-editor textarea { font-size: 12.5px; } }

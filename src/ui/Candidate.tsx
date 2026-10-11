@@ -5,6 +5,7 @@ import {
   Badge, Card, CompanyMark, Empty, ErrorBox, FORMAT_RU, GRADE_RU, Icon, Kpi, LevelMeter, Loading, PageHead, Ring, SALARY_TYPE_RU, SalaryBanner, skillName, STATUS_RU, subLabel, VerificationBadge, money,
 } from "./ui";
 import { CandidateFit } from "./TeamFit";
+import PythonPractice from "./PythonPractice";
 import Shell, { type ShellCtx } from "./Shell";
 
 interface Me {
@@ -56,11 +57,12 @@ const SOURCE_RU: Record<string, string> = {
   self_reported: "заявлено кандидатом", core_assessment: "создано тестом", technology_exam: "создано экзаменом по технологии", fsp: "демо-данные ФСП", experience: "самоописанный опыт",
 };
 
-type Tab = "overview" | "evidence" | "test" | "fit" | "invitations" | "profile";
+type Tab = "overview" | "evidence" | "test" | "practice" | "fit" | "invitations" | "profile";
 const TITLES: Record<Tab, [string, string]> = {
   overview: ["Обзор", "Грейд, подтверждённые навыки и новые приглашения"],
   evidence: ["Профиль подтверждённых компетенций", "Заявка → подтверждение: что подтверждено оценкой, а что только заявлено"],
   test: ["Оценка навыков", "Основная оценка: подтверждение грейда J1–S3"],
+  practice: ["Практика Python", "Небольшая задача с автоматическими проверками в браузере"],
   fit: ["Рекомендации", "Подходящие вакансии, интересы и анкета предпочтений"],
   invitations: ["Приглашения", "Предложения работодателей с зарплатной вилкой"],
   profile: ["Настройки профиля", "Личные данные, предпочтения и опыт"],
@@ -87,6 +89,7 @@ export default function CandidateApp({ session, shell, demoMode }: { session: Se
     { key: "overview", label: "Обзор", icon: "home" },
     { key: "evidence", label: "Мои компетенции", icon: "shield" },
     { key: "test", label: "Оценка навыков", icon: "check" },
+    { key: "practice", label: "Практика Python", icon: "bolt" },
     { key: "fit", label: "Рекомендации", icon: "star" },
     { key: "invitations", label: "Приглашения", icon: "mail", count: fresh },
     { key: "profile", label: "Настройки", icon: "gear" },
@@ -115,6 +118,7 @@ export default function CandidateApp({ session, shell, demoMode }: { session: Se
       {tab === "overview" && <OverviewTab session={session} invs={invs} go={setTab} />}
       {tab === "profile" && <ProfileTab session={session} />}
       {tab === "test" && <AssessmentTab session={session} demoMode={demoMode ?? shell.demoMode} goEvidence={() => setTab("evidence")} />}
+      {tab === "practice" && <PythonPractice />}
       {tab === "evidence" && <EvidenceTab session={session} />}
       {tab === "fit" && <CandidateFit session={session} go={(t) => setTab(t as Tab)} />}
       {tab === "invitations" && <InvitationsTab session={session} onChange={reloadInvs} go={setTab} />}

@@ -15,3 +15,4 @@ build/
 *.sqlite*
 pgdata/
 .DS_Store
+src/ui/public/sandbox/pyodide/
