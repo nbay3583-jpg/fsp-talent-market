@@ -31,3 +31,6 @@ The VPS tree `/opt/fsp-talent-market` is not a git checkout (`DEPLOYED_SHA` mark
 (run from the Mac with `DEPLOY_CONFIRM=yes`): `git archive HEAD` → rsync to `/opt/fsp-release-<sha>` → as root on the host: pg_dump -Fc + code tarball into `/opt/fsp-backups`,
 rsync into `/opt/fsp-talent-market` (keeps `.env*`, `docker-compose.deploy.yml`), rebuild backend+frontend only, wait for `/health` and `alembic current = 0010`,
 automatic code-only rollback from the tarball on failure. `.env.deploy` is root-only, hence the SSH host `marakand-prod` (root) rather than `hermes-prod-nl` (deploy).
+
+Preflight (read-only, changes nothing on the server, validates a live `pg_dump | pg_restore --list` stream): `DEPLOY_PREFLIGHT=1 ./scripts/deploy-vps.sh`.
+Rollback is additive: the previous release tarball is rsynced back over the tree (no `--delete`, no bulk removal); the 0010 migration file stays so old code still starts against a 0010 schema.
