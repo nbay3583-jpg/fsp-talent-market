@@ -1,4 +1,8 @@
-# Core Assessment mechanics (Backend / Python)
+# Assessment mechanics (Backend / Python; separate technology exams)
+
+> Release note (11 October 2026): **Core 17 tasks** for new attempts; independent **FastAPI** and **PostgreSQL** exams use the same engine (10 tasks each per grade). Tech exam results create separate skill evidence and do **not** change the Core grade. Newly added families have only 2 variants, and their question banks have not received independent expert fact-checking. The separate Pyodide Python Practice is a browser self-test, not evidence of a verified grade.
+
+## Core Assessment mechanics (Backend / Python)
 
 The Core Assessment is the **only** source of the platform grade.
 
@@ -12,7 +16,7 @@ The Core Assessment is the **only** source of the platform grade.
 - **Task Variant** is a concrete instance: prompt, options, `seed`, expected behaviour, scoring contract, `is_anchor`.
 - Variants of one family change domain, schema, endpoint, numbers or scenario; they keep competency, difficulty, rubric dimensions and scoring contract. Rendering is a pure function (`assessments/variants.py`): same template + preset + seed ⇒ same variant.
 
-Seed content (rubric `backend-core-2026.10.2`): six competencies (Python, SQL, API/FastAPI, Testing, Docker basics, System thinking), **11 task families per grade** (33 total), 6–10 verified presets (variants) per family; 11 tasks per attempt (time limits 15 / 19 / 23 min for Junior / Middle / Senior). Formats used: code reading, SQL reasoning, API reasoning, deterministic/rubric questions (single choice). No arbitrary code execution.
+Core has six competencies (Python, SQL, API/FastAPI, Testing, Docker basics, System thinking). The original composition had **11 families per grade**; after the October 11 additive expansion **new attempts have 17 tasks**. Historical attempts and the legacy validation may retain 11-task composition. Original families had 6–10 presets; the added families have 2 alternatives per new slot. Time limits are 15 / 19 / 23 min for Junior / Middle / Senior. Formats used: code reading, SQL reasoning, API reasoning, deterministic/rubric questions (single choice). No arbitrary code execution.
 
 ## Flow and scoring
 
