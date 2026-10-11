@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Safe update of the EXISTING FSP VPS deployment (migration 0010). Run from the Mac, repo root:
+# Safe update of the EXISTING FSP VPS deployment (migration 0011). Run from the Mac, repo root:
 #   DEPLOY_PREFLIGHT=1 ./scripts/deploy-vps.sh      # read-only checks on the server, changes nothing
 #   DEPLOY_CONFIRM=yes ./scripts/deploy-vps.sh      # real deploy
 # Source = `git archive HEAD` (tracked files only), delivered by rsync. Touches only the compose project
@@ -96,16 +96,16 @@ ls -la "$DUMP" "$CODE"
 sync_code() {  # $1 = source dir; additive only (no --delete); env, compose file and DEPLOYED_SHA are never touched
   rsync -a --chown=deploy:deploy --exclude='.env*' --exclude='docker-compose.deploy.yml' --exclude=DEPLOYED_SHA "$1"/ "$APP"/
 }
-healthy() {  # backend answers and DB is at 0010
+healthy() {  # backend answers and DB is at 0011
   for _ in $(seq 1 40); do
     if curl -fsS http://127.0.0.1:8720/health >/dev/null 2>&1 \
-       && [ "$($DC exec -T backend alembic current 2>/dev/null | tail -1 | cut -c1-4)" = "0010" ]; then return 0; fi
+       && [ "$($DC exec -T backend alembic current 2>/dev/null | tail -1 | cut -c1-4)" = "0011" ]; then return 0; fi
     sleep 3
   done
   return 1
 }
 rollback() {
-  echo "!! rolling back APP CODE only (schema stays at 0010 - old code works with it; data untouched; no files deleted)"
+  echo "!! rolling back APP CODE only (schema stays at 0011, additive nullable column - old code works with it; data untouched; no files deleted)"
   local prev; prev=$(mktemp -d /opt/fsp-rollback-XXXXXX)
   tar xzf "$CODE" -C "$prev"
   sync_code "$prev"

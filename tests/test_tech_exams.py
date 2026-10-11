@@ -112,3 +112,14 @@ def test_core_attempts_do_not_see_exam_history(session):
     _take(session, Grade.JUNIOR, False, exam="fastapi")
     attempt = start_attempt(session, 1, Grade.JUNIOR, now=T0)  # no cooldown from the exam
     assert session.get(AssessmentAttempt, attempt.id).exam_code is None
+
+
+def test_exam_skill_reaches_matching_facts_once(session):
+    from fsp_market.matching.facts import load_candidate_facts
+
+    _take(session, Grade.MIDDLE, True, exam="postgresql")
+    cand = session.get(Candidate, 1)
+    facts = load_candidate_facts(session, [cand])[1]
+    sk = facts.skills["postgresql"]
+    assert sk.verified_level == Grade.MIDDLE and not sk.experience and not sk.fsp_titles
+    assert facts.verification_status == VerificationStatus.UNVERIFIED  # overall grade untouched
