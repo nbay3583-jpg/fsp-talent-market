@@ -90,6 +90,9 @@ export function Empty({ children, icon, title, action, compact }: { children: Re
   );
 }
 
+/** Основания «почему подходит», которые платформа НЕ подтверждала: частичное совпадение по заявленному опыту, не галочка. */
+const UNCONFIRMED_WHY = new Set(["SKILL_EXPERIENCE", "CONTEXT_FIT", "CONTEXT_TASKS"]);
+
 export function FitBlock({ label, fit, why, gaps }: { label: string; fit: number; why: Reason[]; gaps: Reason[] }) {
   const pct = Math.round(fit * 100);
   return (
@@ -107,7 +110,7 @@ export function FitBlock({ label, fit, why, gaps }: { label: string; fit: number
           {why.length === 0 && <p className="muted">Нет подтверждённых оснований</p>}
           <ul className="why">
             {why.map((r, i) => (
-              <li key={`${r.code}-${i}`} title={r.code}>✓ {localizeReason(r)}</li>
+              <li key={`${r.code}-${i}`} className={UNCONFIRMED_WHY.has(r.code) ? "partial" : undefined}>{UNCONFIRMED_WHY.has(r.code) ? "◐ " : "✓ "}{localizeReason(r)}</li>
             ))}
           </ul>
         </div>
@@ -116,7 +119,7 @@ export function FitBlock({ label, fit, why, gaps }: { label: string; fit: number
           {gaps.length === 0 && <p className="muted">Пробелов не обнаружено</p>}
           <ul className="gaps">
             {gaps.map((r, i) => (
-              <li key={`${r.code}-${i}`} title={r.code}>△ {localizeReason(r)}</li>
+              <li key={`${r.code}-${i}`}>△ {localizeReason(r)}</li>
             ))}
           </ul>
         </div>

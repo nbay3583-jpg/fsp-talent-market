@@ -303,6 +303,7 @@ function CandidatePanel({ session, id, need, close }: { session: Session; id: nu
               {s.has_professional_experience && <Badge tone="muted">опыт (не подтверждён)</Badge>}
               {s.fsp_achievements.map((a) => <Badge key={a} tone="info">ФСП (демо): {a}</Badge>)}</td></tr>))}
         </tbody></table>)}
+      {d.skills.length > 0 && <p className="muted" style={{ fontSize: 13 }}>«Результат оценки» — диагностика внутри комплексной оценки платформы, а не независимая сертификация технологии. «Опыт» и «только заявлено» платформой не проверялись.</p>}
       {d.work_experience && d.work_experience.length > 0 && (
         <>
           <h4>Заявленный опыт работы <Badge tone="muted">не подтверждён</Badge></h4>

@@ -154,6 +154,17 @@ def _freshness(latest: datetime | None, now: datetime, policy: MatchingPolicy) -
     return round(1.0 - (age - policy.freshness_full_days) / span, 4)
 
 
+# display names for reason texts only (never used in scoring)
+_SKILL_RU = {"python": "Python", "sql": "SQL", "api_fastapi": "API / FastAPI", "testing": "Тестирование",
+             "docker_basics": "Основы Docker", "system_thinking": "Системное мышление", "postgresql": "PostgreSQL", "kafka": "Kafka"}
+_FORMAT_RU = {"REMOTE": "удалённо", "OFFICE": "офис", "HYBRID": "гибрид"}
+_SALARY_RU = {"GROSS": "до налогов", "NET": "на руки"}
+_GRADE_RU = {"JUNIOR": "Junior", "MIDDLE": "Middle", "SENIOR": "Senior"}
+
+
+def _ru(code: str) -> str:
+    return _SKILL_RU.get(code, code)
+
 _WORD = re.compile(r"[a-zа-яё0-9+#.]{4,}", re.IGNORECASE)
 _STOP = frozenset(
     ["this", "that", "with", "from", "have", "will", "your", "about", "работа", "работы", "работать", "требуется", "ищем", "нужен", "опыт", "опыта", "опытом", "знание", "знания", "умение", "навыки", "компания", "команда", "разработчик", "разработка", "backend", "python", "developer", "engineer", "middle", "junior", "senior", "senior"]
@@ -189,7 +200,7 @@ def context_fit(need: NeedSpec, c: CandidateFacts, now: datetime) -> tuple[float
             Reason(
                 "CONTEXT_FIT",
                 f"В заявленном опыте («{job.position}», {job.company}) совпадают технологии "
-                f"вакансии: {', '.join(sorted(s.code for s in hit))} — не подтверждено платформой",
+                f"вакансии: {', '.join(sorted(_ru(s.code) for s in hit))} — не подтверждено платформой",
             )
         )
     if shared:
@@ -233,15 +244,15 @@ def requirement_fit(
         why.append(
             Reason(
                 "GRADE_VERIFIED",
-                f"Подтверждён уровень Backend {c.verified_grade} ({c.verified_sublevel}) "
+                f"Подтверждён уровень Backend {_GRADE_RU.get(str(c.verified_grade), c.verified_grade)} ({c.verified_sublevel}) "
                 "по основному тестированию",
             )
         )
     else:
         assessment = 0.0
-        claimed = c.claimed_grade or "не указан"
+        claimed = _GRADE_RU.get(str(c.claimed_grade), "не указан")
         status = (
-            "не подтверждён (NOT VERIFIED)"
+            "не подтверждён тестом"
             if c.verification_status == VerificationStatus.NOT_VERIFIED
             else "ещё не проверялся"
         )
@@ -259,14 +270,14 @@ def requirement_fit(
             if GRADE_RANK[f.verified_level] >= GRADE_RANK[need.target_grade]:
                 cov += spec.weight
                 why.append(
-                    Reason("SKILL_VERIFIED", f"{spec.code}: навык подтверждён ({tag})", spec.code)
+                    Reason("SKILL_VERIFIED", f"{_ru(spec.code)}: навык подтверждён ({tag})", spec.code)
                 )
             else:
                 cov += spec.weight * policy.skill_credit_below_target
                 gaps.append(
                     Reason(
                         "SKILL_BELOW_TARGET",
-                        f"{spec.code}: подтверждён уровень {f.verified_level}, ниже целевого "
+                        f"{_ru(spec.code)}: подтверждён уровень {f.verified_level}, ниже целевого "
                         f"{need.target_grade} ({tag})",
                         spec.code,
                     )
@@ -276,14 +287,14 @@ def requirement_fit(
             why.append(
                 Reason(
                     "SKILL_EXPERIENCE",
-                    f"{spec.code}: заявлен опыт, не подтверждён ({tag})",
+                    f"{_ru(spec.code)}: заявлен опыт, не подтверждён ({tag})",
                     spec.code,
                 )
             )
             gaps.append(
                 Reason(
                     "WEAK_EVIDENCE",
-                    f"{spec.code}: не подтверждён — опыт из резюме платформа не проверяла",
+                    f"{_ru(spec.code)}: не подтверждён — опыт из резюме платформа не проверяла",
                     spec.code,
                 )
             )
@@ -291,13 +302,13 @@ def requirement_fit(
             gaps.append(
                 Reason(
                     "SKILL_UNVERIFIED",
-                    f"{spec.code}: навык заявлен, но не подтверждён ({tag})",
+                    f"{_ru(spec.code)}: навык заявлен, но не подтверждён ({tag})",
                     spec.code,
                 )
             )
         else:
             gaps.append(
-                Reason("SKILL_UNVERIFIED", f"{spec.code}: нет данных о навыке ({tag})", spec.code)
+                Reason("SKILL_UNVERIFIED", f"{_ru(spec.code)}: нет данных о навыке ({tag})", spec.code)
             )
         if f:
             if f.experience:
@@ -307,7 +318,7 @@ def requirement_fit(
                 why.append(
                     Reason(
                         "FSP_RELEVANT",
-                        f"Релевантное достижение ФСП ({spec.code}): {f.fsp_titles[0]}",
+                        f"Релевантное достижение ФСП ({_ru(spec.code)}): {f.fsp_titles[0]}",
                         spec.code,
                     )
                 )
@@ -323,13 +334,13 @@ def requirement_fit(
         why.append(
             Reason(
                 "SALARY_OVERLAP",
-                f"Ожидания по зарплате ({c.salary_min:,} {c.salary_type or need.salary_type}) "
-                f"укладываются в вилку {need.salary_from:,}–{need.salary_to:,} {need.salary_type}",
+                f"Ожидания по зарплате ({c.salary_min:,} {_SALARY_RU.get(str(c.salary_type or need.salary_type), '')}) "
+                f"укладываются в вилку {need.salary_from:,}–{need.salary_to:,} {_SALARY_RU.get(str(need.salary_type), '')}",
             )
         )
     shared = sorted(set(need.work_formats) & set(c.work_formats))
     if shared:
-        why.append(Reason("WORK_FORMAT_MATCH", f"Формат работы совпадает: {', '.join(shared)}"))
+        why.append(Reason("WORK_FORMAT_MATCH", f"Формат работы совпадает: {', '.join(_FORMAT_RU.get(str(x), str(x)) for x in shared)}"))
 
     ctx, ctx_reasons = context_fit(need, c, now)
     for r in ctx_reasons:

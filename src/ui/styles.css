@@ -568,3 +568,4 @@ blockquote { margin: 12px 0; padding: 10px 14px; border-left: 3px solid var(--mi
 .comp-bar .comp-note { color: var(--warn-ink, #8a5a00); }
 .comp-bar.empty .progress { opacity: .45; }
 .comp-caveat { margin: 12px 0 0; font-size: 13px; }
+.why li.partial { color: var(--muted, #667); }
