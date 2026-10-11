@@ -25,3 +25,9 @@ Migration 0010 (`employer_needs.status/closed_at/public_to_candidates`, invitati
 ## Notes
 - No `demo reset`, no volume removal. New behaviour visible to users: newly registered candidates are published after email verification; needs are shown to candidates only when the employer ticks "visible to candidates".
 - SMTP is not configured: verification links are shown in the UI in demo mode only.
+
+## Delivery via rsync (how this VPS is actually updated)
+The VPS tree `/opt/fsp-talent-market` is not a git checkout (`DEPLOYED_SHA` marks the release), so steps 2–4 above are automated by `scripts/deploy-vps.sh`
+(run from the Mac with `DEPLOY_CONFIRM=yes`): `git archive HEAD` → rsync to `/opt/fsp-release-<sha>` → as root on the host: pg_dump -Fc + code tarball into `/opt/fsp-backups`,
+rsync into `/opt/fsp-talent-market` (keeps `.env*`, `docker-compose.deploy.yml`), rebuild backend+frontend only, wait for `/health` and `alembic current = 0010`,
+automatic code-only rollback from the tarball on failure. `.env.deploy` is root-only, hence the SSH host `marakand-prod` (root) rather than `hermes-prod-nl` (deploy).
