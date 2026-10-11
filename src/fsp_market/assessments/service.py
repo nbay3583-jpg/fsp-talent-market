@@ -33,7 +33,8 @@ from fsp_market.assessments.models import (
 from fsp_market.assessments.scoring import PASS_THRESHOLD, score_answer
 from fsp_market.candidates.models import Candidate
 from fsp_market.common.enums import AttemptStatus, Grade, VerificationStatus
-from fsp_market.evidence.service import record_core_assessment_evidence
+from fsp_market.assessments import tech_exams
+from fsp_market.evidence.service import record_core_assessment_evidence, record_tech_exam_evidence
 from fsp_market.taxonomy.grades import sublevel_for_score
 from fsp_market.taxonomy.models import Competency
 
@@ -80,12 +81,19 @@ def _family_variants(session: Session, family: TaskFamily) -> list[TaskVariant]:
     )
 
 
-def _seen_variant_ids(session: Session, candidate_id: int, grade: Grade) -> set[int]:
+def _exam_filter(exam: str | None):
+    return AssessmentAttempt.exam_code.is_(None) if exam is None else AssessmentAttempt.exam_code == exam
+
+
+def _seen_variant_ids(
+    session: Session, candidate_id: int, grade: Grade, exam: str | None = None
+) -> set[int]:
     seen: set[int] = set()
     for ids in session.scalars(
         select(AssessmentAttempt.variant_ids).where(
             AssessmentAttempt.candidate_id == candidate_id,
             AssessmentAttempt.target_grade == grade,
+            _exam_filter(exam),
         )
     ):
         seen.update(ids or [])
@@ -93,17 +101,31 @@ def _seen_variant_ids(session: Session, candidate_id: int, grade: Grade) -> set[
 
 
 def pick_variants(
-    session: Session, grade: Grade, seed: int, avoid: set[int] | None = None
+    session: Session,
+    grade: Grade,
+    seed: int,
+    avoid: set[int] | None = None,
+    exam: str | None = None,
+    extended: bool = True,
 ) -> list[TaskVariant]:
     """One variant per active family of the grade; deterministic for a given seed. Variants the
     candidate has already seen at this grade are avoided while unseen ones remain."""
-    rng = random.Random(f"{content.RUBRIC_VERSION}|{grade}|{seed}")
+    rng = random.Random(
+        f"{content.RUBRIC_VERSION}|{grade}|{seed}" if exam is None
+        else f"{content.RUBRIC_VERSION}|{exam}|{grade}|{seed}"
+    )
     avoid = avoid or set()
     families = session.scalars(
         select(TaskFamily)
-        .where(TaskFamily.target_grade == grade, TaskFamily.is_active.is_(True))
+        .where(
+            TaskFamily.target_grade == grade,
+            TaskFamily.is_active.is_(True),
+            TaskFamily.code.like(tech_exams.family_prefix(exam) + "%" if exam else "core.%"),
+        )
         .order_by(TaskFamily.id)
     ).all()
+    if exam is None and not extended:  # legacy 11-task composition (demo personas, validation)
+        families = [f for f in families if ".x_" not in f.code]
     chosen: list[TaskVariant] = []
     for family in families:
         variants = _family_variants(session, family)
@@ -139,6 +161,8 @@ def start_attempt(
     now: datetime | None = None,
     seed: int | None = None,
     variant_ids: list[int] | None = None,
+    exam: str | None = None,
+    extended: bool = True,
 ) -> AssessmentAttempt:
     now = _now(now)
     candidate = session.get(Candidate, candidate_id)
@@ -150,6 +174,7 @@ def start_attempt(
         .where(
             AssessmentAttempt.candidate_id == candidate_id,
             AssessmentAttempt.target_grade == target_grade,
+            _exam_filter(exam),
             AssessmentResult.verification_status == VerificationStatus.NOT_VERIFIED,
         )
     ).scalars()
@@ -158,10 +183,11 @@ def start_attempt(
         raise CooldownError(f"cooldown: {COOLDOWN_DAYS} days after a failed {target_grade} attempt")
     seed = secrets.randbelow(2**31) if seed is None else seed
     if variant_ids is None:
-        avoid = _seen_variant_ids(session, candidate_id, target_grade)
-        variant_ids = [v.id for v in pick_variants(session, target_grade, seed, avoid)]
-    limit = content.TIME_LIMIT_SECONDS[str(target_grade)]
+        avoid = _seen_variant_ids(session, candidate_id, target_grade, exam)
+        variant_ids = [v.id for v in pick_variants(session, target_grade, seed, avoid, exam, extended)]
+    limit = (tech_exams.TIME_LIMIT_SECONDS if exam else content.TIME_LIMIT_SECONDS)[str(target_grade)]
     attempt = AssessmentAttempt(
+        exam_code=exam,
         candidate_id=candidate_id,
         target_grade=target_grade,
         started_at=now,
@@ -172,7 +198,8 @@ def start_attempt(
         variant_ids=variant_ids,
         draft_answers={},
     )
-    candidate.claimed_grade = target_grade  # the candidate's own claim; never inferred
+    if exam is None:  # an exam confirms ONE skill; it never touches the overall grade claim
+        candidate.claimed_grade = target_grade  # the candidate's own claim; never inferred
     session.add(attempt)
     session.flush()
     return attempt
@@ -319,6 +346,9 @@ def score_attempt(
     total = earned_total / possible_total if possible_total else 0.0
     passed = total >= PASS_THRESHOLD[attempt.target_grade]
     competency_scores = {k: e / p for k, (e, p) in competency.items() if p}
+    exam = attempt.exam_code
+    if exam:  # one exam = one skill: the result is keyed by the confirmed skill
+        competency_scores = {tech_exams.EXAMS[exam]["skill"]: total}
     sublevel = sublevel_for_score(attempt.target_grade, total) if passed else None
     result = AssessmentResult(
         attempt_id=attempt.id,
@@ -338,6 +368,11 @@ def score_attempt(
     attempt.scored_at = now
 
     candidate = session.get(Candidate, attempt.candidate_id)
+    if exam:  # independent exam: overall grade, status and cooldown of the Core stay untouched
+        session.flush()
+        if passed:
+            record_tech_exam_evidence(session, candidate, attempt, result, tech_exams.EXAMS[exam]["skill"])
+        return result
     candidate.last_attempt_at = now
     if passed:
         candidate.verification_status = VerificationStatus.VERIFIED

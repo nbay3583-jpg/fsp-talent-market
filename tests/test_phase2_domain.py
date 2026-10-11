@@ -68,7 +68,8 @@ def test_taxonomy_and_sublevels(session):
 def test_seed_is_idempotent_and_parameterized(session):
     seed_backend_python(session)
     session.commit()
-    assert session.scalar(select(func.count(TaskFamily.id))) == 33
+    legacy = TaskFamily.code.like("core.%") & TaskFamily.code.notlike("%.x\\_%", escape="\\")
+    assert session.scalar(select(func.count(TaskFamily.id)).where(legacy)) == 33  # legacy Core families untouched
     n_variants = session.scalar(select(func.count(TaskVariant.id)))
     assert n_variants == session.scalar(select(func.count(TaskPreset.id))) >= 24 * 6
     seed_backend_python(session)
@@ -78,7 +79,7 @@ def test_seed_is_idempotent_and_parameterized(session):
         variants = session.scalars(
             select(TaskVariant).join(TaskTemplate).where(TaskTemplate.family_id == family.id)
         ).all()
-        assert len(variants) >= 6
+        assert len(variants) >= (6 if family.code.startswith("core.") and ".x_" not in family.code else 2)
         shown = {(v.prompt, repr(v.input_data["options"])) for v in variants}
         assert len(shown) == len(variants)  # what the learner sees differs
         assert {v.scoring_contract["points"] for v in variants} == {1.0}  # contract fixed

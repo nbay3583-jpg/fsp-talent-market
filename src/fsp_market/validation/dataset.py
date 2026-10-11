@@ -72,7 +72,8 @@ def build_database(session: Session, cands: list[dict], needs: list[dict]) -> di
     seed_backend_python(session)
     session.add(Specialization(code="frontend_ts", name="Frontend / TypeScript"))
     for code, name in EXTRA_SKILLS.items():
-        session.add(Skill(code=code, name=name, competency_id=None))
+        if session.scalar(select(Skill).where(Skill.code == code)) is None:
+            session.add(Skill(code=code, name=name, competency_id=None))
     session.flush()
     specs = {s.code: s.id for s in session.scalars(select(Specialization))}
     cand_ids: dict[str, int] = {}

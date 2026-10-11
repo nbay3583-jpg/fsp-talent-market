@@ -81,7 +81,7 @@ def test_assigned_tasks_are_reproducible_and_hide_answers(env):
     comps = {t["competency"] for t in first["tasks"]}
     assert comps == {"python", "sql", "api_fastapi", "testing", "docker_basics", "system_thinking"}
     assert "correct" not in str(first) and "scoring" not in str(first)
-    assert len(first["tasks"]) <= 11  # short, a few minutes
+    assert 15 <= len(first["tasks"]) <= 18  # deeper Core: 17 tasks for new attempts
 
 
 def test_verified_flow_and_profile(env):
@@ -234,7 +234,7 @@ def test_timer_autosave_reload_and_expiry(env, monkeypatch):
     monkeypatch.setattr(service, "utcnow", lambda: t0)
     monkeypatch.setattr("fsp_market.api.routes.utcnow", lambda: t0)
     a = client.post("/api/assessments", json={"target_grade": "MIDDLE"}, headers=h).json()
-    assert a["time_limit_seconds"] == 19 * 60 and a["remaining_seconds"] == 19 * 60
+    assert a["time_limit_seconds"] == 28 * 60 and a["remaining_seconds"] == 28 * 60
     first = a["tasks"][0]
     value = {"single": "A", "multi": ["A"], "number": "3"}[first["answer_type"]]
     # 5 minutes later: reload shows the server countdown and the autosaved answer
@@ -245,12 +245,12 @@ def test_timer_autosave_reload_and_expiry(env, monkeypatch):
         f"/api/assessments/{a['attempt_id']}/answers",
         json={"answers": {first["variant_id"]: value}}, headers=h,
     )
-    assert put.status_code == 200 and put.json()["remaining_seconds"] == 14 * 60
+    assert put.status_code == 200 and put.json()["remaining_seconds"] == 23 * 60
     again = client.get(f"/api/assessments/{a['attempt_id']}", headers=h).json()
-    assert again["remaining_seconds"] == 14 * 60
+    assert again["remaining_seconds"] == 23 * 60
     assert again["saved_answers"] == {str(first["variant_id"]): value}
     # after the deadline: late answers are ignored, saved ones are scored, result is `expired`
-    t2 = t0 + timedelta(minutes=20)
+    t2 = t0 + timedelta(minutes=30)
     monkeypatch.setattr("fsp_market.api.routes.utcnow", lambda: t2)
     monkeypatch.setattr(service, "utcnow", lambda: t2)
     ok = {
@@ -281,7 +281,7 @@ def test_assessment_texts_are_russian_and_seeds_differ(env):
         h = register(client, email=f"ru{n}@x.io")
         for grade in ("JUNIOR", "MIDDLE", "SENIOR"):
             body = client.post("/api/assessments", json={"target_grade": grade}, headers=h).json()
-            assert len(body["tasks"]) == 11
+            assert 15 <= len(body["tasks"]) <= 18
             for task in body["tasks"]:
                 assert not banned.search(task["prompt"]), task["prompt"]
                 assert re.search("[А-Яа-я]", task["prompt"])

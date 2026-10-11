@@ -9,7 +9,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from fsp_market.assessments import content
+from fsp_market.assessments import content, tech_exams
 from fsp_market.assessments.models import TaskFamily, TaskPreset, TaskTemplate, TaskVariant
 from fsp_market.assessments.variants import render_variant_fields
 from fsp_market.common.enums import Grade, TaskFormat
@@ -37,6 +37,11 @@ def seed_backend_python(session: Session) -> None:
         )
         competencies[item["code"]] = comp
         _get_or_create(session, Skill, item["code"], name=item["name"], competency_id=comp.id)
+
+    for exam in tech_exams.EXAMS.values():  # skills confirmed by technology exams (not part of Core)
+        if session.scalar(select(Skill).where(Skill.code == exam["skill"])) is None:
+            session.add(Skill(code=exam["skill"], name=exam["name"], competency_id=None))
+    session.flush()
 
     current = {fam["code"] for fam in content.FAMILIES}
     for old in session.scalars(select(TaskFamily).where(TaskFamily.code.notin_(current))):

@@ -25,7 +25,7 @@ import traceback
 from collections.abc import Callable
 from typing import Any
 
-RUBRIC_VERSION = "backend-core-2026.10.2"
+RUBRIC_VERSION = "backend-core-2026.10.2"  # also seeds preset generation: never change
 SPECIALIZATION = {"code": "backend_python", "name": "Backend / Python"}
 COMPETENCIES = [
     {"code": "python", "name": "Python"},
@@ -37,9 +37,9 @@ COMPETENCIES = [
 ]
 LETTERS = "ABCD"
 
-# Time budget (seconds) for one attempt: 11 tasks per grade. Server-side `deadline_at` is derived
+# Time budget (seconds) for one attempt: 17 tasks per grade (11 before the x_* extra families). Server-side `deadline_at` is derived
 # from this table (see assessments/service.py).
-TIME_LIMIT_SECONDS = {"JUNIOR": 15 * 60, "MIDDLE": 19 * 60, "SENIOR": 23 * 60}
+TIME_LIMIT_SECONDS = {"JUNIOR": 22 * 60, "MIDDLE": 28 * 60, "SENIOR": 34 * 60}
 
 
 # ------------------------------------------------------------------ helpers
@@ -1231,3 +1231,9 @@ def generate_presets(template: Template, family_code: str) -> list[dict[str, Any
         else:
             raise RuntimeError(f"{template['code']}: preset {index} is a duplicate of a sibling")
     return out
+
+
+# ------------------------------------------------------------------ technology exams + deeper Core
+from fsp_market.assessments import tech_exams  # noqa: E402
+
+FAMILIES.extend(tech_exams.build_families())

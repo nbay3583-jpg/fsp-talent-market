@@ -6,11 +6,12 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from fsp_market.api.deps import CandidateDep, ProviderDep, SessionDep
+from fsp_market.assessments import tech_exams
 from fsp_market.assessments.breakdown import competency_breakdown
 from fsp_market.assessments.models import (
     AssessmentAttempt,
@@ -57,6 +58,7 @@ class RegisterIn(BaseModel):
 
 
 class StartIn(BaseModel):
+    exam: str | None = None  # None = Core Assessment; "fastapi" | "postgresql" = independent exam
     target_grade: Grade
 
 
@@ -77,6 +79,8 @@ def _tasks(session: Session, attempt: AssessmentAttempt) -> list[dict[str, Any]]
             .join(TaskTemplate, TaskTemplate.family_id == TaskFamily.id)
             .where(TaskTemplate.id == variant.template_id)
         )
+        if attempt.exam_code in tech_exams.EXAMS:
+            competency = tech_exams.EXAMS[attempt.exam_code]["skill"]
         out.append(  # never expose the scoring contract / correct answer
             {
                 "variant_id": variant.id,
@@ -95,6 +99,7 @@ def _attempt_payload(session: Session, attempt: AssessmentAttempt) -> dict[str, 
         "attempt_id": attempt.id,
         "target_grade": attempt.target_grade,
         "status": attempt.status,
+        "exam": attempt.exam_code,
         "tasks": _tasks(session, attempt),
         "started_at": attempt.started_at.isoformat() if attempt.started_at else None,
         "deadline_at": attempt.deadline_at.isoformat() if attempt.deadline_at else None,
@@ -113,8 +118,9 @@ def _result_payload(session: Session, candidate_id: int, attempt, result, expire
         "passed": result.passed,
         "score": result.total_score,
         "competency_scores": result.subscores,
-        "competency_breakdown": competency_breakdown(session, result),
         "achieved_sublevel": result.achieved_sublevel,
+        "exam": attempt.exam_code,
+        "competency_breakdown": [] if attempt.exam_code else competency_breakdown(session, result),
         "claimed_grade": session.get(Candidate, candidate_id).claimed_grade,
         "expired": expired or attempt.expired,
     }
@@ -217,6 +223,8 @@ def _expire_if_needed(session: Session, attempt: AssessmentAttempt) -> bool:
 def start_assessment(
     body: StartIn, candidate_id: int = CandidateDep, session: Session = SessionDep
 ) -> dict[str, Any]:
+    if body.exam is not None and body.exam not in tech_exams.EXAMS:
+        raise HTTPException(status_code=422, detail="unknown exam")
     cand = session.get(Candidate, candidate_id)
     if cand.specialization_id is not None and session.scalar(
         select(Competency.id).where(Competency.specialization_id == cand.specialization_id).limit(1)
@@ -226,6 +234,7 @@ def start_assessment(
         select(AssessmentAttempt).where(
             AssessmentAttempt.candidate_id == candidate_id,
             AssessmentAttempt.target_grade == body.target_grade,
+            AssessmentAttempt.exam_code.is_(None) if body.exam is None else AssessmentAttempt.exam_code == body.exam,
             AssessmentAttempt.status == AttemptStatus.IN_PROGRESS,
         )
     )
@@ -233,7 +242,7 @@ def start_assessment(
         attempt = None
     try:
         if attempt is None:
-            attempt = start_attempt(session, candidate_id, body.target_grade)
+            attempt = start_attempt(session, candidate_id, body.target_grade, exam=body.exam)
     except CooldownError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except AssessmentError as exc:
@@ -404,3 +413,32 @@ def catalog(session: Session = SessionDep) -> dict[str, Any]:
             for s in session.scalars(select(Skill).order_by(Skill.code))
         ],
     }
+
+
+@router.get("/exams")
+def exam_catalog(
+    candidate_id: int = CandidateDep, session: Session = SessionDep
+) -> list[dict[str, Any]]:
+    """Independent technology exams: each confirms ONE skill and never changes the overall grade."""
+    out = []
+    for code, info in tech_exams.EXAMS.items():
+        tasks = {
+            str(grade): session.scalar(
+                select(func.count(TaskFamily.id)).where(
+                    TaskFamily.is_active.is_(True),
+                    TaskFamily.target_grade == grade,
+                    TaskFamily.code.like(tech_exams.family_prefix(code) + "%"),
+                )
+            )
+            for grade in Grade
+        }
+        out.append(
+            {
+                "exam": code,
+                "skill": info["skill"],
+                "name": info["name"],
+                "tasks": tasks,
+                "time_limit_seconds": tech_exams.TIME_LIMIT_SECONDS,
+            }
+        )
+    return out

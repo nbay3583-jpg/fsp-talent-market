@@ -54,7 +54,7 @@ def test_counts_come_from_the_attempt(session):
     result = _take(session, correct=True)
     rows = {r["competency"]: r for r in competency_breakdown(session, result)}
     assert list(rows) == CODES
-    assert sum(r["tasks"] for r in rows.values()) == len(result.trace) == 11
+    assert sum(r["tasks"] for r in rows.values()) == len(result.trace) >= 15
     for code, r in rows.items():
         assert r["percent"] == result.subscores[code]
         assert r["answered"] == r["tasks"]

@@ -11,12 +11,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, object_session
 
 from fsp_market.candidates.models import Candidate
-from fsp_market.common.enums import SkillImportance, Sublevel, VerificationStatus
+from fsp_market.common.enums import EvidenceType, SkillImportance, Sublevel, VerificationStatus
 from fsp_market.matching.engine import hard_filter, requirement_fit
 from fsp_market.matching.facts import CandidateFacts, load_candidate_facts, load_need_spec
 from fsp_market.matching.models import EmployerNeed, MatchResult, MatchRun, NeedSkill
 from fsp_market.matching.policy import DEFAULT_POLICY, MatchingPolicy
-from fsp_market.skills.models import Skill
+from fsp_market.skills.models import Skill, SkillClaim, SkillEvidence
 from fsp_market.taxonomy.models import Specialization
 
 FIT_LABEL = "Соответствие этой потребности"
@@ -211,6 +211,19 @@ def public_candidate(c: Candidate, f: CandidateFacts) -> dict[str, Any]:
     """Employer-safe view: NO email, phone, full name or FSP member id."""
     sess = object_session(c)
     spec = sess.get(Specialization, c.specialization_id) if sess and c.specialization_id else None
+    exam_skills: set[str] = set()  # skills confirmed by an independent technology exam
+    if sess is not None:
+        exam_skills = set(
+            sess.scalars(
+                select(Skill.code)
+                .join(SkillClaim, SkillClaim.skill_id == Skill.id)
+                .join(SkillEvidence, SkillEvidence.claim_id == SkillClaim.id)
+                .where(
+                    SkillClaim.candidate_id == c.id,
+                    SkillEvidence.evidence_type == EvidenceType.TECHNOLOGY_ASSESSMENT,
+                )
+            )
+        )
     return {
         "candidate_id": c.id,
         "display_name": _display_name(c.full_name),
@@ -244,6 +257,7 @@ def public_candidate(c: Candidate, f: CandidateFacts) -> dict[str, Any]:
                 "skill": s.code,
                 "verified_level": s.verified_level,
                 "verified_sublevel": s.verified_sublevel,
+                "confirmed_by_exam": s.code in exam_skills and bool(s.verified_level),
                 "has_professional_experience": s.experience,
                 "fsp_achievements": list(s.fsp_titles),
                 "claimed_only": bool(s.claimed and not s.verified_level and not s.experience),

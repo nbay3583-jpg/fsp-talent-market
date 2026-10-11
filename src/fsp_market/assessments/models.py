@@ -127,6 +127,7 @@ class AssessmentAttempt(Base):
     time_limit_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
     expired: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    exam_code: Mapped[str | None] = mapped_column(String(32), nullable=True)  # NULL = Core Assessment
     rubric_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
     variant_ids: Mapped[Any | None] = mapped_column(JSON, nullable=True)  # frozen at start
     # {variant_id: {"answer": ..., "saved_at": iso}} autosaved answers (survive reload / expiry)

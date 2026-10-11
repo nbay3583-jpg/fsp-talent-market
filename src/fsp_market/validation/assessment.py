@@ -113,7 +113,13 @@ def _fresh_db() -> Session:
 
 def _families(session: Session, grade: str):
     return session.scalars(
-        select(TaskFamily).where(TaskFamily.target_grade == grade).order_by(TaskFamily.id)
+        select(TaskFamily)
+        .where(
+            TaskFamily.target_grade == grade,
+            TaskFamily.code.like("core.%"),
+            TaskFamily.code.notlike("%.x\\_%", escape="\\"),  # the fixed 11-task reference composition
+        )
+        .order_by(TaskFamily.id)
     ).all()
 
 

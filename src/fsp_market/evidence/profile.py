@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from fsp_market.assessments.breakdown import competency_breakdown
+from fsp_market.assessments import tech_exams
 from fsp_market.assessments.models import AssessmentAttempt, AssessmentResult
 from fsp_market.candidates.models import Candidate
 from fsp_market.common.enums import EvidenceType
@@ -33,7 +34,7 @@ def build_evidence_profile(session: Session, candidate_id: int) -> dict[str, Any
     latest = session.execute(
         select(AssessmentAttempt, AssessmentResult)
         .join(AssessmentResult, AssessmentResult.attempt_id == AssessmentAttempt.id)
-        .where(AssessmentAttempt.candidate_id == candidate_id)
+        .where(AssessmentAttempt.candidate_id == candidate_id, AssessmentAttempt.exam_code.is_(None))  # Core only
         .order_by(AssessmentAttempt.id.desc())
     ).first()
     assessment = None
@@ -50,6 +51,31 @@ def build_evidence_profile(session: Session, candidate_id: int) -> dict[str, Any
             "achieved_sublevel": _value(result.achieved_sublevel),
             "scored_at": attempt.scored_at.isoformat() if attempt.scored_at else None,
         }
+
+    exams = []
+    for attempt, result in session.execute(
+        select(AssessmentAttempt, AssessmentResult)
+        .join(AssessmentResult, AssessmentResult.attempt_id == AssessmentAttempt.id)
+        .where(AssessmentAttempt.candidate_id == candidate_id, AssessmentAttempt.exam_code.is_not(None))
+        .order_by(AssessmentAttempt.id.desc())
+    ).all():
+        info = tech_exams.EXAMS.get(attempt.exam_code)
+        if info is None:
+            continue
+        exams.append(
+            {
+                "attempt_id": attempt.id,
+                "exam": attempt.exam_code,
+                "skill": info["skill"],
+                "name": info["name"],
+                "target_grade": _value(result.target_grade),
+                "passed": result.passed,
+                "score": result.total_score,
+                "achieved_sublevel": _value(result.achieved_sublevel),
+                "tasks": len(result.trace or []),
+                "scored_at": attempt.scored_at.isoformat() if attempt.scored_at else None,
+            }
+        )
 
     skills = []
     fsp_count = 0
@@ -76,7 +102,7 @@ def build_evidence_profile(session: Session, candidate_id: int) -> dict[str, Any
                 # a claim created by the assessment only echoes the attempt's target grade; it is not
                 # something the candidate declared, so it must not masquerade as "claimed"
                 "claimed_level": (
-                    None if claim.source == "core_assessment" else _value(claim.claimed_level)
+                    None if claim.source in ("core_assessment", "technology_exam") else _value(claim.claimed_level)
                 ),
                 "claim_source": claim.source,
                 "verified_level": _value(verified.level) if verified else None,
@@ -107,6 +133,7 @@ def build_evidence_profile(session: Session, candidate_id: int) -> dict[str, Any
         "verified_grade": _value(candidate.verified_grade),
         "verified_sublevel": _value(candidate.verified_sublevel),
         "assessment": assessment,
+        "tech_exams": exams,
         "skills": skills,
         "fsp": {"has_history": fsp_count > 0, "evidence_items": fsp_count},
     }

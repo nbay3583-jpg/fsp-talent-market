@@ -397,7 +397,9 @@ C = [
 def run_core_assessment(
     session: Session, cand: Candidate, grade: str, wrong, now: datetime
 ) -> None:
-    attempt = start_attempt(session, cand.id, Grade(grade), now=now, seed=cand.id)
+    attempt = start_attempt(
+        session, cand.id, Grade(grade), now=now, seed=cand.id, extended=False  # fixed demo composition
+    )
     answers = {}
     for v in attempt_variants(session, attempt):
         comp = session.scalar(

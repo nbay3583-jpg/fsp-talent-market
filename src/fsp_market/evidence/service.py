@@ -155,3 +155,45 @@ def add_professional_experience(
     session.add(evidence)
     session.flush()
     return evidence
+
+
+def record_tech_exam_evidence(
+    session: Session,
+    candidate: Candidate,
+    attempt: AssessmentAttempt,
+    result: AssessmentResult,
+    skill_code: str,
+) -> SkillEvidence:
+    """A PASSED independent technology exam confirms exactly one skill. It never changes the
+    candidate's overall grade or verification status; the per-skill level only moves up."""
+    skill = _skill(session, skill_code)
+    claim = _get_or_create_claim(session, candidate.id, skill.id, "technology_exam", attempt.target_grade)
+    evidence = SkillEvidence(
+        claim_id=claim.id,
+        evidence_type=EvidenceType.TECHNOLOGY_ASSESSMENT,
+        strength=EvidenceStrength.HIGH,
+        level=attempt.target_grade,
+        sublevel=result.achieved_sublevel,
+        attempt_id=attempt.id,
+        title=f"Экзамен по технологии {skill.name}",
+    )
+    session.add(evidence)
+    session.flush()
+    verified = session.scalar(
+        select(VerifiedSkillLevel).where(VerifiedSkillLevel.claim_id == claim.id)
+    )
+    if verified is None:
+        session.add(
+            VerifiedSkillLevel(
+                claim_id=claim.id,
+                level=attempt.target_grade,
+                sublevel=result.achieved_sublevel,
+                basis_evidence_id=evidence.id,
+            )
+        )
+    elif _ORDER[Grade(verified.level)] < _ORDER[attempt.target_grade]:
+        verified.level = attempt.target_grade
+        verified.sublevel = result.achieved_sublevel
+        verified.basis_evidence_id = evidence.id
+    session.flush()
+    return evidence
