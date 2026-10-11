@@ -504,11 +504,12 @@ blockquote { margin: 12px 0; padding: 10px 14px; border-left: 3px solid var(--mi
 .acc > :last-child { margin-bottom: 14px; }
 
 /* ---------- site helper ---------- */
-.assistant-fab { position: fixed; right: 20px; bottom: 20px; z-index: 45; display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 18px 0 14px; background: var(--mint-600); color: #fff; border: 0; border-radius: var(--radius-pill); font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(11, 77, 68, .2), 0 8px 24px rgba(11, 77, 68, .24); transition: transform .18s ease, box-shadow .18s ease, background .18s ease, opacity .18s ease; }
-.assistant-fab:hover { background: #198a79; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(11, 77, 68, .2), 0 12px 28px rgba(11, 77, 68, .28); }
-.assistant-fab:active { transform: translateY(0); }
-.assistant-fab:focus-visible { outline: 3px solid var(--mint-300); outline-offset: 3px; }
-.assistant-fab.hidden { opacity: 0; pointer-events: none; transform: scale(.9); }
+/* `button.assistant-fab` + :not(:disabled) outrank the global `button:hover:not(:disabled)` (near-white mint-50), which made the label unreadable */
+button.assistant-fab { position: fixed; right: 20px; bottom: 20px; z-index: 45; display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 18px 0 14px; background: #187f6e; color: #fff; border: 1px solid var(--mint-ink); border-radius: var(--radius-pill); font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(11, 77, 68, .2), 0 8px 24px rgba(11, 77, 68, .24); transition: transform .18s ease, box-shadow .18s ease, background .18s ease, opacity .18s ease; }
+button.assistant-fab:hover:not(:disabled), button.assistant-fab:focus-visible:not(:disabled) { background: #146b5d; color: #fff; border-color: var(--mint-ink); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(11, 77, 68, .2), 0 12px 28px rgba(11, 77, 68, .3); }
+button.assistant-fab:active:not(:disabled) { background: var(--mint-ink); color: #fff; transform: translateY(0); }
+button.assistant-fab:focus-visible { outline: 3px solid var(--mint-300); outline-offset: 3px; }
+button.assistant-fab.hidden { opacity: 0; pointer-events: none; transform: scale(.9); }
 .assistant { position: fixed; right: 20px; bottom: 20px; z-index: 80; width: min(392px, calc(100vw - 32px)); height: min(580px, calc(100vh - 40px)); height: min(580px, calc(100dvh - 40px)); display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-panel); box-shadow: 0 2px 6px rgba(22, 32, 31, .06), 0 20px 48px rgba(22, 32, 31, .18); overflow: hidden; transform-origin: bottom right; animation: assistant-in .2s ease-out; }
 @keyframes assistant-in { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
 .assistant-head { display: flex; align-items: center; gap: 12px; padding: 14px 14px 12px 16px; background: linear-gradient(180deg, var(--mint-50), var(--card)); border-bottom: 1px solid var(--line); }
@@ -528,14 +529,14 @@ blockquote { margin: 12px 0; padding: 10px 14px; border-left: 3px solid var(--mi
 .chip:hover:not(:disabled) { background: var(--mint-50); border-color: var(--mint-400); }
 .assistant-form { display: flex; gap: 8px; padding: 12px 16px 14px; }
 .assistant-form input { flex: 1; min-width: 0; }
-@media (max-width: 900px) { .assistant-fab { right: 14px; bottom: 14px; } .cabinet-main, .public { padding-bottom: 88px; } }
+@media (max-width: 900px) { button.assistant-fab { right: 14px; bottom: 14px; } .cabinet-main, .public { padding-bottom: 88px; } }
 @media (max-width: 560px) {
-  .assistant-fab { width: 52px; height: 52px; padding: 0; justify-content: center; }
+  button.assistant-fab { width: 52px; height: 52px; padding: 0; justify-content: center; }
   .assistant-fab-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .assistant { right: 0; left: 0; bottom: 0; width: auto; height: min(78vh, 560px); height: min(78dvh, 560px); border-radius: var(--radius-panel) var(--radius-panel) 0 0; border-bottom: 0; transform-origin: bottom center; }
   .assistant-form input { font-size: 16px; }
 }
-@media (prefers-reduced-motion: reduce) { .assistant, .assistant-fab { animation: none; transition: none; } }
+@media (prefers-reduced-motion: reduce) { .assistant, button.assistant-fab { animation: none; transition: none; } }
 
 /* ---------- grouped column chart (validation) ---------- */
 .cols { display: grid; grid-template-columns: 38px 1fr; gap: 0 8px; margin-top: 14px; }
