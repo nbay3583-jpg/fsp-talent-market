@@ -85,7 +85,9 @@ N=$($DC exec -T db sh -c 'pg_restore --list' < "$DUMP.part" | grep -c 'TABLE DAT
 [ "${N:-0}" -ge 10 ] || fail "backup is not a valid pg_dump archive (TABLE DATA entries: ${N:-0})"
 mv "$DUMP.part" "$DUMP"; chmod 600 "$DUMP"
 tar czf "$CODE.part" --exclude='.env*' -C "$APP" .
-tar tzf "$CODE.part" | grep -q 'src/fsp_market/migrations/versions/' || fail "code backup lacks migrations"
+# grep -c (not -q): -q exits early, tar then gets SIGPIPE and pipefail reports a false failure
+M=$(tar tzf "$CODE.part" | grep -c 'src/fsp_market/migrations/versions/.*\.py$') || true
+[ "${M:-0}" -ge 9 ] || fail "code backup lacks migrations (found ${M:-0})"
 mv "$CODE.part" "$CODE"
 sha256sum "$DUMP" "$CODE" > "$BK/fsp-before-0010-$TS.sha256"
 ls -la "$DUMP" "$CODE"
