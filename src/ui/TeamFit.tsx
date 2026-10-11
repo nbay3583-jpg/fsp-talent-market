@@ -47,7 +47,16 @@ function Meter({ label, value, na }: { label: string; value: number | null; na?:
 }
 
 /** Подписи шкалы 1–5 строятся из полюсов вопроса: 1 и 5 — крайние варианты, 3 — «по ситуации». */
-const scaleLabels = (low: string, high: string) => [low, `Скорее: ${low}`, "По ситуации / одинаково", `Скорее: ${high}`, high];
+const scaleLabels = (low: string, high: string) => [`Однозначно: ${low}`, `Скорее: ${low}`, "Зависит от ситуации / подходят оба варианта", `Скорее: ${high}`, `Однозначно: ${high}`];
+/** Формулировки вопросов для интерфейса; ключи осей и сохраняемые значения 1–5 не меняются. */
+const QUESTION_RU: Record<string, string> = {
+  autonomy: "Как вам комфортнее принимать рабочие решения?",
+  communication: "Как вам удобнее общаться по рабочим вопросам?",
+  pace: "Какой рабочий темп вам подходит?",
+  structure: "Какие правила работы вам ближе?",
+  feedback: "Как часто вы хотите получать обратную связь?",
+  collaboration: "В каком формате вам удобнее работать над задачами?",
+};
 
 /** Анкета предпочтений: пять подписанных вариантов на вопрос; неотвеченный вопрос не считается нейтральным. */
 export function WorkStyleForm({ q, value, onSave, label }: { q: Questions; value: Record<string, number> | null; onSave: (a: Record<string, number>) => Promise<void>; label: string }) {
@@ -65,8 +74,8 @@ export function WorkStyleForm({ q, value, onSave, label }: { q: Questions; value
       <p className="muted">{q.note}</p>
       {q.axes.map((x) => (
         <fieldset key={x.key} className="scale">
-          <legend>{x.label}</legend>
-          <p className="muted">1 — {x.low}; 5 — {x.high}; 3 — по ситуации.</p>
+          <legend>{x.label}: {QUESTION_RU[x.key] ?? x.label}</legend>
+          <p className="muted">Выберите от 1 до 5: 1 — {x.low}, 5 — {x.high}.</p>
           <div className="scale-opts" role="radiogroup" aria-label={x.label}>
             {scaleLabels(x.low, x.high).map((t, i) => (
               <label key={i} className={`scale-opt${a[x.key] === i + 1 ? " on" : ""}`}>
