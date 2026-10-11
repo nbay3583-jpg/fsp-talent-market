@@ -77,9 +77,25 @@ FRESH = (
 )
 
 
+def repair_seeded_verification(session: Session) -> int:
+    """Seeded fixtures (@demo.example, no password) are published by definition. Rows created before
+    the seed set email_verified would otherwise drop out of every pool since publication requires it."""
+    rows = session.scalars(
+        select(Candidate).where(
+            Candidate.email.like("%@demo.example"),
+            Candidate.password_hash.is_(None),
+            Candidate.email_verified.is_(False),
+        )
+    ).all()
+    for row in rows:
+        row.email_verified = True
+    return len(rows)
+
+
 def seed(session: Session) -> dict:
     ids = seed_matching_demo(session, with_need=False)
     seed_demo_extra(session)
+    repair_seeded_verification(session)
     spec = session.scalar(select(Specialization).where(Specialization.code == "backend_python"))
     for email, name, phone, salary in FRESH:
         if session.scalar(select(Candidate).where(Candidate.email == email)) is None:
