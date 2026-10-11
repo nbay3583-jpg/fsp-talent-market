@@ -8,6 +8,6 @@ Employer: need → hard constraints → Requirement Fit with WHY / GAPS → cand
 
 Central abstraction: **Evidence Profile** — `Skill Claim → Skill Evidence → Verified Skill Level`; résumé data is context, FSP achievements are separate external evidence, and there is no universal Talent Score. "Fit" always means fit to one concrete need.
 
-MVP scope: Backend / Python fully implemented (Junior / Middle / Senior, sublevels J1–S2); other specialisations exist only as taxonomy rows. Mock FSP provider. Roles: candidate, employer.
+MVP scope: Backend / Python fully implemented (Junior / Middle / Senior, nine sublevels J1–S3); other specialisations exist only as taxonomy rows. Mock FSP provider. Roles: candidate, employer.
 
 Non-goals (not built): calibrated IRT, arbitrary code execution sandbox, LLM judging, résumé parsing, universal score, ATS, anti-fraud, chat, vacancy marketplace, real Keycloak / FSP API, email delivery.

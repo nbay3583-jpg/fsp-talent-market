@@ -13,7 +13,7 @@ A **Need** has role, specialisation, target grade (+ optional sublevel), require
 | constraint | rule |
 |---|---|
 | specialisation | must equal the need's |
-| grade | **internal sublevel ±1**: target M2 → {M1, M2, S1}; without a target sublevel only the grade's own two sublevels. Verified candidates use their verified sublevel; others the whole range of the claimed grade. Never ±1 public grade |
+| grade | **internal sublevel ±1**: target M2 → {M1, M2, M3}, target M3 → {M2, M3, S1} (crosses the grade border); without a target sublevel only the grade's own three sublevels. Verified candidates use their verified sublevel; others the whole range of the claimed grade. Never ±1 public grade |
 | salary | candidate minimum ≤ need maximum (inclusive); NET↔GROSS converted at 13 % (policy parameter); unknown expectation does not exclude |
 | work format | at least one shared format |
 | location | only checked when the shared formats exclude REMOTE |
@@ -45,3 +45,11 @@ Employer views (`matching/service.py: public_candidate`) show an abbreviated nam
 ## ATS export
 
 `GET /api/employer/match-runs/{run_id}/export?format=csv|json` returns the stored run (rank, candidate id, abbreviated name, grades, fit, formats, location, salary expectation, verified skills, WHY/GAP codes). Owner-only; no contacts. CSV has a UTF-8 BOM and neutralises formula-injection prefixes.
+
+## Reproducibility and invitation rules (2026-10-11)
+
+- A match run is evaluated at the start of the UTC day and stores `policy.input_fingerprint` (hash of the need spec and every candidate's facts). Same fingerprint ⇒ identical composition, order, WHY and GAPS; a changed pool or candidate state changes the fingerprint, so differences are explainable. Tie-break: Requirement Fit desc, VERIFIED first, candidate id.
+- Experience is a weak, unconfirmed signal (context fit weight 0.05 and 50% skill credit, always labelled "not confirmed"); only the Core Assessment assigns a grade.
+- An invitation for a saved need is validated server-side: role, salary type, salary range and work format must stay within the need; the candidate must pass the need's hard filters and the offered range must reach the candidate's stated minimum. A standalone invitation (Full Pool) has its own validation and is tracked separately from need-scoped ones: uniqueness is per employer + candidate + need.
+- A CLOSED need is excluded from matching and new invitations; its runs and sent invitations remain. Needs are shown to candidates only when published by the employer.
+- A candidate profile is visible to employers only if the visibility intent is on **and** the email is verified **and** invitations are open.
