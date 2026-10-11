@@ -14,7 +14,13 @@ Employer Need ──> hard constraints ──> Requirement Fit + WHY/GAPS ──
                                                                  candidate Accept ──> contacts unlocked ◄┘ (Decline: stay hidden)
 ```
 
-Categorisation: a candidate's **category** is `specialization × public grade` (e.g. *Backend / Middle*), with internal sublevels J1 J2 M1 M2 S1 S2. Only Backend / Python is fully implemented; other specialisations stay in the taxonomy as data (a frontend specialisation row exists as a seed example). The grade is set only by the Core Assessment.
+Categorisation: a candidate's **category** is `specialization × public grade` (e.g. *Backend / Middle*), with nine internal sublevels J1/J2/J3, M1/M2/M3, S1/S2/S3. Only Backend / Python is fully implemented; other specialisations stay in the taxonomy as data (a frontend specialisation row exists as a seed example). The grade is set only by the Core Assessment.
+
+## 2026-10-11 additions
+
+- New Core attempts contain **17 tasks** (legacy variants/attempts are preserved); technology exams **FastAPI** and **PostgreSQL** use the same Assessment Engine, with independent attempt/result records and skill-specific evidence, never replacing the Core grade.
+- Browser-only **Python Practice** uses a Pyodide 0.27.7 Web Worker inside a separate sandboxed frame; user code is not run in the API process and does not create verified grade/evidence. The released practice is not a proctored independent certification.
+- The assessment extension is supported by additive Alembic migration `0011`. Earlier architecture prose in this document may refer to the base MVP; see README and the live OpenAPI for newer routes.
 
 ## Components (`src/fsp_market/`)
 
@@ -35,7 +41,7 @@ Categorisation: a candidate's **category** is `specialization × public grade` (
 
 ## Data model (tables)
 
-`specializations`, `competencies`, `skills`, `candidates`, `employers`, `skill_claims`, `skill_evidence`, `verified_skill_levels`, `task_families`, `task_templates`, `task_presets`, `task_variants`, `assessment_attempts`, `assessment_answers`, `assessment_results`, `employer_needs`, `need_skills`, `match_runs`, `match_results`, `invitations`. Migrations `0001`–`0004` in `src/fsp_market/migrations/versions/`. Variants store `seed` and `is_anchor`, results store sub-scores and rubric results (IRT-ready storage; **no calibration is claimed**).
+`specializations`, `competencies`, `skills`, `candidates`, `employers`, `skill_claims`, `skill_evidence`, `verified_skill_levels`, `task_families`, `task_templates`, `task_presets`, `task_variants`, `assessment_attempts`, `assessment_answers`, `assessment_results`, `employer_needs`, `need_skills`, `match_runs`, `match_results`, `invitations`. Migrations `0001`–`0011` in `src/fsp_market/migrations/versions/`. Variants store `seed` and `is_anchor`, results store sub-scores and rubric results (IRT-ready storage; **no calibration is claimed**).
 
 ## Invariants enforced in code (and covered by tests)
 
