@@ -190,3 +190,8 @@ python -m fsp_market.demo reset                           # сброс демо
 - **Приглашения**: уникальность «один активный» — на (работодатель, кандидат, потребность); standalone-приглашение — отдельный сценарий. Приглашение по потребности проверяется на сервере: роль, тип/вилка зарплаты и формат берутся из потребности, кандидат обязан пройти hard-фильтры. Закрытая потребность (`POST /api/employer/needs/{id}/close`) не участвует в подборе и новых приглашениях, история сохраняется.
 - **Рекомендации кандидату** показывают только потребности, опубликованные работодателем (`PUT /api/employer/needs/{id}/publication`); по остальным — анонимная сводка по навыкам.
 - GigaChat/LLM-адаптер не подключён: нет ключа и проверки; грейд и подбор в любом случае детерминированы.
+
+### Synthetic CV demo profiles (opt-in)
+`artifacts/fsp_synthetic_candidates.json` holds 14 fully fictional profiles (11 Backend/Python, 3 Frontend/TS; `cv-syn-*@demo.example`, no phone, claimed skills only, `UNVERIFIED`).
+They are not part of startup/seed. Inside the backend container: `python -m fsp_market.demo_cv_import` (dry-run), `... --apply` (idempotent, DEMO_MODE only, never updates existing rows).
+Unverified profiles are counted as considered but cannot pass the grade constraint until they take the assessment.

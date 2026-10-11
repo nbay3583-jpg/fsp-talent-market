@@ -1,0 +1,683 @@
+{
+  "schema_version": 1,
+  "dataset_id": "fsp-cv-synthetic-2026-10-11",
+  "dataset_kind": "synthetic_demo_only",
+  "description": "14 синтетических составных профилей на основе общих технологических паттернов из 23 PDF/DOC в архиве. Не являются реальными или обезличенными копиями резюме.",
+  "provenance": {
+    "source_document_count": 23,
+    "source_used": "только общая статистика стека и распространённые сочетания технологий; никаких индивидуальных биографий",
+    "personal_data_copied": false
+  },
+  "profiles": [
+    {
+      "demo_id": "CV-SYN-B01",
+      "full_name": "Нина Архипова",
+      "email": "cv-syn-b01@demo.example",
+      "specialization": "backend_python",
+      "claimed_grade": "JUNIOR",
+      "salary_min": 95000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "REMOTE"
+      ],
+      "location": "Томск",
+      "available_in_days": 14,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [
+        "python",
+        "sql",
+        "testing"
+      ],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Учебный сервис обработки заявок",
+          "start_date": "2024-03-01",
+          "end_date": "2025-08-01",
+          "stack": [
+            "python",
+            "sql"
+          ],
+          "tasks": "Python, SQL, базовые тесты и обработка запросов.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-B02",
+      "full_name": "Артём Елагин",
+      "email": "cv-syn-b02@demo.example",
+      "specialization": "backend_python",
+      "claimed_grade": "JUNIOR",
+      "salary_min": 120000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "HYBRID",
+        "OFFICE"
+      ],
+      "location": "Москва",
+      "available_in_days": 30,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [
+        "python",
+        "sql",
+        "postgresql"
+      ],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Внутренняя CRM",
+          "start_date": "2023-06-01",
+          "end_date": "2025-09-01",
+          "stack": [
+            "python",
+            "sql",
+            "postgresql"
+          ],
+          "tasks": "Django, PostgreSQL, интеграция форм и отчётов.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-B03",
+      "full_name": "Марина Белова",
+      "email": "cv-syn-b03@demo.example",
+      "specialization": "backend_python",
+      "claimed_grade": "MIDDLE",
+      "salary_min": 200000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "REMOTE"
+      ],
+      "location": "Казань",
+      "available_in_days": 7,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [
+        "python",
+        "sql",
+        "api_fastapi",
+        "postgresql",
+        "docker_basics"
+      ],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Корпоративный портал",
+          "start_date": "2021-01-01",
+          "end_date": "2023-11-01",
+          "stack": [
+            "python",
+            "postgresql",
+            "sql"
+          ],
+          "tasks": "Django, REST API и миграции PostgreSQL.",
+          "projects": "",
+          "achievements": ""
+        },
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "API для B2B-сервисов",
+          "start_date": "2023-12-01",
+          "end_date": null,
+          "stack": [
+            "python",
+            "api_fastapi",
+            "postgresql",
+            "docker_basics"
+          ],
+          "tasks": "FastAPI, Docker, обработка ошибок и интеграционные тесты.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-B04",
+      "full_name": "Даниил Поляков",
+      "email": "cv-syn-b04@demo.example",
+      "specialization": "backend_python",
+      "claimed_grade": "MIDDLE",
+      "salary_min": 215000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "REMOTE",
+        "HYBRID"
+      ],
+      "location": "Екатеринбург",
+      "available_in_days": 14,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [
+        "python",
+        "sql",
+        "postgresql",
+        "testing",
+        "system_thinking"
+      ],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Каталог данных",
+          "start_date": "2020-08-01",
+          "end_date": "2023-01-01",
+          "stack": [
+            "python",
+            "sql"
+          ],
+          "tasks": "Django, SQL, импорт данных.",
+          "projects": "",
+          "achievements": ""
+        },
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Система отчётности",
+          "start_date": "2023-02-01",
+          "end_date": null,
+          "stack": [
+            "python",
+            "postgresql",
+            "testing"
+          ],
+          "tasks": "Django REST Framework, Celery, PostgreSQL, тестирование бизнес-логики.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-B05",
+      "full_name": "Олеся Сафонова",
+      "email": "cv-syn-b05@demo.example",
+      "specialization": "backend_python",
+      "claimed_grade": "MIDDLE",
+      "salary_min": 225000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "REMOTE"
+      ],
+      "location": "Новосибирск",
+      "available_in_days": 0,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [
+        "python",
+        "api_fastapi",
+        "postgresql",
+        "docker_basics",
+        "system_thinking"
+      ],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Сервис интеграций",
+          "start_date": "2022-02-01",
+          "end_date": null,
+          "stack": [
+            "python",
+            "api_fastapi",
+            "postgresql",
+            "docker_basics"
+          ],
+          "tasks": "FastAPI, Redis, асинхронные запросы, обработка событий и Docker.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-B06",
+      "full_name": "Игорь Дементьев",
+      "email": "cv-syn-b06@demo.example",
+      "specialization": "backend_python",
+      "claimed_grade": "MIDDLE",
+      "salary_min": 235000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "HYBRID",
+        "REMOTE"
+      ],
+      "location": "Санкт-Петербург",
+      "available_in_days": 21,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [
+        "python",
+        "sql",
+        "postgresql",
+        "testing",
+        "docker_basics"
+      ],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Внутренние веб-сервисы",
+          "start_date": "2019-09-01",
+          "end_date": "2022-05-01",
+          "stack": [
+            "python",
+            "sql"
+          ],
+          "tasks": "Flask, MySQL, поддержка API.",
+          "projects": "",
+          "achievements": ""
+        },
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Платформа документооборота",
+          "start_date": "2022-06-01",
+          "end_date": null,
+          "stack": [
+            "python",
+            "postgresql",
+            "docker_basics",
+            "testing"
+          ],
+          "tasks": "PostgreSQL, Celery, Docker, CI/CD, pytest, мониторинг.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-B07",
+      "full_name": "Валерия Исаева",
+      "email": "cv-syn-b07@demo.example",
+      "specialization": "backend_python",
+      "claimed_grade": "MIDDLE",
+      "salary_min": 245000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "REMOTE"
+      ],
+      "location": "Самара",
+      "available_in_days": 30,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [
+        "python",
+        "api_fastapi",
+        "postgresql",
+        "docker_basics",
+        "testing"
+      ],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Сервис бронирований",
+          "start_date": "2021-04-01",
+          "end_date": null,
+          "stack": [
+            "python",
+            "api_fastapi",
+            "postgresql",
+            "docker_basics",
+            "testing"
+          ],
+          "tasks": "FastAPI, асинхронное API, PostgreSQL, тесты, контейнеризация.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-B08",
+      "full_name": "Глеб Михайлов",
+      "email": "cv-syn-b08@demo.example",
+      "specialization": "backend_python",
+      "claimed_grade": "MIDDLE",
+      "salary_min": 175000,
+      "salary_type": "NET",
+      "work_formats": [
+        "OFFICE",
+        "HYBRID"
+      ],
+      "location": "Москва",
+      "available_in_days": 45,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [
+        "python",
+        "sql",
+        "postgresql"
+      ],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Веб-панель администрирования",
+          "start_date": "2020-03-01",
+          "end_date": "2023-02-01",
+          "stack": [
+            "python",
+            "sql"
+          ],
+          "tasks": "Flask, SQL, очереди задач.",
+          "projects": "",
+          "achievements": ""
+        },
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Система учёта",
+          "start_date": "2023-03-01",
+          "end_date": null,
+          "stack": [
+            "python",
+            "postgresql"
+          ],
+          "tasks": "Django, PostgreSQL, оптимизация SQL и отчётов.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-B09",
+      "full_name": "Алина Журавлёва",
+      "email": "cv-syn-b09@demo.example",
+      "specialization": "backend_python",
+      "claimed_grade": "SENIOR",
+      "salary_min": 300000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "REMOTE"
+      ],
+      "location": "Пермь",
+      "available_in_days": 30,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [
+        "python",
+        "sql",
+        "api_fastapi",
+        "postgresql",
+        "docker_basics",
+        "system_thinking",
+        "kafka"
+      ],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Сервис заказов",
+          "start_date": "2017-08-01",
+          "end_date": "2021-05-01",
+          "stack": [
+            "python",
+            "sql",
+            "postgresql"
+          ],
+          "tasks": "Django, PostgreSQL, оптимизация запросов.",
+          "projects": "",
+          "achievements": ""
+        },
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Платформа интеграций",
+          "start_date": "2021-06-01",
+          "end_date": null,
+          "stack": [
+            "python",
+            "api_fastapi",
+            "postgresql",
+            "docker_basics",
+            "kafka"
+          ],
+          "tasks": "FastAPI, Kafka, Redis, Docker, системное проектирование и API-контракты.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-B10",
+      "full_name": "Кирилл Кравцов",
+      "email": "cv-syn-b10@demo.example",
+      "specialization": "backend_python",
+      "claimed_grade": "SENIOR",
+      "salary_min": 340000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "HYBRID",
+        "REMOTE"
+      ],
+      "location": "Москва",
+      "available_in_days": 14,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [
+        "python",
+        "api_fastapi",
+        "postgresql",
+        "testing",
+        "docker_basics",
+        "system_thinking"
+      ],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Веб-платформа",
+          "start_date": "2016-07-01",
+          "end_date": "2020-12-01",
+          "stack": [
+            "python",
+            "postgresql"
+          ],
+          "tasks": "Python, Django, PostgreSQL, ревью.",
+          "projects": "",
+          "achievements": ""
+        },
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Набор внутренних сервисов",
+          "start_date": "2021-01-01",
+          "end_date": null,
+          "stack": [
+            "python",
+            "api_fastapi",
+            "postgresql",
+            "testing",
+            "docker_basics",
+            "system_thinking"
+          ],
+          "tasks": "FastAPI, CI/CD, Docker, Kubernetes, наблюдаемость, архитектурные решения.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-B11",
+      "full_name": "София Климова",
+      "email": "cv-syn-b11@demo.example",
+      "specialization": "backend_python",
+      "claimed_grade": "SENIOR",
+      "salary_min": 310000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "OFFICE",
+        "HYBRID"
+      ],
+      "location": "Москва",
+      "available_in_days": 60,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [
+        "python",
+        "sql",
+        "postgresql",
+        "docker_basics",
+        "system_thinking"
+      ],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Интеграция корпоративных систем",
+          "start_date": "2017-03-01",
+          "end_date": "2021-01-01",
+          "stack": [
+            "python",
+            "sql"
+          ],
+          "tasks": "Flask, REST API, обмен данными.",
+          "projects": "",
+          "achievements": ""
+        },
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Платформа клиентских сервисов",
+          "start_date": "2021-02-01",
+          "end_date": null,
+          "stack": [
+            "python",
+            "postgresql",
+            "docker_basics",
+            "system_thinking"
+          ],
+          "tasks": "Django, PostgreSQL, миграции, проектирование и документация API.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-F01",
+      "full_name": "Полина Родионова",
+      "email": "cv-syn-f01@demo.example",
+      "specialization": "frontend_ts",
+      "claimed_grade": "JUNIOR",
+      "salary_min": 100000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "REMOTE",
+        "HYBRID"
+      ],
+      "location": "Воронеж",
+      "available_in_days": 14,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Интерфейс личного кабинета",
+          "start_date": "2024-02-01",
+          "end_date": null,
+          "stack": [],
+          "tasks": "JavaScript, React, адаптивная верстка, запросы к REST API.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-F02",
+      "full_name": "Матвей Захаров",
+      "email": "cv-syn-f02@demo.example",
+      "specialization": "frontend_ts",
+      "claimed_grade": "MIDDLE",
+      "salary_min": 190000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "REMOTE"
+      ],
+      "location": "Казань",
+      "available_in_days": 7,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Интерфейс аналитической панели",
+          "start_date": "2021-05-01",
+          "end_date": "2023-02-01",
+          "stack": [],
+          "tasks": "Vue, JavaScript, REST API.",
+          "projects": "",
+          "achievements": ""
+        },
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Веб-интерфейс B2B",
+          "start_date": "2023-03-01",
+          "end_date": null,
+          "stack": [],
+          "tasks": "TypeScript, React, работа с формами и состоянием.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    },
+    {
+      "demo_id": "CV-SYN-F03",
+      "full_name": "Елизавета Зорина",
+      "email": "cv-syn-f03@demo.example",
+      "specialization": "frontend_ts",
+      "claimed_grade": "SENIOR",
+      "salary_min": 275000,
+      "salary_type": "GROSS",
+      "work_formats": [
+        "HYBRID"
+      ],
+      "location": "Санкт-Петербург",
+      "available_in_days": 30,
+      "profile_visible": true,
+      "open_to_invitations": true,
+      "skill_claims": [],
+      "experience": [
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Интерфейс портала",
+          "start_date": "2018-06-01",
+          "end_date": "2021-06-01",
+          "stack": [],
+          "tasks": "JavaScript, Vue, адаптивный UI.",
+          "projects": "",
+          "achievements": ""
+        },
+        {
+          "company": "Синтетическая демо-компания",
+          "position": "Дизайн-система",
+          "start_date": "2021-07-01",
+          "end_date": null,
+          "stack": [],
+          "tasks": "TypeScript, React, компоненты, тестирование и CI/CD.",
+          "projects": "",
+          "achievements": ""
+        }
+      ],
+      "is_synthetic": true,
+      "verification_note": "Только заявленные навыки; грейд не подтверждён тестированием"
+    }
+  ]
+}
